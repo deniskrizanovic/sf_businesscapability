@@ -55,3 +55,6 @@ target/
 **/tsconfig*.json
 **/*.tsbuildinfo
 **/graphql.config.yml
+
+# Local strategy docs
+docs/Detailed Strategy Mapping*
