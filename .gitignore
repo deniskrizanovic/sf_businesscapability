@@ -58,3 +58,9 @@ target/
 
 # Local strategy docs
 docs/Detailed Strategy Mapping*
+
+# IDE config
+.idea/
+
+# Temporary retrieved org metadata
+retrieved_temp/
