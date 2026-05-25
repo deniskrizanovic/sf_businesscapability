@@ -3,7 +3,8 @@
 ## How to use this plan
 
 - Each step has a BDD spec file in `docs/specs/` listing formal acceptance criteria. Review the spec before starting the step.
-- Each step is a deployable slice. Claude deploys to `home-denispoc` at the end of each step and reports the result before progressing.
+- Each step is a deployable slice. Claude deploys to `home-denispoc` at the end of each step and reports the deployment result, then stops.
+- **Claude never marks a step complete.** Only you mark a step complete after confirming every item in the manual inspection checklist.
 - **Do not start a step until the previous step's checkbox is ticked.**
 - Before starting any step, Claude must check that the prior step checkbox is `[x]`. If it is still `[ ]`, Claude must stop and ask why before proceeding.
 - Every step that creates Salesforce metadata must use the appropriate skill from the table in `CLAUDE.md`. Claude must confirm which skill it is invoking before generating any file.
@@ -17,16 +18,16 @@
 
 ## Progress Tracker
 
-| Step | Description | Status |
-|---|---|---|
-| 1 | `bcm_Map__c` — object, fields, permission sets, Maps tab, app with Maps tab | `[x]` |
-| 2 | `bcm_Capability__c` — object, fields, validation rules, permission additions, Capabilities tab added to app | `[ ]` |
-| 3 | `bcm_Tag__c` — object, fields, validation rule, permission additions, Tags tab added to app | `[ ]` |
-| 4 | `bcm_CapabilityTag__c` — junction object, permission additions | `[ ]` |
-| 5 | App structure — Custom Permission, Import + Map FlexiPage stubs, Import tab added to app | `[ ]` |
-| 6 | Import — `bcm_ImportController` Apex + `bcm_ImportUtility` LWC | `[ ]` |
-| 7 | Diagram — `bcm_CapabilityMap` LWC (read-only: layout, render, zoom/pan, tag highlight) | `[ ]` |
-| 8 | Drag-drop — `bcm_DragDropController` Apex + drag-drop interactions in LWC | `[ ]` |
+| Step | Description | FPs Unlocked | CFP | Cumul. | % Done | Status | Completed |
+|---|---|---|---|---|---|---|---|
+| 1 | `bcm_Map__c` — object, fields, permission sets, Maps tab, app | FP7–12 (Map CRUD) | 18 | 18 | 16% | `[x]` | 2026-05-25 |
+| 2 | `bcm_Capability__c` — object, fields, trigger, validation rules, Capabilities tab, Map record page | FP13, FP15–19 (Capability list + CRUD) | 21 | 39 | 35% | `[ ]` | — |
+| 3 | `bcm_Tag__c` — object, fields, validation rule, Tags tab | FP22–28 (Tag CRUD + detail) | 23 | 62 | 56% | `[ ]` | — |
+| 4 | `bcm_CapabilityTag__c` — junction object, permission additions | FP14, FP20–21 (Capability detail w/tags, tag junctions) | 15 | 77 | 69% | `[ ]` | — |
+| 5 | App structure — Custom Permission, FlexiPage stubs, Import tab | — | 0 | 77 | 69% | `[ ]` | — |
+| 6 | Import — `bcm_ImportController` Apex + `bcm_ImportUtility` LWC | FP4 (Import JSON) | 11 | 88 | 79% | `[ ]` | — |
+| 7 | Diagram — `bcm_CapabilityMap` LWC (read-only) | FP1–3 (Map / Capability / Tag diagram load) | 11 | 99 | 89% | `[ ]` | — |
+| 8 | Drag-drop — `bcm_DragDropController` Apex + LWC interactions | FP5–6 (Reorder + Reparent) | 12 | 111 | 100% | `[ ]` | — |
 
 ---
 
@@ -77,30 +78,34 @@
 - Fields:
   - `bcm_Map__c` (Lookup → `bcm_Map__c`, Required, deleteConstraint: Restrict)
   - `bcm_Parent__c` (Lookup → `bcm_Capability__c`, Optional, deleteConstraint: SetNull)
-  - `bcm_Level__c` (Number 1,0 — Required)
-  - `bcm_SortOrder__c` (Number 6,0 — Required)
+  - `bcm_Level__c` (Number 1,0 — Optional; set by trigger)
+  - `bcm_SortOrder__c` (Number 6,0 — Optional; set by trigger)
   - `bcm_ExternalId__c` (Text 255 — Unique, External ID)
   - `bcm_Definition__c` (Rich Text Area 32768)
   - `bcm_StrategySupport__c` (Rich Text Area 32768)
   - `bcm_ArchitecturalNuance__c` (Rich Text Area 32768)
-- Validation rules:
+- Apex trigger `bcm_CapabilityTrigger` + handler `bcm_CapabilityHandler` (before insert, before update):
+  - Derives `bcm_Level__c` from parent: null parent → 1; parent set → parent's level + 1
+  - If `bcm_SortOrder__c` is blank, sets it to MAX sibling SortOrder + 1 (scope: same map, same parent)
+- Validation rules (safety guards — trigger sets valid values, rules catch anything that bypasses the trigger):
   - Level must be 1, 2, or 3
   - If Parent is null, Level must be 1
   - If Parent is set, Level must be 2 or 3
 - Apex test class `bcm_CapabilityValidationTest` covering:
-  - Level 0 → `DmlException` thrown
-  - Level 4 → `DmlException` thrown
-  - Level 1, no parent → saves successfully
-  - Level 2, no parent → `DmlException` thrown
-  - Level 3, no parent → `DmlException` thrown
-  - Level 1, parent set → `DmlException` thrown
-  - Level 2, parent set → saves successfully
-  - Level 3, parent set → saves successfully
+  - Level derived as 1 when no parent provided
+  - Level derived as 2 when parent is L1
+  - Level derived as 3 when parent is L2
+  - SortOrder auto-assigned as MAX+1 when not provided
+  - SortOrder preserved when explicitly provided
+  - Viewer cannot insert (DmlException)
+  - Editor can insert valid Capability
+  - Editor cannot insert invalid Capability (Level 2, no parent)
 - Permission set additions:
   - `bcm_Viewer`: add Read on `bcm_Capability__c`; Capabilities tab Default On
   - `bcm_Editor`: add Read, Create, Edit, Delete on `bcm_Capability__c`; Capabilities tab Default On
 - Object Tab for `bcm_Capability__c` (Capabilities tab)
 - `bcm_BusinessCapabilityMap` app updated to include the Capabilities tab
+- Lightning Record Page `bcm_MapRecordPage` for `bcm_Map__c` — assigned as default for the app; includes highlights panel, detail, and Capabilities related list
 
 **Skills to invoke (Claude must confirm before generating any file):**
 - `generating-custom-object` — for `bcm_Capability__c`
@@ -109,7 +114,9 @@
 - `generating-custom-tab` — for the Capabilities tab
 - `generating-permission-set` — update `bcm_Viewer` and `bcm_Editor`
 - `generating-custom-application` — update `bcm_BusinessCapabilityMap` to include Capabilities tab
-- No skill for Apex — hand-written; state this explicitly before writing
+- `generating-apex` — for `bcm_CapabilityTrigger` and `bcm_CapabilityHandler`
+- `generating-apex-test` — for `bcm_CapabilityValidationTest`
+- `generating-flexipage` — for `bcm_MapRecordPage` (Record Page for `bcm_Map__c`)
 
 **Manual inspection checklist:**
 - [ ] `bcm_Capability__c` visible in Setup → Object Manager
@@ -117,12 +124,15 @@
 - [ ] `bcm_ExternalId__c` marked as External ID in field detail
 - [ ] `bcm_Parent__c` is a self-referencing lookup (not Master-Detail)
 - [ ] All 3 validation rules active on the object
-- [ ] `bcm_CapabilityValidationTest` passes with all 8 test methods green
-- [ ] Create a test Capability record with no Parent and Level = 2 → validation fires in UI
-- [ ] Create a test Capability record with a Parent and Level = 1 → validation fires in UI
+- [ ] Create a Capability with no Parent, no Level → record saves; Level = 1 set by trigger
+- [ ] Create a Capability with an L1 Parent, no Level → record saves; Level = 2 set by trigger
+- [ ] Create a Capability with no SortOrder → record saves; SortOrder = MAX+1 within siblings
+- [ ] `bcm_CapabilityValidationTest` passes with all test methods green
 - [ ] Capabilities tab visible in the BCM app
 - [ ] `bcm_Viewer` now grants Read on `bcm_Capability__c`
 - [ ] `bcm_Editor` now grants Read/Create/Edit/Delete on `bcm_Capability__c`
+- [ ] Open a `bcm_Map__c` record → `bcm_MapRecordPage` loads with Capabilities related list visible
+- [ ] Create a Capability linked to that Map → it appears in the related list without page refresh
 
 **Step complete:** `[ ]`
 
@@ -161,7 +171,7 @@
 - `generating-custom-tab` — for the Tags tab
 - `generating-permission-set` — update `bcm_Viewer` and `bcm_Editor`
 - `generating-custom-application` — update `bcm_BusinessCapabilityMap` to include Tags tab
-- No skill for Apex — hand-written; state this explicitly before writing
+- `generating-apex-test` — for `bcm_TagValidationTest`
 
 **Manual inspection checklist:**
 - [ ] `bcm_Tag__c` visible in Setup → Object Manager
@@ -264,7 +274,8 @@
 
 **Skills to invoke (Claude must confirm before generating any file):**
 - `generating-flexipage` — update `bcm_ImportPage` to add `bcm_ImportUtility` component
-- No skill for Apex — hand-written; state this explicitly before writing
+- `generating-apex` — for `bcm_ImportController`, `bcm_ImportPayload`, `bcm_CapabilityNode`, `bcm_ImportResult`
+- `generating-apex-test` — for `bcm_ImportControllerTest`
 
 **Manual inspection checklist:**
 - [ ] Deploy succeeds with no errors
@@ -304,7 +315,8 @@
 
 **Skills to invoke (Claude must confirm before generating any file):**
 - `generating-flexipage` — update `bcm_MapPage` to add `bcm_CapabilityMap` component
-- No skill for Apex or LWC JS — hand-written; state this explicitly before writing
+- `generating-apex` — for `bcm_MapController`, `bcm_CapabilityController`, `bcm_TagController`
+- `generating-apex-test` — for test classes for all three controllers
 
 **Manual inspection checklist:**
 - [ ] Deploy succeeds with no errors
@@ -345,7 +357,8 @@
   - Revert on Apex error with toast notification
 
 **Skills to invoke (Claude must confirm before generating any file):**
-- No skill for Apex or LWC JS — hand-written; state this explicitly before writing
+- `generating-apex` — for `bcm_DragDropController`
+- `generating-apex-test` — for `bcm_DragDropControllerTest`
 
 **Manual inspection checklist:**
 - [ ] Deploy succeeds with no errors

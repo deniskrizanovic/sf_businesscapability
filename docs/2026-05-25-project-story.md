@@ -1,4 +1,5 @@
 # The Story of Business Capability Map
+
 *Written 2026-05-25 — all times are Sydney time (AEST, UTC+10)*
 
 ---
@@ -7,13 +8,13 @@
 
 On the morning of Saturday 23 May 2026, a Salesforce DX project was created and a single commit was pushed: the boilerplate README that every new SFDX project ships with. Eighteen lines of documentation links. No code, no design, no direction — just the shell of something that hadn't decided what it was yet.
 
-Two days passed.
+On the next day.
 
 ---
 
 ## The Real-World Spark
 
-On Monday 25 May, the project woke up with purpose. The first commit of the day — at 8:07am AEST — added a detailed strategy mapping document: a real business capability model for Homes NSW, comparing their documented capabilities against some external benchmark. It was a dense, 780-line analysis of what a housing agency actually does, expressed as a hierarchy of capabilities.
+On Sunday 24 May, the project woke up with purpose. The first commit of the day — at 8:07am AEST — added a detailed strategy mapping document: a real business capability model for Homes NSW, comparing their documented capabilities against some external benchmark. It was a dense, 780-line analysis of what a housing agency actually does, expressed as a hierarchy of capabilities.
 
 One minute later, at 8:08am AEST, it was gone. The file was removed from the repository and added to `.gitignore`.
 
@@ -38,15 +39,10 @@ In a single push, the repository went from a blank SFDC skeleton to a fully scaf
 **The design docs covered everything.** Six planning documents arrived in this commit:
 
 - `01-data-model.md` defined the four objects (`bcm_Map__c`, `bcm_Capability__c`, `bcm_Tag__c`, `bcm_CapabilityTag__c`), their fields, relationship types, delete constraints, and validation rules. The self-referencing parent lookup on `bcm_Capability__c` required a subtle decision: Salesforce does not allow `Restrict` or `Cascade` delete constraints on self-referencing lookups. The constraint must be `SetNull` — a deployment failure waiting to happen if hand-written and not caught. It was caught here, in the spec.
-
 - `02-import.md` designed the mechanism for loading data. A nested JSON tree would be pasted into a textarea component by an admin. An Apex controller would parse it, upsert the Map, upsert Tags, upsert Capabilities in two passes (first without parent links to avoid ordering issues, then a second pass to wire up the hierarchy), and finally rebuild the junction records for capability-tag associations. The two-pass upsert for capabilities was a deliberate design choice to avoid the problem of inserting a child before its parent exists.
-
 - `03-diagram-layout.md` worked out the SVG coordinate geometry — how to calculate column widths, row heights, chevron shapes for Level 1, rounded rectangles for Level 2, and bullet lists for Level 3.
-
 - `04-drag-drop.md` handled the interactive structural editing. Two operations were defined: *reorder* (drag within the same parent, updating `bcm_SortOrder__c` for all siblings) and *reparent* (drag to a different parent, updating `bcm_Parent__c`, `bcm_Level__c` for the moved node and all its descendants, and rewriting sort orders for both the old and new sibling groups).
-
 - `05-lwc-architecture.md` specified the component tree and every piece of tracked state in `bcm_CapabilityMap`. It also identified a known LWC constraint: child components cannot return SVG fragments directly into a parent SVG. The recommendation was to skip LWC child components for node rendering entirely, and instead implement node renderers as pure JavaScript classes called from the parent template. This keeps all SVG inside one component's single template and sidesteps the SVG-in-shadow-DOM problem.
-
 - `06-app-structure.md` defined the Lightning App (`bcm_BusinessCapabilityMap`), its tabs, and the two Permission Sets. `bcm_Viewer` gets read-only access, drag handles hidden. `bcm_Editor` gets full access, drag handles visible. The visibility of drag handles is controlled not by the permission set directly but by a Custom Permission (`bcm_CanEdit`) checked at runtime in the LWC — the idiomatic Salesforce approach for conditional UI.
 
 A `CONTEXT.md` was written as a domain glossary: Business Capability, Level, Tag, Sort Order, Diagram, Map, Import, External ID, Rendering Mode, Permission Sets, Diagram Page, and every LWC component — all defined precisely. This document became the shared vocabulary for the project.
@@ -88,6 +84,7 @@ The final commit of the day landed at 7:20pm AEST: *"Add implementation plan, BD
 The implementation plan divided the work into eight deployable steps, each gated on the previous step's checkbox being ticked. The gate is enforced in the plan document itself, with an explicit instruction that work must stop and ask if a prior step isn't complete before the next one begins.
 
 The steps follow a strict bottom-up sequence:
+
 1. `bcm_Map__c` — the container object, permission sets, Maps tab, app
 2. `bcm_Capability__c` — the core object, validation rules, Capabilities tab
 3. `bcm_Tag__c` — the label object, colour validation
