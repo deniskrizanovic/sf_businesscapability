@@ -97,18 +97,3 @@ Default sort: `Name` ASC
 ### bcm_Map__c
 Default list view columns: `Name`, `bcm_Description__c`
 Default sort: `Name` ASC
-
-## Build Order
-The recommended deployment sequence to avoid dependency errors:
-
-1. Custom Objects: `bcm_Map__c`, `bcm_Capability__c`, `bcm_Tag__c`, `bcm_CapabilityTag__c`
-2. Custom Fields on all objects
-3. Validation Rules
-4. Custom Permission: `bcm_CanEdit`
-5. Permission Sets: `bcm_Viewer`, `bcm_Editor`
-6. Apex Classes: all controllers
-7. LWC Components: `bcm_CapabilityNode`, `bcm_ContextMenu`, `bcm_ImportUtility`, `bcm_CapabilityMap`
-8. Lightning App Pages: `bcm_MapPage`, `bcm_ImportPage`
-9. Lightning Application: `bcm_BusinessCapabilityMap`
-10. Tabs
-11. List Views
