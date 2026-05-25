@@ -2,11 +2,13 @@
 
 ## How to use this plan
 
-- Each step has a BDD spec file in `docs/plan/specs/` listing formal acceptance criteria. Review the spec before starting the step.
-- Each step is a deployable slice you can manually inspect in the org (`home-denispoc` sandbox) before progressing.
+- Each step has a BDD spec file in `docs/specs/` listing formal acceptance criteria. Review the spec before starting the step.
+- Each step is a deployable slice. Claude deploys to `home-denispoc` at the end of each step and reports the result before progressing.
 - **Do not start a step until the previous step's checkbox is ticked.**
 - Before starting any step, Claude must check that the prior step checkbox is `[x]`. If it is still `[ ]`, Claude must stop and ask why before proceeding.
 - Every step that creates Salesforce metadata must use the appropriate skill from the table in `CLAUDE.md`. Claude must confirm which skill it is invoking before generating any file.
+- Every permission set must include `<applicationVisibilities>` for `bcm_BusinessCapabilityMap` with `<visible>true</visible>` so the app appears in the App Launcher.
+- **Deploy command:** use `--source-dir` flags for each new metadata folder rather than deploying the whole `force-app` tree. This avoids stale `destructiveChanges.xml` entries from source tracking picking up not-yet-built future components.
 - Every Apex test class must test permission boundaries using `System.runAs()` — at minimum one test user with `bcm_Viewer` assigned and one with `bcm_Editor` assigned. DML operations that should fail for Viewers must assert a `DmlException` is thrown. DML operations that should succeed for Editors must assert the record is saved.
 - Page layouts use org-generated defaults. No custom layout XML is created.
 - The Custom Permission (`bcm_CanEdit`) is the single explicit exception — it is hand-written XML.
@@ -17,7 +19,7 @@
 
 | Step | Description | Status |
 |---|---|---|
-| 1 | `bcm_Map__c` — object, fields, permission sets, Maps tab, app with Maps tab | `[ ]` |
+| 1 | `bcm_Map__c` — object, fields, permission sets, Maps tab, app with Maps tab | `[x]` |
 | 2 | `bcm_Capability__c` — object, fields, validation rules, permission additions, Capabilities tab added to app | `[ ]` |
 | 3 | `bcm_Tag__c` — object, fields, validation rule, permission additions, Tags tab added to app | `[ ]` |
 | 4 | `bcm_CapabilityTag__c` — junction object, permission additions | `[ ]` |
@@ -60,7 +62,7 @@
 - [ ] `bcm_Viewer` permission set exists and grants Read on `bcm_Map__c`
 - [ ] `bcm_Editor` permission set exists and grants Read/Create/Edit/Delete on `bcm_Map__c`
 
-**Step complete:** `[ ]`
+**Step complete:** `[x]` — deployed to `home-denispoc` 2026-05-25
 
 ---
 
