@@ -56,6 +56,21 @@ Allow an admin to load a full capability map from a nested JSON document by past
 - `tags` is an array of tag names; tags are created if they don't exist (with a default grey colour `#CCCCCC`)
 - `children` may be empty array or omitted
 
+## Rich Text Fields and Import
+
+`bcm_Description__c` (on Map), and `bcm_Definition__c`, `bcm_StrategySupport__c`, `bcm_ArchitecturalNuance__c` (on Capability) are Rich Text Area fields. Salesforce stores these as HTML internally.
+
+**Decision: the JSON source supplies HTML strings for all rich text fields.** The Apex controller passes these values directly to the field — no transformation is applied. The importer does not accept or convert plain text for these fields.
+
+Example JSON values for rich text fields:
+```json
+"definition": "<p>A named, persistent ability the business has.</p>",
+"strategySupport": "<p>Supports <strong>Strategy 2025–2035</strong> objective 3.</p>",
+"architecturalNuance": "<ul><li>Depends on CRM integration</li></ul>"
+```
+
+Source data must be prepared with HTML markup before import. Plain text strings without HTML tags will save without error but will render as unstyled text.
+
 ## Apex Controller: `bcm_ImportController`
 
 ### Method

@@ -8,7 +8,7 @@ A container for a set of Business Capabilities. Multiple maps can exist in the s
 | Field | Type | Attributes |
 |---|---|---|
 | `Name` | Standard Text | Required, unique |
-| `bcm_Description__c` | Long Text Area | Optional |
+| `bcm_Description__c` | Rich Text Area | Optional |
 
 ### bcm_Capability__c
 A single Business Capability at any level (1, 2, or 3).
@@ -21,9 +21,9 @@ A single Business Capability at any level (1, 2, or 3).
 | Level | `bcm_Level__c` | Number (1, 0 decimal) | Required, values: 1, 2, 3 |
 | Sort Order | `bcm_SortOrder__c` | Number (6, 0 decimal) | Required |
 | External ID | `bcm_ExternalId__c` | Text (255) | Unique, External ID, used for upsert |
-| Definition | `bcm_Definition__c` | Long Text Area (32768) | Optional |
-| Strategy Support | `bcm_StrategySupport__c` | Long Text Area (32768) | Optional |
-| Architectural Nuance | `bcm_ArchitecturalNuance__c` | Long Text Area (32768) | Optional |
+| Definition | `bcm_Definition__c` | Rich Text Area (32768) | Optional |
+| Strategy Support | `bcm_StrategySupport__c` | Rich Text Area (32768) | Optional |
+| Architectural Nuance | `bcm_ArchitecturalNuance__c` | Rich Text Area (32768) | Optional |
 
 **Relationships:**
 - `bcm_Map__c` lookup: `Lookup` (not Master-Detail) — allows map deletion without cascading capability deletion; `deleteConstraint: Restrict`
