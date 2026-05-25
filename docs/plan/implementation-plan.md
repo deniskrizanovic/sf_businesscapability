@@ -7,6 +7,7 @@
 - **Claude never marks a step complete.** Only you mark a step complete after confirming every item in the manual inspection checklist.
 - **Do not start a step until the previous step's checkbox is ticked.**
 - Before starting any step, Claude must check that the prior step checkbox is `[x]`. If it is still `[ ]`, Claude must stop and ask why before proceeding.
+- Before starting any step, Claude must run `git status` and confirm the branch is clean (no uncommitted changes, no untracked files under `force-app/`). If the branch is not clean, Claude must stop and ask before proceeding.
 - Every step that creates Salesforce metadata must use the appropriate skill from the table in `CLAUDE.md`. Claude must confirm which skill it is invoking before generating any file.
 - Every permission set must include `<applicationVisibilities>` for `bcm_BusinessCapabilityMap` with `<visible>true</visible>` so the app appears in the App Launcher.
 - **Deploy command:** use `--source-dir` flags for each new metadata folder rather than deploying the whole `force-app` tree. This avoids stale `destructiveChanges.xml` entries from source tracking picking up not-yet-built future components.
