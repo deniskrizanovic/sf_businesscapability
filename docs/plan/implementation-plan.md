@@ -34,7 +34,7 @@
 
 ## Step 1 — `bcm_Map__c`: Object, Fields, Permission Sets, Maps Tab, App
 
-**Spec:** [step-01-map-object.md](../specs/step-01-map-object.md)
+**Spec:** [map-object.md](../specs/map-object.md)
 
 **Before starting:** No prior step. Proceed directly.
 
@@ -70,7 +70,7 @@
 
 ## Step 2 — `bcm_Capability__c`: Object, Fields, Validation Rules, Permission Additions, Capabilities Tab
 
-**Spec:** [step-02-capability-object.md](../specs/step-02-capability-object.md)
+**Spec:** [capability-object.md](../specs/capability-object.md)
 
 **Before starting:** Claude must confirm Step 1 checkbox is `[x]`. If not, stop and ask why.
 
@@ -141,7 +141,7 @@
 
 ## Step 3 — `bcm_Tag__c`: Object, Fields, Validation Rule, Permission Additions, Tags Tab
 
-**Spec:** [step-03-tag-object.md](../specs/step-03-tag-object.md)
+**Spec:** [tag-object.md](../specs/tag-object.md)
 
 **Before starting:** Claude must confirm Step 2 checkbox is `[x]`. If not, stop and ask why.
 
@@ -190,7 +190,7 @@
 
 ## Step 4 — `bcm_CapabilityTag__c`: Junction Object, Permission Set Additions
 
-**Spec:** [step-04-capabilitytag-object.md](../specs/step-04-capabilitytag-object.md)
+**Spec:** [capability-tag-object.md](../specs/capability-tag-object.md)
 
 **Before starting:** Claude must confirm Step 3 checkbox is `[x]`. If not, stop and ask why.
 
@@ -224,7 +224,7 @@
 
 ## Step 5 — App Structure: Custom Permission, Import Tab, FlexiPage Stubs
 
-**Spec:** [step-05-app-structure.md](../specs/step-05-app-structure.md)
+**Spec:** [app-structure.md](../specs/app-structure.md)
 
 **Before starting:** Claude must confirm Step 4 checkbox is `[x]`. If not, stop and ask why.
 
@@ -261,7 +261,7 @@
 
 ## Step 6 — Import: `bcm_ImportController` Apex + `bcm_ImportUtility` LWC
 
-**Spec:** [step-06-import.md](../specs/step-06-import.md)
+**Spec:** [import.md](../specs/import.md)
 
 **Before starting:** Claude must confirm Step 5 checkbox is `[x]`. If not, stop and ask why.
 
@@ -294,7 +294,7 @@
 
 ## Step 7 — Diagram: `bcm_CapabilityMap` LWC (read-only)
 
-**Spec:** [step-07-diagram.md](../specs/step-07-diagram.md)
+**Spec:** [diagram.md](../specs/diagram.md)
 
 **Before starting:** Claude must confirm Step 6 checkbox is `[x]`. If not, stop and ask why.
 
@@ -340,7 +340,7 @@
 
 ## Step 8 — Drag-Drop: `bcm_DragDropController` Apex + LWC Interactions
 
-**Spec:** [step-08-drag-drop.md](../specs/step-08-drag-drop.md)
+**Spec:** [drag-drop.md](../specs/drag-drop.md)
 
 **Before starting:** Claude must confirm Step 7 checkbox is `[x]`. If not, stop and ask why.
 
