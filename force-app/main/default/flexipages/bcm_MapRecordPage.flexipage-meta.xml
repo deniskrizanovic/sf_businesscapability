@@ -92,10 +92,13 @@
                     <name>relatedListFieldAliases</name>
                     <valueList>
                         <valueListItems>
-                            <value>NAME</value>
+                            <value>bcm_Level__c</value>
                         </valueListItems>
                         <valueListItems>
                             <value>bcm_Parent__c</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>NAME</value>
                         </valueListItems>
                         <valueListItems>
                             <value>bcm_SortOrder__c</value>

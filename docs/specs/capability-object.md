@@ -155,6 +155,20 @@ Given a Level 2 Capability exists
 When I save a new Capability with Level 3 and that record as its Parent  
 Then the record saves successfully  
 
+**Scenario: A Level 3 Capability parented to a Level 1 is rejected**
+> Tested by: not yet covered
+
+Given a Level 1 Capability exists  
+When I try to save a new Capability with Level 3 and that Level 1 record as its Parent  
+Then I see the error: "The parent capability must be exactly one level above (e.g. a Level 3 capability must have a Level 2 parent)."  
+
+**Scenario: A Level 2 Capability parented to another Level 2 is rejected**
+> Tested by: not yet covered
+
+Given a Level 2 Capability exists  
+When I try to save a new Capability with Level 2 and that Level 2 record as its Parent  
+Then I see the error: "The parent capability must be exactly one level above (e.g. a Level 3 capability must have a Level 2 parent)."  
+
 ---
 
 ## Feature: Access rules are enforced for Editors and Viewers

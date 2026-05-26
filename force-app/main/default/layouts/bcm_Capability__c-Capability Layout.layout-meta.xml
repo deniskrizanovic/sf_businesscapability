@@ -8,11 +8,15 @@
         <layoutColumns>
             <layoutItems>
                 <behavior>Required</behavior>
+                <field>bcm_Map__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Required</behavior>
                 <field>bcm_Level__c</field>
             </layoutItems>
             <layoutItems>
                 <behavior>Required</behavior>
-                <field>bcm_Map__c</field>
+                <field>Name</field>
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
@@ -21,10 +25,6 @@
             <layoutItems>
                 <behavior>Required</behavior>
                 <field>bcm_SortOrder__c</field>
-            </layoutItems>
-            <layoutItems>
-                <behavior>Required</behavior>
-                <field>Name</field>
             </layoutItems>
         </layoutColumns>
         <layoutColumns>

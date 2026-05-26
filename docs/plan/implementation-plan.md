@@ -92,6 +92,7 @@
   - Level must be 1, 2, or 3
   - If Parent is null, Level must be 1
   - If Parent is set, Level must be 2 or 3
+  - If Parent is set, Parent's Level must equal this Level − 1 (prevents e.g. L3 parented to L1)
 - Apex test class `bcm_CapabilityValidationTest` covering:
   - Level derived as 1 when no parent provided
   - Level derived as 2 when parent is L1
@@ -122,9 +123,10 @@
 **Manual inspection checklist:**
 - [ ] `bcm_Capability__c` visible in Setup → Object Manager
 - [ ] All 8 custom fields present
+- [ ] Capability record layout shows fields in order: Map, Level, Capability Name, Parent Capability, Sort Order
 - [ ] `bcm_ExternalId__c` marked as External ID in field detail
 - [ ] `bcm_Parent__c` is a self-referencing lookup (not Master-Detail)
-- [ ] All 3 validation rules active on the object
+- [ ] All 4 validation rules active on the object
 - [ ] Create a Capability with no Parent, no Level → record saves; Level = 1 set by trigger
 - [ ] Create a Capability with an L1 Parent, no Level → record saves; Level = 2 set by trigger
 - [ ] Create a Capability with no SortOrder → record saves; SortOrder = MAX+1 within siblings
