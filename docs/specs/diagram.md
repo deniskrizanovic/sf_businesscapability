@@ -1,12 +1,12 @@
-# Step 7 Acceptance Criteria — Diagram (Read-Only)
+# Acceptance Criteria — Diagram
 
 ## Feature: Map selector loads available Maps
 
-**Scenario: Map combobox is populated on page load**
+**Scenario: Map dropdown is populated on page load**
 
-Given at least one `bcm_Map__c` record exists in the org  
+Given at least one Map record exists  
 When the user navigates to the Map tab  
-Then the Map combobox displays all available Map names  
+Then the Map dropdown displays all available Map names  
 
 **Scenario: No map is selected on initial load**
 
@@ -20,8 +20,8 @@ Then the diagram canvas is empty and no capabilities are rendered
 
 **Scenario: Selecting a Map renders the full diagram**
 
-Given the user selects a Map from the combobox  
-When the data load completes  
+Given the user selects a Map from the dropdown  
+When the data loads  
 Then the diagram renders without errors and displays all capabilities for that Map  
 
 **Scenario: L1 capabilities render as chevrons**
@@ -42,17 +42,17 @@ Given a Map with at least one Level 3 Capability is selected
 When the diagram renders  
 Then each Level 3 Capability is displayed as a bulleted text item inside its parent Level 2 box  
 
-**Scenario: Column order matches SortOrder of Level 1 capabilities**
+**Scenario: Column order matches Sort Order of Level 1 capabilities**
 
-Given a Map with multiple Level 1 Capabilities at different SortOrder values  
+Given a Map with multiple Level 1 Capabilities at different Sort Order values  
 When the diagram renders  
-Then columns appear left-to-right in ascending SortOrder sequence  
+Then columns appear left-to-right in ascending Sort Order sequence  
 
-**Scenario: L2 boxes within a column are stacked in SortOrder sequence**
+**Scenario: L2 boxes within a column are stacked in Sort Order sequence**
 
-Given a Level 1 Capability with multiple Level 2 children at different SortOrder values  
+Given a Level 1 Capability with multiple Level 2 children at different Sort Order values  
 When the diagram renders  
-Then the L2 boxes appear top-to-bottom in ascending SortOrder sequence  
+Then the L2 boxes appear top-to-bottom in ascending Sort Order sequence  
 
 ---
 
@@ -70,16 +70,16 @@ Given a map is loaded and the diagram is visible
 When the user scrolls the mouse wheel downward over the diagram  
 Then the diagram scales down toward the cursor position  
 
-**Scenario: Zoom is clamped between 0.2 and 3.0**
+**Scenario: Zoom is clamped at minimum and maximum levels**
 
 Given the diagram is at maximum zoom  
 When the user continues scrolling upward  
-Then the zoom does not exceed 3.0  
+Then the zoom does not increase further  
 
 **Scenario: Click-drag on the background pans the diagram**
 
 Given a map is loaded and the diagram is visible  
-When the user clicks and drags on the SVG background (not on a node)  
+When the user clicks and drags on the diagram background (not on a node)  
 Then the diagram content moves in the direction of the drag  
 
 ---
@@ -89,19 +89,19 @@ Then the diagram content moves in the direction of the drag
 **Scenario: Selecting a tag highlights matching capabilities**
 
 Given a Map is loaded and at least one Capability has a Tag applied  
-When the user selects that Tag in the "Colour by Tag" combobox  
+When the user selects that Tag in the "Colour by Tag" dropdown  
 Then all Level 2 capabilities carrying that Tag have their box fill changed to the Tag's colour  
 
 **Scenario: Capabilities without the selected tag remain white**
 
-Given a Tag is selected in the combobox  
+Given a Tag is selected in the dropdown  
 When the diagram renders the highlight  
 Then Level 2 capabilities not carrying that Tag remain white  
 
 **Scenario: Selecting None clears all highlights**
 
 Given a Tag is currently selected and capabilities are highlighted  
-When the user selects "None" in the Tag combobox  
+When the user selects "None" in the Tag dropdown  
 Then all capability boxes return to their default white fill  
 
 ---
@@ -112,7 +112,7 @@ Then all capability boxes return to their default white fill
 
 Given a map is loaded and the diagram is rendered  
 When the user left-clicks any capability node  
-Then the context menu appears near the click position with placeholder text  
+Then the context menu appears near the click position  
 
 **Scenario: Context menu closes when dismissed**
 
@@ -122,44 +122,10 @@ Then the context menu closes
 
 ---
 
-## Feature: Drag handles are not present in read-only mode
+## Feature: Drag handles are not visible to Viewers
 
-**Scenario: No drag handles are visible before drag-drop is built**
+**Scenario: Viewer sees no drag handles on the diagram**
 
-Given the diagram is rendered in Step 7 (before Step 8 is complete)  
-When the user hovers over any capability node  
-Then no drag handle icon is visible  
-
----
-
-## Feature: Apex controllers meet coverage and permission boundary requirements
-
-**Scenario: All diagram Apex test classes pass**
-
-Given `bcm_MapControllerTest`, `bcm_CapabilityControllerTest`, and `bcm_TagControllerTest` have been deployed  
-When the test classes are executed in the org  
-Then all test methods pass and coverage for each controller is ≥ 75%  
-
-**Scenario: Viewer can call getMaps (tested via System.runAs)**
-
-Given a test user with `bcm_Viewer` assigned is running via `System.runAs`  
-When the test calls `bcm_MapController.getMaps()`  
-Then a list of Map records is returned without error  
-
-**Scenario: Viewer can call getCapabilities (tested via System.runAs)**
-
-Given a test user with `bcm_Viewer` assigned is running via `System.runAs`  
-When the test calls `bcm_CapabilityController.getCapabilities(mapId)`  
-Then the capabilities for the specified map are returned without error  
-
-**Scenario: Viewer can call getTags (tested via System.runAs)**
-
-Given a test user with `bcm_Viewer` assigned is running via `System.runAs`  
-When the test calls `bcm_TagController.getTags()`  
-Then a list of Tag records is returned without error  
-
-**Scenario: Editor can call all three read controllers (tested via System.runAs)**
-
-Given a test user with `bcm_Editor` assigned is running via `System.runAs`  
-When the test calls `getMaps()`, `getCapabilities(mapId)`, and `getTags()`  
-Then all three return data without error  
+Given the user has the `bcm_Viewer` permission set assigned  
+When the user views the diagram  
+Then no drag handle icon is visible on any node  

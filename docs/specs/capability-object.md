@@ -1,4 +1,4 @@
-# Step 2 Acceptance Criteria — Capability Object
+# Acceptance Criteria — Capability Object
 
 ## Feature: A Capability record can be created with all expected fields
 

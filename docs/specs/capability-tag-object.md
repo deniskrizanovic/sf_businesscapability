@@ -1,62 +1,62 @@
-# Step 4 Acceptance Criteria — `bcm_CapabilityTag__c` Junction Object
+# Acceptance Criteria — Capability Tag Object
 
 ## Feature: Related lists appear on parent record detail pages
 
 **Scenario: Tags related list appears on a Capability record**
 
-Given a `bcm_Capability__c` record exists  
+Given a Capability record exists  
 When the user opens the record detail page  
-Then a related list for `bcm_CapabilityTag__c` is visible  
+Then a Tags related list is visible  
 
 **Scenario: Capabilities related list appears on a Tag record**
 
-Given a `bcm_Tag__c` record exists  
+Given a Tag record exists  
 When the user opens the record detail page  
-Then a related list for `bcm_CapabilityTag__c` is visible  
+Then a Capabilities related list is visible  
 
 ---
 
-## Feature: Junction records can be created and cascade-deleted
+## Feature: Capabilities can be linked to Tags and links cascade-delete correctly
 
 **Scenario: Editor can link a Capability to a Tag**
 
-Given a `bcm_Capability__c` record and a `bcm_Tag__c` record both exist  
+Given a Capability record and a Tag record both exist  
 And the user has the `bcm_Editor` permission set assigned  
-When the user creates a `bcm_CapabilityTag__c` record linking the two  
-Then the junction record saves successfully and appears in both related lists  
+When the user creates a link between the two records  
+Then the link saves successfully and appears in both related lists  
 
-**Scenario: Deleting a Capability deletes its junction records**
+**Scenario: Deleting a Capability deletes its tag links**
 
-Given a `bcm_CapabilityTag__c` record exists linking a Capability to a Tag  
-When the parent `bcm_Capability__c` record is deleted  
-Then the `bcm_CapabilityTag__c` record is also deleted  
+Given a link exists between a Capability and a Tag  
+When the parent Capability record is deleted  
+Then the link record is also deleted  
 
-**Scenario: Deleting a Tag deletes its junction records**
+**Scenario: Deleting a Tag deletes its capability links**
 
-Given a `bcm_CapabilityTag__c` record exists linking a Capability to a Tag  
-When the parent `bcm_Tag__c` record is deleted  
-Then the `bcm_CapabilityTag__c` record is also deleted  
+Given a link exists between a Capability and a Tag  
+When the parent Tag record is deleted  
+Then the link record is also deleted  
 
 ---
 
-## Feature: Permission sets grant correct access to CapabilityTag records
+## Feature: Permission sets grant correct access to Capability-Tag links
 
-**Scenario: Viewer can read a CapabilityTag record**
+**Scenario: Viewer can see Capability-Tag links**
 
-Given a `bcm_CapabilityTag__c` record exists  
+Given a link exists between a Capability and a Tag  
 And the user has the `bcm_Viewer` permission set assigned  
 When the user views the related list on a Capability or Tag record  
-Then the junction record is visible  
+Then the link is visible  
 
-**Scenario: Viewer cannot create a CapabilityTag record**
+**Scenario: Viewer cannot create a Capability-Tag link**
 
 Given the user has the `bcm_Viewer` permission set assigned  
-When the user attempts to insert a `bcm_CapabilityTag__c` record via DML  
-Then a `DmlException` is thrown with insufficient privileges  
+When the user attempts to create a link between a Capability and a Tag  
+Then access is denied and the link is not created  
 
-**Scenario: Editor can create and delete a CapabilityTag record**
+**Scenario: Editor can create and delete a Capability-Tag link**
 
 Given the user has the `bcm_Editor` permission set assigned  
 And both a Capability and a Tag record exist  
-When the user creates a junction record then deletes it  
+When the user creates a link between them then deletes it  
 Then both operations complete successfully  
