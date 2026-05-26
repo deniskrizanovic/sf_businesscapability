@@ -54,11 +54,27 @@ Given two Capabilities exist under the same Map and Parent with Sort Orders 1 an
 When I save a third Capability under the same Map and Parent without entering a Sort Order  
 Then the Sort Order is automatically set to 3  
 
-**Scenario: Sort Order is preserved when I enter one manually**
+**Scenario: Sort Order is preserved when I enter one manually with no siblings**
 
-Given I am logged in as an Editor  
+Given I am logged in as an Editor and no other Capabilities exist under the same Map and Parent  
 When I save a Capability with Sort Order set to 10  
 Then the Sort Order stays at 10  
+
+**Scenario: Existing siblings shift down when I insert a Capability at a taken Sort Order**
+
+Given 15 Capabilities exist under the same Map and Parent with Sort Orders 1 through 15  
+When I save a new Capability under the same Map and Parent with Sort Order set to 5  
+Then the new Capability has Sort Order 5  
+And the Capabilities that previously occupied positions 5 through 15 each move down one position  
+And the Capabilities with Sort Orders 1 through 4 are unchanged  
+
+**Scenario: Multiple Capabilities inserted in the same save each land at their requested Sort Order**
+
+Given 10 Capabilities exist under the same Map and Parent with Sort Orders 1 through 10  
+When I save two new Capabilities in the same transaction with Sort Orders 3 and 7  
+Then the first new Capability has Sort Order 3  
+And the second new Capability has Sort Order 7  
+And existing Capabilities that were displaced by either insertion are each shifted down by the correct amount  
 
 ---
 
