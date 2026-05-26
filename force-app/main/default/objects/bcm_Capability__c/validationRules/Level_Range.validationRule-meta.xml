@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Level_Range</fullName>
+    <active>true</active>
+    <errorConditionFormula>NOT(OR(bcm_Level__c = 1, bcm_Level__c = 2, bcm_Level__c = 3))</errorConditionFormula>
+    <errorMessage>Level must be 1, 2, or 3.</errorMessage>
+</ValidationRule>

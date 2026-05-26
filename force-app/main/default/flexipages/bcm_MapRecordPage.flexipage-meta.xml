@@ -1,19 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  RecordPage FlexiPage Template
-  
-  Template Variables Available:
-  - flexipagename: The name of the FlexiPage
-  - masterlabel: The display label
-  - description: The page description
-  - apiVersion: The Salesforce API version
-  - entityName: The SObject API name (e.g., 'Account', 'Rental_Property__c')
-  - primaryField: Single primary field API name for dynamic highlights (e.g., 'Name')
-  - secondaryFields: Array of secondary field API names for dynamic highlights
-  - detailFields: Array of field API names for the Details tab field section
--->
 <FlexiPage xmlns="http://soap.sforce.com/2006/04/metadata">
-    
     <flexiPageRegions>
         <itemInstances>
             <fieldInstance>
@@ -28,10 +14,7 @@
         <name>Facet-PrimaryFields</name>
         <type>Facet</type>
     </flexiPageRegions>
-    
-    
     <flexiPageRegions>
-        
         <itemInstances>
             <fieldInstance>
                 <fieldInstanceProperties>
@@ -42,11 +25,9 @@
                 <identifier>Recordbcm_Description__cSecondaryField0</identifier>
             </fieldInstance>
         </itemInstances>
-        
         <name>Facet-SecondaryFields</name>
         <type>Facet</type>
     </flexiPageRegions>
-    
     <flexiPageRegions>
         <itemInstances>
             <componentInstance>
@@ -65,18 +46,14 @@
                     <name>numVisibleActions</name>
                     <value>3</value>
                 </componentInstanceProperties>
-                
                 <componentInstanceProperties>
                     <name>primaryField</name>
                     <value>Facet-PrimaryFields</value>
                 </componentInstanceProperties>
-                
-                
                 <componentInstanceProperties>
                     <name>secondaryFields</name>
                     <value>Facet-SecondaryFields</value>
                 </componentInstanceProperties>
-                
                 <componentName>record_flexipage:dynamicHighlights</componentName>
                 <identifier>record_flexipage_dynamicHighlights</identifier>
             </componentInstance>
@@ -88,29 +65,103 @@
         <itemInstances>
             <componentInstance>
                 <componentInstanceProperties>
-                    <name>relatedListComponentOverride</name>
-                    <value>NONE</value>
+                    <name>actionNames</name>
+                    <valueList>
+                        <valueListItems>
+                            <value>New</value>
+                        </valueListItems>
+                    </valueList>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
-                    <name>rowsToDisplay</name>
+                    <name>maxRecordsToDisplay</name>
                     <value>10</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>parentFieldApiName</name>
+                    <value>bcm_Map__c.Id</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>relatedListApiName</name>
+                    <value>Capabilities__r</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>relatedListDisplayType</name>
+                    <value>ADVGRID</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>relatedListFieldAliases</name>
+                    <valueList>
+                        <valueListItems>
+                            <value>NAME</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>bcm_Parent__c</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>bcm_SortOrder__c</value>
+                        </valueListItems>
+                    </valueList>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>relatedListLabel</name>
+                    <value>Capabilities</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
                     <name>showActionBar</name>
                     <value>true</value>
                 </componentInstanceProperties>
-                <componentName>force:relatedListContainer</componentName>
-                <identifier>force_relatedListContainer</identifier>
+                <componentInstanceProperties>
+                    <name>sortFieldAlias</name>
+                    <value>__DEFAULT__</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>sortFieldOrder</name>
+                    <value>Default</value>
+                </componentInstanceProperties>
+                <componentName>lst:dynamicRelatedList</componentName>
+                <identifier>lst_dynamicRelatedList</identifier>
             </componentInstance>
         </itemInstances>
         <name>relatedTabContent</name>
         <type>Facet</type>
     </flexiPageRegions>
-    <!-- Field Section: Detail Fields -->
-    
-    <!-- Column 1 Fields -->
     <flexiPageRegions>
-        
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>body</name>
+                    <value>relatedTabContent</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>title</name>
+                    <value>Capabilities</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:tab</componentName>
+                <identifier>relatedListsTab</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>maintabs</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>label</name>
+                    <value>Tabs</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>tabs</name>
+                    <value>maintabs</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:tabset</componentName>
+                <identifier>flexipage_tabset</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>main</name>
+        <type>Region</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
         <itemInstances>
             <fieldInstance>
                 <fieldInstanceProperties>
@@ -121,14 +172,10 @@
                 <identifier>RecordNameColumn1Field0</identifier>
             </fieldInstance>
         </itemInstances>
-        
         <name>Facet-FieldSection-Column1</name>
         <type>Facet</type>
     </flexiPageRegions>
-    <!-- Column 2 Fields -->
-    
     <flexiPageRegions>
-        
         <itemInstances>
             <fieldInstance>
                 <fieldInstanceProperties>
@@ -139,12 +186,9 @@
                 <identifier>Recordbcm_Description__cColumn2Field0</identifier>
             </fieldInstance>
         </itemInstances>
-        
         <name>Facet-FieldSection-Column2</name>
         <type>Facet</type>
     </flexiPageRegions>
-    
-    <!-- Field Section: Column Facets -->
     <flexiPageRegions>
         <itemInstances>
             <componentInstance>
@@ -156,7 +200,6 @@
                 <identifier>flexipage_column1</identifier>
             </componentInstance>
         </itemInstances>
-        
         <itemInstances>
             <componentInstance>
                 <componentInstanceProperties>
@@ -167,11 +210,9 @@
                 <identifier>flexipage_column2</identifier>
             </componentInstance>
         </itemInstances>
-        
         <name>Facet-FieldSection-Columns</name>
         <type>Facet</type>
     </flexiPageRegions>
-    <!-- Field Section Component -->
     <flexiPageRegions>
         <itemInstances>
             <componentInstance>
@@ -191,110 +232,9 @@
                 <identifier>flexipage_fieldSection</identifier>
             </componentInstance>
         </itemInstances>
-        <name>detailTabContent</name>
-        <type>Facet</type>
-    </flexiPageRegions>
-    <flexiPageRegions>
-        <itemInstances>
-            <componentInstance>
-                <componentInstanceProperties>
-                    <name>body</name>
-                    <value>relatedTabContent</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>title</name>
-                    <value>Standard.Tab.relatedLists</value>
-                </componentInstanceProperties>
-                <componentName>flexipage:tab</componentName>
-                <identifier>relatedListsTab</identifier>
-            </componentInstance>
-        </itemInstances>
-        <itemInstances>
-            <componentInstance>
-                <componentInstanceProperties>
-                    <name>active</name>
-                    <value>true</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>body</name>
-                    <value>detailTabContent</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>title</name>
-                    <value>Standard.Tab.detail</value>
-                </componentInstanceProperties>
-                <componentName>flexipage:tab</componentName>
-                <identifier>detailTab</identifier>
-            </componentInstance>
-        </itemInstances>
-        <name>maintabs</name>
-        <type>Facet</type>
-    </flexiPageRegions>
-    <flexiPageRegions>
-        <itemInstances>
-            <componentInstance>
-                <componentInstanceProperties>
-                    <name>tabs</name>
-                    <value>maintabs</value>
-                </componentInstanceProperties>
-                <componentName>flexipage:tabset</componentName>
-                <identifier>flexipage_tabset</identifier>
-            </componentInstance>
-        </itemInstances>
-        <name>main</name>
-        <type>Region</type>
-    </flexiPageRegions>
-    <flexiPageRegions>
-        <itemInstances>
-            <componentInstance>
-                <componentInstanceProperties>
-                    <name>showLegacyActivityComposer</name>
-                    <value>false</value>
-                </componentInstanceProperties>
-                <componentName>runtime_sales_activities:activityPanel</componentName>
-                <identifier>runtime_sales_activities_activityPanel</identifier>
-            </componentInstance>
-        </itemInstances>
-        <name>activityTabContent</name>
-        <type>Facet</type>
-    </flexiPageRegions>
-    <flexiPageRegions>
-        <itemInstances>
-            <componentInstance>
-                <componentInstanceProperties>
-                    <name>active</name>
-                    <value>true</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>body</name>
-                    <value>activityTabContent</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>title</name>
-                    <value>Standard.Tab.activity</value>
-                </componentInstanceProperties>
-                <componentName>flexipage:tab</componentName>
-                <identifier>activityTab</identifier>
-            </componentInstance>
-        </itemInstances>
-        <name>sidebartabs</name>
-        <type>Facet</type>
-    </flexiPageRegions>
-    <flexiPageRegions>
-        <itemInstances>
-            <componentInstance>
-                <componentInstanceProperties>
-                    <name>tabs</name>
-                    <value>sidebartabs</value>
-                </componentInstanceProperties>
-                <componentName>flexipage:tabset</componentName>
-                <identifier>flexipage_tabset2</identifier>
-            </componentInstance>
-        </itemInstances>
         <name>sidebar</name>
         <type>Region</type>
     </flexiPageRegions>
-    <description></description>
     <masterLabel>bcm_MapRecordPage</masterLabel>
     <sobjectType>bcm_Map__c</sobjectType>
     <template>

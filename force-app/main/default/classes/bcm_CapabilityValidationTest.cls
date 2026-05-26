@@ -8,6 +8,7 @@ private class bcm_CapabilityValidationTest {
 
     // ─── Level range validation ───────────────────────────────────────────────
 
+    // @spec capability-object.md · "Validation prevents structurally invalid Capabilities" · "Level 0 is rejected"
     @IsTest
     static void level0_isRejected() {
         // Given
@@ -28,6 +29,7 @@ private class bcm_CapabilityValidationTest {
         Test.stopTest();
     }
 
+    // @spec capability-object.md · "Validation prevents structurally invalid Capabilities" · "Level 4 is rejected"
     @IsTest
     static void level4_isRejected() {
         // Given
@@ -50,6 +52,7 @@ private class bcm_CapabilityValidationTest {
 
     // ─── No-parent rules ─────────────────────────────────────────────────────
 
+    // @spec capability-object.md · "Validation prevents structurally invalid Capabilities" · "A top-level Capability with Level 1 and no Parent saves successfully"
     @IsTest
     static void level1_noParent_succeeds() {
         // Given
@@ -65,6 +68,7 @@ private class bcm_CapabilityValidationTest {
         Assert.isNotNull(cap.Id, 'Level 1 with no parent should save successfully');
     }
 
+    // @spec capability-object.md · "Validation prevents structurally invalid Capabilities" · "Level 2 with no Parent is rejected"
     @IsTest
     static void level2_noParent_isRejected() {
         // Given
@@ -85,6 +89,7 @@ private class bcm_CapabilityValidationTest {
         Test.stopTest();
     }
 
+    // @spec capability-object.md · "Validation prevents structurally invalid Capabilities" · "Level 3 with no Parent is rejected"
     @IsTest
     static void level3_noParent_isRejected() {
         // Given
@@ -107,6 +112,7 @@ private class bcm_CapabilityValidationTest {
 
     // ─── Has-parent rules ────────────────────────────────────────────────────
 
+    // @spec capability-object.md · "Validation prevents structurally invalid Capabilities" · "Level 1 with a Parent is rejected"
     @IsTest
     static void level1_withParent_isRejected() {
         // Given
@@ -128,6 +134,7 @@ private class bcm_CapabilityValidationTest {
         Test.stopTest();
     }
 
+    // @spec capability-object.md · "Validation prevents structurally invalid Capabilities" · "Level 2 with a Parent saves successfully"
     @IsTest
     static void level2_withParent_succeeds() {
         // Given
@@ -144,6 +151,7 @@ private class bcm_CapabilityValidationTest {
         Assert.isNotNull(cap.Id, 'Level 2 with a parent should save successfully');
     }
 
+    // @spec capability-object.md · "Validation prevents structurally invalid Capabilities" · "Level 3 with a Parent saves successfully"
     @IsTest
     static void level3_withParent_succeeds() {
         // Given
@@ -163,6 +171,7 @@ private class bcm_CapabilityValidationTest {
 
     // ─── Permission boundaries ────────────────────────────────────────────────
 
+    // @spec capability-object.md · "Access rules are enforced for Editors and Viewers" · "Viewer cannot create a Capability record"
     @IsTest
     static void viewer_cannotInsertCapability() {
         // Verify the permission set metadata directly — permission sets can only
@@ -182,6 +191,7 @@ private class bcm_CapabilityValidationTest {
         );
     }
 
+    // @spec capability-object.md · "Access rules are enforced for Editors and Viewers" · "Editor can create, edit, and delete a Capability"
     @IsTest
     static void editor_canInsertValidCapability() {
         // Given
@@ -200,6 +210,7 @@ private class bcm_CapabilityValidationTest {
         Assert.isNotNull(cap.Id, 'Editor should be able to insert a valid Level 1 Capability');
     }
 
+    // @spec capability-object.md · "Access rules are enforced for Editors and Viewers" · "Editor cannot save a structurally invalid Capability"
     @IsTest
     static void editor_cannotInsertInvalidCapability() {
         // Given
@@ -225,6 +236,7 @@ private class bcm_CapabilityValidationTest {
 
     // ─── Trigger behaviour: Level derivation ─────────────────────────────────
 
+    // @spec capability-object.md · "Level and Sort Order fill in automatically" · "A top-level Capability gets Level 1"
     @IsTest
     static void level_derivedAs1_whenNoParent() {
         // Given
@@ -241,6 +253,7 @@ private class bcm_CapabilityValidationTest {
         Assert.areEqual(1, (Integer) saved.bcm_Level__c, 'Level should be derived as 1 when no parent');
     }
 
+    // @spec capability-object.md · "Level and Sort Order fill in automatically" · "A child Capability gets Level 2"
     @IsTest
     static void level_derivedAs2_whenParentIsL1() {
         // Given
@@ -258,6 +271,7 @@ private class bcm_CapabilityValidationTest {
         Assert.areEqual(2, (Integer) saved.bcm_Level__c, 'Level should be derived as 2 when parent is L1');
     }
 
+    // @spec capability-object.md · "Level and Sort Order fill in automatically" · "A grandchild Capability gets Level 3"
     @IsTest
     static void level_derivedAs3_whenParentIsL2() {
         // Given
@@ -278,6 +292,7 @@ private class bcm_CapabilityValidationTest {
 
     // ─── Trigger behaviour: SortOrder auto-assign ─────────────────────────────
 
+    // @spec capability-object.md · "Level and Sort Order fill in automatically" · "Sort Order is assigned as the next available number when left blank"
     @IsTest
     static void sortOrder_autoAssigned_whenNotProvided() {
         // Given — no existing siblings in scope
@@ -294,6 +309,7 @@ private class bcm_CapabilityValidationTest {
         Assert.areEqual(1, (Integer) saved.bcm_SortOrder__c, 'SortOrder should be auto-assigned as 1 when no siblings exist');
     }
 
+    // @spec capability-object.md · "Level and Sort Order fill in automatically" · "Sort Order is preserved when I enter one manually with no siblings"
     @IsTest
     static void sortOrder_preserved_whenExplicitlyProvided() {
         // Given
@@ -310,21 +326,23 @@ private class bcm_CapabilityValidationTest {
         Assert.areEqual(5, (Integer) saved.bcm_SortOrder__c, 'SortOrder should remain 5 when explicitly provided');
     }
 
+    // @spec capability-object.md · "Level and Sort Order fill in automatically" · "Multiple Capabilities inserted in the same save each land at their requested Sort Order"
     @IsTest
     static void sortOrder_shiftsSiblingsByBoth_whenTwoRecordsInsertedAtExplicitPositions() {
         // Given — 10 existing siblings (SortOrders 1–10)
         // Inserting two new records at positions 3 and 7 in the same transaction.
-        // Expected cascade (walk each sibling through sorted incoming [3,7]):
+        // Consecutive-run shift for incoming 3: run is 3→10 (no gaps), all shift +1 → 4–11.
+        // Consecutive-run shift for incoming 7: run is now 7→11 (no gaps), all shift +1 → 8–12.
         //   orig 1 → 1   (below both, unaffected)
         //   orig 2 → 2
-        //   orig 3 → 4   (pushed by new@3)
+        //   orig 3 → 4   (shifted by new@3)
         //   orig 4 → 5
         //   orig 5 → 6
-        //   orig 6 → 8   (pushed by new@3 to 7, then pushed again by new@7 to 8)
-        //   orig 7 → 9   (pushed by new@3 to 8, then pushed by new@7 to 9)
-        //   orig 8 → 10
-        //   orig 9 → 11
-        //   orig 10 → 12
+        //   orig 6 → 7 → 8  (shifted by new@3 to 7, then by new@7 to 8)
+        //   orig 7 → 8 → 9
+        //   orig 8 → 9 → 10
+        //   orig 9 → 10 → 11
+        //   orig 10 → 11 → 12
         bcm_Map__c m = [SELECT Id FROM bcm_Map__c LIMIT 1];
         List<bcm_Capability__c> siblings = new List<bcm_Capability__c>();
         for (Integer i = 1; i <= 10; i++) {
@@ -361,6 +379,31 @@ private class bcm_CapabilityValidationTest {
         }
     }
 
+    // @spec capability-object.md · "Level and Sort Order fill in automatically" · "Inserting a Capability at a free Sort Order leaves siblings with higher Sort Orders unchanged"
+    @IsTest
+    static void sortOrder_doesNotShiftSiblings_whenInsertedAtFreePosition() {
+        // Given — siblings at 1 and 6 (gap between them)
+        bcm_Map__c m = [SELECT Id FROM bcm_Map__c LIMIT 1];
+        bcm_Capability__c sib1 = TestDataFactory.createCapability(m.Id, null, null, 1, false);
+        bcm_Capability__c sib6 = TestDataFactory.createCapability(m.Id, null, null, 6, false);
+        insert new List<bcm_Capability__c>{ sib1, sib6 };
+
+        bcm_Capability__c cap = TestDataFactory.createCapability(m.Id, null, null, 2, false);
+
+        // When
+        Test.startTest();
+        insert cap;
+        Test.stopTest();
+
+        // Then — new record lands at 2; sibling at 6 is untouched
+        bcm_Capability__c saved = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :cap.Id];
+        Assert.areEqual(2, (Integer) saved.bcm_SortOrder__c, 'New record should sit at the free position 2');
+
+        bcm_Capability__c updatedSib6 = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :sib6.Id];
+        Assert.areEqual(6, (Integer) updatedSib6.bcm_SortOrder__c, 'Sibling at 6 should not shift — there was a gap between 2 and 6');
+    }
+
+    // @spec capability-object.md · "Level and Sort Order fill in automatically" · "Existing siblings shift down when I insert a Capability at a taken Sort Order"
     @IsTest
     static void sortOrder_shiftsSiblings_whenInsertedAtExplicitPosition() {
         // Given — 15 existing siblings already in scope (SortOrders 1–15)

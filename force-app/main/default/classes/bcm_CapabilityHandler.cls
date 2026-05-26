@@ -69,9 +69,7 @@ public with sharing class bcm_CapabilityHandler {
     // ─── SortOrder shift (explicit insert) ──────────────────────────────────
 
     private static void shiftSiblingsForExplicitSortOrder(List<bcm_Capability__c> records) {
-        // Build a map of (groupKey → sorted list of explicit SortOrder values being inserted)
-        // so we can calculate how many incoming records land at or below each existing sibling.
-        Map<String, List<Decimal>> incomingByKey = new Map<String, List<Decimal>>();
+        Map<String, List<Integer>> incomingByKey = new Map<String, List<Integer>>();
         Map<String, Id> mapIdByKey = new Map<String, Id>();
         Map<String, Id> parentIdByKey = new Map<String, Id>();
 
@@ -81,25 +79,23 @@ public with sharing class bcm_CapabilityHandler {
             }
             String key = buildGroupKey(cap.bcm_Map__c, cap.bcm_Parent__c);
             if (!incomingByKey.containsKey(key)) {
-                incomingByKey.put(key, new List<Decimal>());
+                incomingByKey.put(key, new List<Integer>());
                 mapIdByKey.put(key, cap.bcm_Map__c);
                 parentIdByKey.put(key, cap.bcm_Parent__c);
             }
-            incomingByKey.get(key).add(cap.bcm_SortOrder__c);
+            incomingByKey.get(key).add(cap.bcm_SortOrder__c.intValue());
         }
 
         if (incomingByKey.isEmpty()) {
             return;
         }
 
-        // Determine the minimum explicit SortOrder per group so we only query affected siblings
-        Map<String, Decimal> minIncomingByKey = new Map<String, Decimal>();
+        // Determine minimum incoming position per group to bound the sibling query
+        Map<String, Integer> minIncomingByKey = new Map<String, Integer>();
         for (String key : incomingByKey.keySet()) {
-            Decimal minVal = null;
-            for (Decimal v : incomingByKey.get(key)) {
-                if (minVal == null || v < minVal) {
-                    minVal = v;
-                }
+            Integer minVal = null;
+            for (Integer v : incomingByKey.get(key)) {
+                if (minVal == null || v < minVal) minVal = v;
             }
             minIncomingByKey.put(key, minVal);
         }
@@ -109,15 +105,12 @@ public with sharing class bcm_CapabilityHandler {
         Boolean hasNullParentGroup = false;
         for (String key : parentIdByKey.keySet()) {
             Id pid = parentIdByKey.get(key);
-            if (pid != null) {
-                nonNullParentIds.add(pid);
-            } else {
-                hasNullParentGroup = true;
-            }
+            if (pid != null) nonNullParentIds.add(pid);
+            else hasNullParentGroup = true;
         }
 
-        // Query existing siblings that fall at or above any incoming explicit position
-        List<bcm_Capability__c> siblingsToShift = new List<bcm_Capability__c>();
+        // siblingsMap: groupKey → (sortOrder → sibling record)
+        Map<String, Map<Integer, bcm_Capability__c>> siblingsMap = new Map<String, Map<Integer, bcm_Capability__c>>();
 
         if (!nonNullParentIds.isEmpty()) {
             for (bcm_Capability__c sib : [
@@ -127,10 +120,10 @@ public with sharing class bcm_CapabilityHandler {
                 WITH USER_MODE
             ]) {
                 String key = buildGroupKey(sib.bcm_Map__c, sib.bcm_Parent__c);
-                Decimal minIncoming = minIncomingByKey.get(key);
-                if (minIncoming != null && sib.bcm_SortOrder__c >= minIncoming) {
-                    siblingsToShift.add(sib);
-                }
+                Integer minIncoming = minIncomingByKey.get(key);
+                if (minIncoming == null || sib.bcm_SortOrder__c < minIncoming) continue;
+                if (!siblingsMap.containsKey(key)) siblingsMap.put(key, new Map<Integer, bcm_Capability__c>());
+                siblingsMap.get(key).put(sib.bcm_SortOrder__c.intValue(), sib);
             }
         }
 
@@ -142,40 +135,61 @@ public with sharing class bcm_CapabilityHandler {
                 WITH USER_MODE
             ]) {
                 String key = buildGroupKey(sib.bcm_Map__c, null);
-                Decimal minIncoming = minIncomingByKey.get(key);
-                if (minIncoming != null && sib.bcm_SortOrder__c >= minIncoming) {
-                    siblingsToShift.add(sib);
-                }
+                Integer minIncoming = minIncomingByKey.get(key);
+                if (minIncoming == null || sib.bcm_SortOrder__c < minIncoming) continue;
+                if (!siblingsMap.containsKey(key)) siblingsMap.put(key, new Map<Integer, bcm_Capability__c>());
+                siblingsMap.get(key).put(sib.bcm_SortOrder__c.intValue(), sib);
             }
         }
 
-        if (siblingsToShift.isEmpty()) {
+        if (siblingsMap.isEmpty()) {
             return;
         }
 
-        // Walk each sibling's position through the sorted incoming list one-by-one.
-        // Each incoming record that would land at or below the sibling's current effective
-        // position pushes it up by 1 — this correctly handles cascades where two incoming
-        // records at e.g. 3 and 7 both affect a sibling originally at 6.
-        for (bcm_Capability__c sib : siblingsToShift) {
-            String key = buildGroupKey(sib.bcm_Map__c, sib.bcm_Parent__c);
-            List<Decimal> incoming = incomingByKey.get(key);
-            if (incoming == null) {
-                continue;
-            }
-            // incoming lists must be sorted ascending for the cascade walk to work
-            List<Decimal> sorted = incoming.clone();
-            sorted.sort();
-            Decimal effective = sib.bcm_SortOrder__c;
-            for (Decimal incomingPos : sorted) {
-                if (incomingPos <= effective) {
-                    effective++;
+        // For each group, process incoming positions lowest-first.
+        // Only shift siblings that form a consecutive run starting at the incoming position —
+        // gaps in the sequence stop the cascade, so siblings beyond the gap are never touched.
+        Map<Id, bcm_Capability__c> toUpdate = new Map<Id, bcm_Capability__c>();
+
+        for (String key : incomingByKey.keySet()) {
+            Map<Integer, bcm_Capability__c> byPos = siblingsMap.get(key);
+            if (byPos == null || byPos.isEmpty()) continue;
+
+            Set<Integer> occupied = new Set<Integer>(byPos.keySet());
+
+            List<Integer> incoming = incomingByKey.get(key).clone();
+            incoming.sort();
+
+            for (Integer incomingPos : incoming) {
+                if (!occupied.contains(incomingPos)) {
+                    // Position is free — no shift needed
+                    occupied.add(incomingPos);
+                    continue;
                 }
+                // Find end of the consecutive run starting at incomingPos
+                Integer runEnd = incomingPos;
+                while (occupied.contains(runEnd + 1)) {
+                    runEnd++;
+                }
+                // Shift siblings in [incomingPos..runEnd] up by 1, high-to-low
+                // to avoid overwriting a position before it is processed
+                for (Integer pos = runEnd; pos >= incomingPos; pos--) {
+                    bcm_Capability__c sib = byPos.get(pos);
+                    if (sib == null) continue;
+                    occupied.remove(pos);
+                    byPos.remove(pos);
+                    sib.bcm_SortOrder__c = pos + 1;
+                    occupied.add(pos + 1);
+                    byPos.put(pos + 1, sib);
+                    toUpdate.put(sib.Id, sib);
+                }
+                occupied.add(incomingPos);
             }
-            sib.bcm_SortOrder__c = effective;
         }
 
-        update siblingsToShift;
+        if (!toUpdate.isEmpty()) {
+            update toUpdate.values();
+        }
     }
 
     // ─── SortOrder derivation ────────────────────────────────────────────────

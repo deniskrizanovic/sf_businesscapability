@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>bcm_Parent__c</fullName>
+    <label>Parent Capability</label>
+    <description>Optional self-referencing lookup to the parent capability in the hierarchy.</description>
+    <inlineHelpText>Leave blank for a top-level (Level 1) capability. Set to the parent for Level 2 or Level 3 capabilities.</inlineHelpText>
+    <type>Lookup</type>
+    <referenceTo>bcm_Capability__c</referenceTo>
+    <relationshipLabel>Child Capabilities</relationshipLabel>
+    <relationshipName>ChildCapabilities</relationshipName>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+</CustomField>
