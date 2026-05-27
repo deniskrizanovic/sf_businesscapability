@@ -1,0 +1,11 @@
+engines:
+  pmd:
+    java_command: "/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home/bin/java"
+  cpd:
+    java_command: "/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home/bin/java"
+  sfge:
+    disable_engine: true
+  flow:
+    disable_engine: true
+  eslint:
+    eslint_config_file: "eslint.config.js"

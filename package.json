@@ -5,6 +5,7 @@
   "description": "Salesforce App",
   "scripts": {
     "lint": "eslint **/{aura,lwc}/**/*.js",
+    "scan": "sf code-analyzer run -t force-app -s 2",
     "test": "npm run test:unit",
     "test:unit": "sfdx-lwc-jest",
     "test:unit:watch": "sfdx-lwc-jest --watch",
@@ -36,6 +37,9 @@
     ],
     "**/{aura,lwc}/**/*.js": [
       "eslint"
+    ],
+    "**/*.{cls,trigger}": [
+      "sf code-analyzer run -s 2 -t"
     ],
     "**/lwc/**": [
         "sfdx-lwc-jest -- --bail --findRelatedTests --passWithNoTests"

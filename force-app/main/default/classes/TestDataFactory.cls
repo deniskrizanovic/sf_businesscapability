@@ -3,7 +3,7 @@ public class TestDataFactory {
 
     public static bcm_Map__c createMap(String name, Boolean doInsert) {
         bcm_Map__c m = new bcm_Map__c(Name = name);
-        if (doInsert) insert m;
+        if (doInsert) { insert m; }
         return m;
     }
 
@@ -17,7 +17,7 @@ public class TestDataFactory {
             bcm_Level__c     = level,
             bcm_SortOrder__c = sortOrder
         );
-        if (doInsert) insert cap;
+        if (doInsert) { insert cap; }
         return cap;
     }
 
