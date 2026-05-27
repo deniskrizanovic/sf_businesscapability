@@ -7,7 +7,7 @@
         <label>Map Name</label>
         <type>Text</type>
     </nameField>
-    <sharingModel>ReadWrite</sharingModel>
+    <sharingModel>Read</sharingModel>
     <deploymentStatus>Deployed</deploymentStatus>
     <visibility>Public</visibility>
     <enableSearch>true</enableSearch>

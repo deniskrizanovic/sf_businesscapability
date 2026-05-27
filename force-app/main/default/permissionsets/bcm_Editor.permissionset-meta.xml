@@ -69,6 +69,10 @@
         <readable>true</readable>
         <field>bcm_Capability__c.bcm_ArchitecturalNuance__c</field>
     </fieldPermissions>
+    <userPermissions>
+        <enabled>true</enabled>
+        <name>CreateCustomizeFilters</name>
+    </userPermissions>
     <applicationVisibilities>
         <application>bcm_BusinessCapabilityMap</application>
         <visible>true</visible>
