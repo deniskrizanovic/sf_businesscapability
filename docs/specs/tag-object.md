@@ -44,7 +44,7 @@ Given the user has any permission set assigned
 When the user opens a saved Tag record that has a Colour selected  
 Then a `lightning-card` tile filled with the chosen colour is visible on the record page above the detail tabs, with the colour name displayed as white text centred inside it  
 
-> Tested by: UI only
+> Tested by: `e2e/tag.spec.ts::"colour swatch lightning-card tile is visible on Tag record page"`
 
 ---
 
@@ -84,7 +84,7 @@ Given the user has the `bcm_Editor` permission set assigned
 When the user opens the Business Capability Map app  
 Then the Tags tab is visible in the navigation bar  
 
-> Tested by: UI only
+> Tested by: `e2e/tag.spec.ts::"Tags tab is visible to Editor"`
 
 **Scenario: Tags tab appears for Viewers**
 
@@ -92,4 +92,4 @@ Given the user has the `bcm_Viewer` permission set assigned
 When the user opens the Business Capability Map app  
 Then the Tags tab is visible in the navigation bar  
 
-> Tested by: UI only
+> Tested by: `e2e/tag.spec.ts::"Tags tab is visible to Viewer"`

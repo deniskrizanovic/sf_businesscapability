@@ -42,6 +42,13 @@ $RECYCLE.BIN/
 # Local environment variables
 .env
 
+# Playwright auth sessions
+tests/e2e/.auth/
+
+# Playwright test results
+playwright-report/
+test-results/
+
 # Python Salesforce Functions
 **/__pycache__/
 **/.venv/

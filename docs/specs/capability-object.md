@@ -3,7 +3,7 @@
 ## Feature: A Capability record can be created with all expected fields
 
 **Scenario: Capability form shows all expected fields**
-> Tested by: UI only
+> Tested by: `e2e/capability.spec.ts::"new Capability form shows all expected fields"`
 
 Given I am logged in as an Editor  
 When I open a new Capability record  
@@ -17,14 +17,14 @@ When I try to save a second Capability with the same External ID
 Then I see an error saying the value must be unique  
 
 **Scenario: Parent Capability can only be another Capability**
-> Tested by: UI only
+> Tested by: `e2e/capability.spec.ts::"Parent Capability lookup only returns Capabilities"`
 
 Given I am creating a Capability  
 When I click the Parent Capability field  
 Then I can only search for and select other Capability records  
 
 **Scenario: Definition field displays formatted text**
-> Tested by: UI only
+> Tested by: `e2e/capability.spec.ts::"Definition field renders formatted text after save"`
 
 Given I am logged in as an Editor  
 When I create a Capability and enter formatted text in the Definition field  
@@ -206,14 +206,14 @@ Then I see a validation error and the record is not saved
 ## Feature: Map record page shows linked Capabilities
 
 **Scenario: Map record page includes a Capabilities section**
-> Tested by: UI only
+> Tested by: `e2e/capability.spec.ts::"Map record page includes a Capabilities related list"`
 
 Given a Map record exists  
 When I open that Map record as a Viewer or Editor  
 Then I see a Capabilities related list on the page  
 
 **Scenario: A linked Capability appears in the Map's related list**
-> Tested by: UI only
+> Tested by: `e2e/capability.spec.ts::"linked Capability appears in the Map related list"`
 
 Given a Map record exists and a Capability is linked to it  
 When I open the Map record  
@@ -224,14 +224,14 @@ Then that Capability appears in the Capabilities related list
 ## Feature: Capabilities tab is visible in the app
 
 **Scenario: Capabilities tab is visible for Editors**
-> Tested by: UI only
+> Tested by: `e2e/capability.spec.ts::"Capabilities tab is visible to Editor"`
 
 Given I am logged in as an Editor  
 When I open the Business Capability Map app  
 Then I see a Capabilities tab in the navigation bar  
 
 **Scenario: Capabilities tab is visible for Viewers**
-> Tested by: UI only
+> Tested by: `e2e/capability.spec.ts::"Capabilities tab is visible to Viewer"`
 
 Given I am logged in as a Viewer  
 When I open the Business Capability Map app  

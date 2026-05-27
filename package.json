@@ -7,6 +7,7 @@
     "lint": "eslint **/{aura,lwc}/**/*.js",
     "scan": "sf code-analyzer run -t force-app -s 2",
     "test": "npm run test:unit",
+    "test:e2e": "playwright test",
     "test:unit": "sfdx-lwc-jest",
     "test:unit:watch": "sfdx-lwc-jest --watch",
     "test:unit:debug": "sfdx-lwc-jest --debug",
@@ -18,6 +19,7 @@
   },
   "devDependencies": {
     "@lwc/eslint-plugin-lwc": "^3.1.0",
+    "@playwright/test": "^1.60.0",
     "@prettier/plugin-xml": "^3.4.1",
     "@salesforce/eslint-config-lwc": "^4.0.0",
     "@salesforce/eslint-plugin-aura": "^3.0.0",
@@ -42,7 +44,7 @@
       "sf code-analyzer run -s 2 -t"
     ],
     "**/lwc/**": [
-        "sfdx-lwc-jest -- --bail --findRelatedTests --passWithNoTests"
+      "sfdx-lwc-jest -- --bail --findRelatedTests --passWithNoTests"
     ]
   }
 }
