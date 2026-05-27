@@ -1,48 +1,50 @@
 # Acceptance Criteria — Tag Object
 
-## Feature: Tag colour validation rule fires correctly
+## Feature: Tag colour picklist enforces allowed values
 
-**Scenario: Empty colour value is rejected**
-
-Given the user has the `bcm_Editor` permission set assigned  
-When the user attempts to save a Tag with an empty Colour  
-Then a validation error is displayed: "Colour must be a hex code in the format #RRGGBB."  
-
-**Scenario: Plain text colour name is rejected**
+**Scenario: Blank colour is rejected**
 
 Given the user has the `bcm_Editor` permission set assigned  
-When the user attempts to save a Tag with Colour set to "red"  
-Then a validation error is displayed: "Colour must be a hex code in the format #RRGGBB."  
+When the user attempts to save a Tag without selecting a Colour  
+Then the record is rejected because Colour is required  
 
-**Scenario: Invalid hex characters are rejected**
+> Tested by: bcm_TagValidationTest.colour_blank_isRejected
 
-Given the user has the `bcm_Editor` permission set assigned  
-When the user attempts to save a Tag with Colour set to "#GGGGGG"  
-Then a validation error is displayed: "Colour must be a hex code in the format #RRGGBB."  
-
-**Scenario: Colour that is too short is rejected**
+**Scenario: Value not in the picklist is rejected**
 
 Given the user has the `bcm_Editor` permission set assigned  
-When the user attempts to save a Tag with Colour set to "#3A86"  
-Then a validation error is displayed: "Colour must be a hex code in the format #RRGGBB."  
+When the user attempts to save a Tag with a Colour value not in the allowed list (e.g. "red")  
+Then the platform rejects the record with a restricted picklist error  
 
-**Scenario: Colour that is too long is rejected**
+> Tested by: bcm_TagValidationTest.colour_invalidPicklistValue_isRejected
 
-Given the user has the `bcm_Editor` permission set assigned  
-When the user attempts to save a Tag with Colour set to "#3A86FFAA"  
-Then a validation error is displayed: "Colour must be a hex code in the format #RRGGBB."  
-
-**Scenario: Valid uppercase hex colour is accepted**
+**Scenario: Valid picklist value saves successfully**
 
 Given the user has the `bcm_Editor` permission set assigned  
-When the user saves a Tag with Colour set to "#3A86FF"  
-Then the record saves successfully  
+When the user saves a Tag with Colour set to "Blue"  
+Then the record saves and the stored value is `#3A86FF`  
 
-**Scenario: Valid lowercase hex colour is accepted**
+> Tested by: bcm_TagValidationTest.colour_validBlue_succeeds
+
+**Scenario: Second valid picklist value saves successfully**
 
 Given the user has the `bcm_Editor` permission set assigned  
-When the user saves a Tag with Colour set to "#3a86ff"  
-Then the record saves successfully  
+When the user saves a Tag with Colour set to "Emerald"  
+Then the record saves and the stored value is `#06A77D`  
+
+> Tested by: bcm_TagValidationTest.colour_validEmerald_succeeds
+
+---
+
+## Feature: Colour swatch is visible on Tag record page
+
+**Scenario: Swatch renders after saving a Tag with a colour**
+
+Given the user has any permission set assigned  
+When the user opens a saved Tag record that has a Colour selected  
+Then a filled circle in the chosen colour is visible on the record page above the detail tabs  
+
+> Tested by: UI only
 
 ---
 
@@ -54,17 +56,23 @@ Given the user has the `bcm_Viewer` permission set assigned
 When the user navigates to a Tag record  
 Then the record detail page loads successfully  
 
+> Deferred: Read access verified indirectly by ObjectPermissions query in viewer_cannotInsertTag
+
 **Scenario: Viewer cannot create a Tag record**
 
 Given the user has the `bcm_Viewer` permission set assigned  
 When the user attempts to create a new Tag record  
 Then access is denied and the record is not created  
 
+> Tested by: bcm_TagValidationTest.viewer_cannotInsertTag
+
 **Scenario: Editor can create, edit, and delete a Tag record**
 
 Given the user has the `bcm_Editor` permission set assigned  
 When the user creates a Tag with a valid colour, edits it, then deletes it  
 Then each operation completes successfully  
+
+> Tested by: bcm_TagValidationTest.editor_canInsertValidTag
 
 ---
 
@@ -76,8 +84,12 @@ Given the user has the `bcm_Editor` permission set assigned
 When the user opens the Business Capability Map app  
 Then the Tags tab is visible in the navigation bar  
 
+> Tested by: UI only
+
 **Scenario: Tags tab appears for Viewers**
 
 Given the user has the `bcm_Viewer` permission set assigned  
 When the user opens the Business Capability Map app  
 Then the Tags tab is visible in the navigation bar  
+
+> Tested by: UI only

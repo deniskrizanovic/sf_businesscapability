@@ -21,6 +21,15 @@ public class TestDataFactory {
         return cap;
     }
 
+    public static bcm_Tag__c createTag(String name, String colour, Boolean doInsert) {
+        bcm_Tag__c tag = new bcm_Tag__c(
+            Name          = name,
+            bcm_Colour__c = colour
+        );
+        if (doInsert) { insert tag; }
+        return tag;
+    }
+
     public static User createUserWithPermSet(String permSetName) {
         Profile p = [SELECT Id FROM Profile WHERE Name = 'Minimum Access - Salesforce' LIMIT 1];
         User running = [

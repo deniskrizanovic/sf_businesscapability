@@ -40,10 +40,24 @@ A named, coloured label applied to Capabilities for visualisation grouping.
 | Field | API Name | Type | Attributes |
 |---|---|---|---|
 | Name | `Name` | Standard Text | Required, unique |
-| Colour | `bcm_Colour__c` | Text (7) | Required, format: `#RRGGBB` |
+| Colour | `bcm_Colour__c` | Picklist (restricted) | Required |
 
-**Validation Rule:**
-- `bcm_Colour__c` must match regex `#[0-9A-Fa-f]{6}`
+**Picklist values** (label → stored API value used directly as hex colour by the diagram LWC):
+
+| Label | Stored value |
+|---|---|
+| Blue | `#3A86FF` |
+| Green | `#2DC653` |
+| Red | `#E63946` |
+| Purple | `#7B2FBE` |
+| Orange | `#FB5607` |
+| Teal | `#0096C7` |
+| Pink | `#FF006E` |
+| Amber | `#FFBE0B` |
+| Indigo | `#4361EE` |
+| Emerald | `#06A77D` |
+
+**No validation rule required** — the restricted picklist enforces allowed values at the platform level. The stored value is the hex code so Step 7's diagram LWC can use `bcm_Colour__c` directly without a lookup table.
 
 ### bcm_CapabilityTag__c
 Junction object linking Capabilities to Tags. A Capability may have many Tags.

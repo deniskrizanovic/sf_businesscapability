@@ -21,6 +21,15 @@
         <viewAllRecords>false</viewAllRecords>
         <object>bcm_Capability__c</object>
     </objectPermissions>
+    <objectPermissions>
+        <allowCreate>false</allowCreate>
+        <allowRead>true</allowRead>
+        <allowEdit>false</allowEdit>
+        <allowDelete>false</allowDelete>
+        <modifyAllRecords>false</modifyAllRecords>
+        <viewAllRecords>false</viewAllRecords>
+        <object>bcm_Tag__c</object>
+    </objectPermissions>
     <fieldPermissions>
         <editable>false</editable>
         <readable>true</readable>
@@ -61,6 +70,10 @@
     </tabSettings>
     <tabSettings>
         <tab>bcm_Capability__c</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>bcm_Tag__c</tab>
         <visibility>Visible</visibility>
     </tabSettings>
 </PermissionSet>

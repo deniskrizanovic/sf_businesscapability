@@ -10,6 +10,7 @@
     <navType>Standard</navType>
     <tabs>bcm_Map__c</tabs>
     <tabs>bcm_Capability__c</tabs>
+    <tabs>bcm_Tag__c</tabs>
     <uiType>Lightning</uiType>
     <brand>
         <headerColor>#1B5E9B</headerColor>

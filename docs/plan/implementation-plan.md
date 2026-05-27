@@ -150,39 +150,41 @@
 **What gets built:**
 - Custom object `bcm_Tag__c`
 - Fields:
-  - `bcm_Colour__c` (Text 7 — Required)
-- Validation rule:
-  - `bcm_Colour__c` must match `#[0-9A-Fa-f]{6}`
+  - `bcm_Colour__c` (Restricted Picklist — Required; 10 values, label = colour name, stored value = hex code)
+  - Palette: Blue `#3A86FF`, Green `#2DC653`, Red `#E63946`, Purple `#7B2FBE`, Orange `#FB5607`, Teal `#0096C7`, Pink `#FF006E`, Amber `#FFBE0B`, Indigo `#4361EE`, Emerald `#06A77D`
+- No validation rule — restricted picklist enforces allowed values at platform level
 - Apex test class `bcm_TagValidationTest` covering:
-  - Empty string → `DmlException` thrown
-  - `red` (no hash, not hex) → `DmlException` thrown
-  - `#GGGGGG` (invalid hex chars) → `DmlException` thrown
-  - `#3A86FF` (valid, uppercase) → saves successfully
-  - `#3a86ff` (valid, lowercase) → saves successfully
-  - `#3A86` (too short) → `DmlException` thrown
-  - `#3A86FFAA` (too long) → `DmlException` thrown
+  - `#3A86FF` (Blue) → saves; stored value verified
+  - `#06A77D` (Emerald) → saves; stored value verified
+  - Blank colour → `DmlException` (required field)
+  - `red` (not in picklist) → `DmlException` (restricted picklist)
+  - Viewer cannot insert (ObjectPermissions query)
+  - Editor can insert valid Tag
 - Permission set additions:
   - `bcm_Viewer`: add Read on `bcm_Tag__c`; Tags tab Default On
   - `bcm_Editor`: add Read, Create, Edit, Delete on `bcm_Tag__c`; Tags tab Default On
 - Object Tab for `bcm_Tag__c` (Tags tab)
 - `bcm_BusinessCapabilityMap` app updated to include the Tags tab
+- LWC `bcm_ColourSwatch` — display-only component; renders a filled coloured circle from the stored hex value; placed on `bcm_Tag_Record_Page` above the detail tabs
+- FlexiPage `bcm_Tag_Record_Page` — highlights panel + colour swatch + tabset (Detail + Related)
 
-**Skills to invoke (Claude must confirm before generating any file):**
+**Skills invoked:**
 - `generating-custom-object` — for `bcm_Tag__c`
-- `generating-custom-field` — for `bcm_Colour__c`
-- `generating-validation-rule` — for colour format rule
+- `generating-custom-field` — for `bcm_Colour__c` (Picklist)
 - `generating-custom-tab` — for the Tags tab
-- `generating-permission-set` — update `bcm_Viewer` and `bcm_Editor`
-- `generating-custom-application` — update `bcm_BusinessCapabilityMap` to include Tags tab
+- `generating-permission-set` — updated `bcm_Viewer` and `bcm_Editor`
+- `generating-custom-application` — updated `bcm_BusinessCapabilityMap`
 - `generating-apex-test` — for `bcm_TagValidationTest`
+- `generating-flexipage` — updated `bcm_Tag_Record_Page` to add `bcm_ColourSwatch`
 
 **Manual inspection checklist:**
 - [ ] `bcm_Tag__c` visible in Setup → Object Manager
-- [ ] `bcm_Colour__c` field present
-- [ ] `bcm_TagValidationTest` passes with all 7 test methods green
-- [ ] Colour validation rule active — create a Tag with colour `red` → validation fires in UI
-- [ ] Create a Tag with colour `#3A86FF` → saves successfully
-- [ ] Tags tab visible in the BCM app
+- [ ] `bcm_Colour__c` is a picklist — opens a dropdown with 10 named colours
+- [ ] `bcm_TagValidationTest` passes with all 6 test methods green
+- [ ] Create a Tag, leave Colour blank → save blocked (required field error)
+- [ ] Create a Tag, select "Blue" → saves; record shows blue circle swatch above detail tabs
+- [ ] Swatch colour matches the selected label visually
+- [ ] Tags tab visible in the BCM app for both Viewer and Editor
 - [ ] `bcm_Viewer` grants Read on `bcm_Tag__c`
 - [ ] `bcm_Editor` grants Read/Create/Edit/Delete on `bcm_Tag__c`
 

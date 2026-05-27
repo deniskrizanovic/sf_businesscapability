@@ -114,7 +114,7 @@ Single-section layout.
 | `Name` | No |
 | `bcm_Colour__c` | No |
 
-**Help text on `bcm_Colour__c`:** "Enter a hex colour code in the format #RRGGBB, e.g. #3A86FF"
+**Help text on `bcm_Colour__c`:** "Choose a colour from the list. This colour will highlight Capabilities tagged with this Tag on the diagram."
 
 ### Related Lists on Tag Detail Page
 
@@ -126,7 +126,14 @@ Single-section layout.
 
 ### FlexiPage
 
-Standard Lightning record page. No custom FlexiPage required.
+**API Name:** `bcm_Tag_Record_Page` — custom FlexiPage deployed in Step 3.
+
+**Regions:**
+- `header` — `force:highlightsPanel`
+- `main` — `bcm_ColourSwatch` (colour preview, above tabs), then `flexipage:tabset` (Detail tab + Related tab)
+- `sidebar` — empty
+
+**`bcm_ColourSwatch` LWC:** Display-only component. Reads `bcm_Colour__c` via `@wire(getRecord)` and renders a filled circle (`border-radius: 50%`) using the stored hex value as `background-color`. No Apex, no DML. Visible to all users with Read access. Source: `force-app/main/default/lwc/bcm_ColourSwatch/`.
 
 ---
 
@@ -139,7 +146,7 @@ The following validation rules (defined in `01-data-model.md`) will fire on save
 | `bcm_Capability__c` | Level must be 1, 2, or 3 | "Level must be 1, 2, or 3." |
 | `bcm_Capability__c` | If Parent is null, Level must be 1 | "A capability with no parent must be Level 1." |
 | `bcm_Capability__c` | If Parent is set, Level must be 2 or 3 | "A capability with a parent must be Level 2 or 3." |
-| `bcm_Tag__c` | Colour must match `#RRGGBB` | "Colour must be a hex code in the format #RRGGBB." |
+| `bcm_Tag__c` | Colour is a required restricted picklist — invalid or blank values are rejected by the platform | Standard picklist error message |
 
 No custom LWC error handling is required for these — Salesforce renders validation rule messages inline on the standard record form.
 
