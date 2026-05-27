@@ -30,6 +30,15 @@ public class TestDataFactory {
         return tag;
     }
 
+    public static bcm_CapabilityTag__c createCapabilityTag(Id capabilityId, Id tagId, Boolean doInsert) {
+        bcm_CapabilityTag__c jct = new bcm_CapabilityTag__c(
+            bcm_Capability__c = capabilityId,
+            bcm_Tag__c        = tagId
+        );
+        if (doInsert) { insert jct; }
+        return jct;
+    }
+
     public static User createUserWithPermSet(String permSetName) {
         Profile p = [SELECT Id FROM Profile WHERE Name = 'Minimum Access - Salesforce' LIMIT 1];
         User running = [
