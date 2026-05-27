@@ -7,9 +7,10 @@
     </targets>
     <targetConfigs>
         <targetConfig targets="lightning__RecordPage">
-            <objects>
-                <object>bcm_Tag__c</object>
-            </objects>
+            <property name="colourField"
+                      type="String"
+                      default="bcm_Tag__c.bcm_Colour__c"
+                      label="Colour Hex Field (Object.Field API Name)" />
         </targetConfig>
     </targetConfigs>
 </LightningComponentBundle>

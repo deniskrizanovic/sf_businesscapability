@@ -1,12 +1,16 @@
 <template>
-    <template if:true={colour}>
-        <div class="slds-media slds-media_center">
-            <div class="slds-media__figure">
-                <span class="swatch" style={swatchStyle}></span>
+    <lightning-card title="Colour" icon-name="utility:color_swatch">
+        <template if:true={colour}>
+            <div class="slds-card__body slds-card__body_inner">
+                <div class="swatch-fill" style={swatchStyle}>
+                    <span class="swatch-label">{label}</span>
+                </div>
             </div>
-            <div class="slds-media__body">
-                <span class="slds-text-body_regular">{label}</span>
+        </template>
+        <template if:false={colour}>
+            <div class="slds-card__body slds-card__body_inner slds-text-color_weak slds-text-align_center">
+                No colour set
             </div>
-        </div>
-    </template>
+        </template>
+    </lightning-card>
 </template>

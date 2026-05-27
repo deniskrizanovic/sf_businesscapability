@@ -165,7 +165,7 @@
   - `bcm_Editor`: add Read, Create, Edit, Delete on `bcm_Tag__c`; Tags tab Default On
 - Object Tab for `bcm_Tag__c` (Tags tab)
 - `bcm_BusinessCapabilityMap` app updated to include the Tags tab
-- LWC `bcm_ColourSwatch` — display-only component; renders a filled coloured circle from the stored hex value; placed on `bcm_Tag_Record_Page` above the detail tabs
+- LWC `bcm_ColourSwatch` — display-only component; renders a `lightning-card` tile with a full-width colour block and centred white colour-name label; field is configurable at design time via `colourField` property; placed on `bcm_Tag_Record_Page` above the detail tabs
 - FlexiPage `bcm_Tag_Record_Page` — highlights panel + colour swatch + tabset (Detail + Related)
 
 **Skills invoked:**
@@ -182,13 +182,13 @@
 - [ ] `bcm_Colour__c` is a picklist — opens a dropdown with 10 named colours
 - [ ] `bcm_TagValidationTest` passes with all 6 test methods green
 - [ ] Create a Tag, leave Colour blank → save blocked (required field error)
-- [ ] Create a Tag, select "Blue" → saves; record shows blue circle swatch above detail tabs
-- [ ] Swatch colour matches the selected label visually
+- [ ] Create a Tag, select "Blue" → saves; record shows a blue-filled `lightning-card` tile above the detail tabs with "Blue" in white centred text
+- [ ] Swatch tile colour and label match the selected picklist value visually
 - [ ] Tags tab visible in the BCM app for both Viewer and Editor
 - [ ] `bcm_Viewer` grants Read on `bcm_Tag__c`
 - [ ] `bcm_Editor` grants Read/Create/Edit/Delete on `bcm_Tag__c`
 
-**Step complete:** `[ ]`
+**Step complete:** `[x]` — deployed to `home-denispoc` 2026-05-27
 
 ---
 

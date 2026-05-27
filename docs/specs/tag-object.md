@@ -42,7 +42,7 @@ Then the record saves and the stored value is `#06A77D`
 
 Given the user has any permission set assigned  
 When the user opens a saved Tag record that has a Colour selected  
-Then a filled circle in the chosen colour is visible on the record page above the detail tabs  
+Then a `lightning-card` tile filled with the chosen colour is visible on the record page above the detail tabs, with the colour name displayed as white text centred inside it  
 
 > Tested by: UI only
 

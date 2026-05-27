@@ -133,7 +133,7 @@ Single-section layout.
 - `main` — `bcm_ColourSwatch` (colour preview, above tabs), then `flexipage:tabset` (Detail tab + Related tab)
 - `sidebar` — empty
 
-**`bcm_ColourSwatch` LWC:** Display-only component. Reads `bcm_Colour__c` via `@wire(getRecord)` and renders a filled circle (`border-radius: 50%`) using the stored hex value as `background-color`. No Apex, no DML. Visible to all users with Read access. Source: `force-app/main/default/lwc/bcm_ColourSwatch/`.
+**`bcm_ColourSwatch` LWC:** Display-only component. Wraps a `lightning-card` (title "Colour", icon `utility:color_swatch`) whose body is a full-width block filled with the stored hex value as `background-color`. The colour name is rendered as white centred text inside the block; if no colour is set, the card body shows "No colour set" in muted text. The target field is configurable at design time via the `colourField` property (default `bcm_Tag__c.bcm_Colour__c`), allowing the component to be reused on any record page. No Apex, no DML. Visible to all users with Read access. Source: `force-app/main/default/lwc/bcm_ColourSwatch/`.
 
 ---
 
