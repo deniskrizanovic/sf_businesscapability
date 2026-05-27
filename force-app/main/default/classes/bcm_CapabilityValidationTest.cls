@@ -169,6 +169,53 @@ private class bcm_CapabilityValidationTest {
         Assert.isNotNull(cap.Id, 'Level 3 with a parent should save successfully');
     }
 
+    // ─── Parent-level validation ─────────────────────────────────────────────
+
+    // @spec capability-object.md · "Validation prevents structurally invalid Capabilities" · "A Level 3 Capability parented to a Level 1 is rejected"
+    @IsTest
+    static void level3_withL1Parent_isRejected() {
+        // Given
+        bcm_Map__c m = [SELECT Id FROM bcm_Map__c LIMIT 1];
+        bcm_Capability__c l1 = TestDataFactory.createCapability(m.Id, null, 1, 1, true);
+        bcm_Capability__c cap = TestDataFactory.createCapability(m.Id, l1.Id, 3, 1, false);
+
+        // When / Then
+        Test.startTest();
+        try {
+            insert cap;
+            Assert.fail('Expected DmlException for Level 3 with a Level 1 parent');
+        } catch (DmlException e) {
+            Assert.isTrue(
+                e.getMessage().contains('must be exactly one level above'),
+                'Error should reference parent-level rule: ' + e.getMessage()
+            );
+        }
+        Test.stopTest();
+    }
+
+    // @spec capability-object.md · "Validation prevents structurally invalid Capabilities" · "A Level 2 Capability parented to another Level 2 is rejected"
+    @IsTest
+    static void level2_withL2Parent_isRejected() {
+        // Given
+        bcm_Map__c m = [SELECT Id FROM bcm_Map__c LIMIT 1];
+        bcm_Capability__c l1 = TestDataFactory.createCapability(m.Id, null, 1, 1, true);
+        bcm_Capability__c l2Parent = TestDataFactory.createCapability(m.Id, l1.Id, 2, 1, true);
+        bcm_Capability__c cap = TestDataFactory.createCapability(m.Id, l2Parent.Id, 2, 1, false);
+
+        // When / Then
+        Test.startTest();
+        try {
+            insert cap;
+            Assert.fail('Expected DmlException for Level 2 with a Level 2 parent');
+        } catch (DmlException e) {
+            Assert.isTrue(
+                e.getMessage().contains('must be exactly one level above'),
+                'Error should reference parent-level rule: ' + e.getMessage()
+            );
+        }
+        Test.stopTest();
+    }
+
     // ─── Permission boundaries ────────────────────────────────────────────────
 
     // @spec capability-object.md · "Access rules are enforced for Editors and Viewers" · "Viewer cannot create a Capability record"

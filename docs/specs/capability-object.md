@@ -10,7 +10,7 @@ When I open a new Capability record
 Then I see fields for Map, Parent Capability, Level, Sort Order, External ID, Definition, Strategy Support, and Architectural Nuance  
 
 **Scenario: External ID must be unique across all Capabilities**
-> Tested by: not yet covered
+> Deferred: platform-enforced (Unique field constraint); verified via UI, not Apex
 
 Given a Capability already exists with a specific External ID  
 When I try to save a second Capability with the same External ID  
@@ -156,14 +156,14 @@ When I save a new Capability with Level 3 and that record as its Parent
 Then the record saves successfully  
 
 **Scenario: A Level 3 Capability parented to a Level 1 is rejected**
-> Tested by: not yet covered
+> Tested by: `bcm_CapabilityValidationTest.level3_withL1Parent_isRejected`
 
 Given a Level 1 Capability exists  
 When I try to save a new Capability with Level 3 and that Level 1 record as its Parent  
 Then I see the error: "The parent capability must be exactly one level above (e.g. a Level 3 capability must have a Level 2 parent)."  
 
 **Scenario: A Level 2 Capability parented to another Level 2 is rejected**
-> Tested by: not yet covered
+> Tested by: `bcm_CapabilityValidationTest.level2_withL2Parent_isRejected`
 
 Given a Level 2 Capability exists  
 When I try to save a new Capability with Level 2 and that Level 2 record as its Parent  
@@ -174,7 +174,7 @@ Then I see the error: "The parent capability must be exactly one level above (e.
 ## Feature: Access rules are enforced for Editors and Viewers
 
 **Scenario: Viewer can read a Capability record**
-> Tested by: not yet covered
+> Deferred: read access is permission-set-enforced; verified via UI, not Apex
 
 Given I am logged in as a Viewer  
 When I open a Capability record  
