@@ -15,6 +15,7 @@ export default defineConfig({
         { name: 'setup', testMatch: /auth\.setup\.ts/ },
         {
             name: 'editor',
+            grep: /editor project/,
             use: {
                 ...devices['Desktop Chrome'],
                 storageState: 'tests/e2e/.auth/editor.json',
@@ -23,6 +24,7 @@ export default defineConfig({
         },
         {
             name: 'viewer',
+            grep: /viewer project/,
             use: {
                 ...devices['Desktop Chrome'],
                 storageState: 'tests/e2e/.auth/viewer.json',

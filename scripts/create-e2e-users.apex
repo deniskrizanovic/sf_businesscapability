@@ -1,6 +1,6 @@
 // E2E test user setup — credentials injected at runtime by create-e2e-users.sh
 // Do NOT edit the placeholder values; they are replaced from .env before execution.
-Profile p = [SELECT Id FROM Profile WHERE Name = 'Standard User' LIMIT 1];
+Profile p = [SELECT Id FROM Profile WHERE Name = 'AutomatedTester - Minimum Access Clone' LIMIT 1];
 
 User editor = new User(
     Username      = '${SF_EDITOR_USERNAME}',
