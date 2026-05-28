@@ -1,0 +1,36 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import { execFileSync } from 'child_process';
+
+export default function globalTeardown() {
+    const runIdFile = path.resolve('tests/e2e/.run_id');
+    if (!fs.existsSync(runIdFile)) return;
+
+    const runId = fs.readFileSync(runIdFile, 'utf-8').trim();
+
+    // Delete in FK order: CapabilityTag → Capability → Tag → Map
+    const apex = `
+List<bcm_CapabilityTag__c> ct = [SELECT Id FROM bcm_CapabilityTag__c
+    WHERE bcm_Capability__r.Name LIKE '%${runId}%' OR bcm_Tag__r.Name LIKE '%${runId}%' LIMIT 10000];
+if (!ct.isEmpty()) delete ct;
+
+List<bcm_Capability__c> caps = [SELECT Id FROM bcm_Capability__c WHERE Name LIKE '%${runId}%' LIMIT 10000];
+if (!caps.isEmpty()) delete caps;
+
+List<bcm_Tag__c> tags = [SELECT Id FROM bcm_Tag__c WHERE Name LIKE '%${runId}%' LIMIT 10000];
+if (!tags.isEmpty()) delete tags;
+
+List<bcm_Map__c> maps = [SELECT Id FROM bcm_Map__c WHERE Name LIKE '%${runId}%' LIMIT 10000];
+if (!maps.isEmpty()) delete maps;
+`.trim();
+
+    const apexFile = path.resolve(`tests/e2e/.teardown_${runId}.apex`);
+    fs.writeFileSync(apexFile, apex, 'utf-8');
+
+    try {
+        execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', 'home-denispoc'], { stdio: 'inherit' });
+    } finally {
+        fs.unlinkSync(apexFile);
+        fs.unlinkSync(runIdFile);
+    }
+}

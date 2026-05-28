@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { getRunId } from './fixtures/run-id';
 
 const APP_PATH = '/lightning/app/bcm_BusinessCapabilityMap';
-const RUN_ID = Date.now();
+const RUN_ID = getRunId();
 
 async function setupAutoDissmiss(page: import('@playwright/test').Page) {
     await page.addLocatorHandler(page.getByText('Live Preview is on'), async () => {
@@ -28,17 +29,6 @@ test.describe('Tag record page — editor project', () => {
         await page.getByRole('button', { name: 'Save', exact: true }).click();
         await page.waitForURL(/\/view$/);
         tagUrl = page.url();
-        await ctx.close();
-    });
-
-    test.afterAll(async ({ browser }) => {
-        const ctx = await browser.newContext({
-            storageState: 'tests/e2e/.auth/editor.json',
-        });
-        const page = await ctx.newPage();
-        await page.goto(tagUrl);
-        await page.getByRole('button', { name: 'Delete' }).click();
-        await page.getByRole('button', { name: 'Delete', exact: true }).click();
         await ctx.close();
     });
 

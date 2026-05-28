@@ -42,8 +42,10 @@ $RECYCLE.BIN/
 # Local environment variables
 .env
 
-# Playwright auth sessions
+# Playwright auth sessions and run state
 tests/e2e/.auth/
+tests/e2e/.run_id
+tests/e2e/.teardown_*.apex
 
 # Playwright test results
 playwright-report/

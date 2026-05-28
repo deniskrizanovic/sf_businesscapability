@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { getRunId } from './fixtures/run-id';
 
 const APP_PATH = '/lightning/app/bcm_BusinessCapabilityMap';
 
-const RUN_ID = Date.now();
+const RUN_ID = getRunId();
 
 async function setupAutoDissmiss(page: import('@playwright/test').Page) {
     await page.addLocatorHandler(page.getByText('Live Preview is on'), async () => {
@@ -16,21 +17,6 @@ function recordIdFromUrl(url: string): string {
     const match = url.match(/\/([a-zA-Z0-9]{15,18})\/view/);
     if (!match) throw new Error(`Could not extract record ID from URL: ${url}`);
     return match[1];
-}
-
-// Delete a Capability record via the list-view row action (the Capability FlexiPage
-// does not expose Delete in its header actions panel).
-async function deleteCapabilityRecord(
-    page: import('@playwright/test').Page,
-    capName: string
-) {
-    await setupAutoDissmiss(page);
-    await page.goto('/lightning/o/bcm_Capability__c/list');
-    // Find the row by the record name link
-    const row = page.getByRole('row').filter({ hasText: capName }).first();
-    await row.getByRole('button', { name: /show actions/i }).click();
-    await page.getByRole('menuitem', { name: 'Delete' }).click();
-    await page.getByRole('button', { name: 'Delete', exact: true }).click();
 }
 
 // ── Record form fields ────────────────────────────────────────────────────────
@@ -75,14 +61,7 @@ test.describe('Capability form — editor project', () => {
         await page.getByRole('button', { name: 'Save', exact: true }).click();
         await page.waitForURL(/\/view$/);
 
-        // The Capability record saves successfully and the detail view loads
         await expect(page.getByRole('heading', { name: capName })).toBeVisible();
-
-        // Tidy up: delete Capability via list-view row action, then delete the Map
-        await deleteCapabilityRecord(page, capName);
-        await page.goto(mapUrl);
-        await page.locator('.slds-page-header').getByRole('button', { name: 'Delete' }).click();
-        await page.getByRole('button', { name: 'Delete', exact: true }).click();
     });
 });
 
@@ -92,7 +71,6 @@ test.describe('Map record page — editor project', () => {
     const mapName = `E2E Related List Map ${RUN_ID}`;
     const capName = `E2E Related Cap ${RUN_ID}`;
     let mapUrl: string;
-    let capUrl: string;
 
     test.beforeAll(async ({ browser }) => {
         const ctx = await browser.newContext({
@@ -114,20 +92,7 @@ test.describe('Map record page — editor project', () => {
         await page.getByLabel('Sort Order').fill('1');
         await page.getByRole('button', { name: 'Save', exact: true }).click();
         await page.waitForURL(/\/view$/);
-        capUrl = page.url();
 
-        await ctx.close();
-    });
-
-    test.afterAll(async ({ browser }) => {
-        const ctx = await browser.newContext({
-            storageState: 'tests/e2e/.auth/editor.json',
-        });
-        const page = await ctx.newPage();
-        await deleteCapabilityRecord(page, capName);
-        await page.goto(mapUrl);
-        await page.locator('.slds-page-header').getByRole('button', { name: 'Delete' }).click();
-        await page.getByRole('button', { name: 'Delete', exact: true }).click();
         await ctx.close();
     });
 

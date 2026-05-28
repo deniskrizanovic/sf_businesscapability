@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { getRunId } from './fixtures/run-id';
 
 const APP_PATH = '/lightning/app/bcm_BusinessCapabilityMap';
-const RUN_ID = Date.now();
+const RUN_ID = getRunId();
 
 // Auto-dismiss the "Live Preview is on" banner whenever it appears
 async function setupAutoDissmiss(page: import('@playwright/test').Page) {
@@ -31,9 +32,6 @@ test.describe('Map CRUD — editor project', () => {
         const name = `E2E Map Create ${RUN_ID}`;
         await createMap(page, name);
         await expect(page.getByRole('heading', { name })).toBeVisible();
-        // Tidy up
-        await page.locator('.slds-page-header').getByRole('button', { name: 'Delete' }).click();
-        await page.getByRole('button', { name: 'Delete', exact: true }).click();
     });
 
     test('editor edits a Map record name', async ({ page }) => {
@@ -44,18 +42,14 @@ test.describe('Map CRUD — editor project', () => {
         await page.getByLabel('Map Name').fill(after);
         await page.getByRole('button', { name: 'Save', exact: true }).click();
         await expect(page.getByRole('heading', { name: after })).toBeVisible();
-        // Tidy up
-        await page.locator('.slds-page-header').getByRole('button', { name: 'Delete' }).click();
-        await page.getByRole('button', { name: 'Delete', exact: true }).click();
     });
 
     test('editor deletes a Map record', async ({ page }) => {
         await createMap(page, `E2E Map Delete ${RUN_ID}`);
         await page.locator('.slds-page-header').getByRole('button', { name: 'Delete' }).click();
         await page.getByRole('button', { name: 'Delete', exact: true }).click();
-        // After deletion Lightning redirects to the list view
         await page.waitForSelector('.slds-page-header', { state: 'visible' });
-        await expect(page.getByRole('link', { name: 'E2E Map Delete Test' })).not.toBeVisible();
+        await expect(page.getByRole('link', { name: `E2E Map Delete ${RUN_ID}` })).not.toBeVisible();
     });
 });
 
@@ -70,17 +64,6 @@ test.describe('Map access — viewer project', () => {
         });
         const page = await ctx.newPage();
         mapUrl = await createMap(page, `E2E Viewer Read Map ${RUN_ID}`);
-        await ctx.close();
-    });
-
-    test.afterAll(async ({ browser }) => {
-        const ctx = await browser.newContext({
-            storageState: 'tests/e2e/.auth/editor.json',
-        });
-        const page = await ctx.newPage();
-        await page.goto(mapUrl);
-        await page.getByRole('button', { name: 'Delete' }).click();
-        await page.getByRole('button', { name: 'Delete', exact: true }).click();
         await ctx.close();
     });
 
