@@ -237,7 +237,7 @@
 - [ ] `bcm_Editor` grants Read/Create/Edit/Delete on `bcm_CapabilityTag__c`
 - [ ] `npx playwright test tests/e2e/capability-tag.spec.ts` passes with zero failures
 
-**Step complete:** `[ ]`
+**Step complete:** `[x]`
 
 ---
 
