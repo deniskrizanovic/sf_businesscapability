@@ -1,8 +1,14 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { execFileSync } from 'child_process';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 export default function globalTeardown() {
+    const orgAlias = process.env.SF_ORG_ALIAS;
+    if (!orgAlias) throw new Error('SF_ORG_ALIAS is not set in .env');
+
     const runIdFile = path.resolve('tests/e2e/.run_id');
     if (!fs.existsSync(runIdFile)) return;
 
@@ -28,7 +34,7 @@ if (!maps.isEmpty()) delete maps;
     fs.writeFileSync(apexFile, apex, 'utf-8');
 
     try {
-        execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', 'home-denispoc'], { stdio: 'inherit' });
+        execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], { stdio: 'inherit' });
     } finally {
         fs.unlinkSync(apexFile);
         fs.unlinkSync(runIdFile);

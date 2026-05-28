@@ -1,23 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { getRunId } from './fixtures/run-id';
+import { APP_PATH, RUN_ID, setupAutoDismiss } from './fixtures/helpers';
 
-const APP_PATH = '/lightning/app/bcm_BusinessCapabilityMap';
-const RUN_ID = getRunId();
-
-// Auto-dismiss the "Live Preview is on" banner whenever it appears
-async function setupAutoDissmiss(page: import('@playwright/test').Page) {
-    await page.addLocatorHandler(page.getByText('Live Preview is on'), async () => {
-        const closeBtn = page.getByRole('link', { name: 'Close' });
-        if (await closeBtn.isVisible().catch(() => false)) await closeBtn.click();
-    });
-}
-
-// Create a Map record via UI and return its record URL
 async function createMap(
     page: import('@playwright/test').Page,
     name: string
 ): Promise<string> {
-    await setupAutoDissmiss(page);
+    await setupAutoDismiss(page);
     await page.goto('/lightning/o/bcm_Map__c/new');
     await page.getByLabel('Map Name').fill(name);
     await page.getByRole('button', { name: 'Save', exact: true }).click();
@@ -68,21 +56,20 @@ test.describe('Map access — viewer project', () => {
     });
 
     test('viewer can read a Map record', async ({ page }) => {
-        await setupAutoDissmiss(page);
+        await setupAutoDismiss(page);
         await page.goto(mapUrl);
         await expect(page.getByRole('heading', { name: `E2E Viewer Read Map ${RUN_ID}` })).toBeVisible();
     });
 
     test('viewer cannot create a Map record — no New button', async ({ page }) => {
-        await setupAutoDissmiss(page);
+        await setupAutoDismiss(page);
         await page.goto('/lightning/o/bcm_Map__c/list');
         await expect(page.getByRole('button', { name: 'New' })).not.toBeVisible();
     });
 
     test('viewer cannot edit a Map record — no Edit button', async ({ page }) => {
-        await setupAutoDissmiss(page);
+        await setupAutoDismiss(page);
         await page.goto(mapUrl);
-        // The record-level Edit action sits in the record actions bar as a button
         await expect(page.getByRole('button', { name: 'Edit', exact: true })).not.toBeVisible();
     });
 });
@@ -91,11 +78,9 @@ test.describe('Map access — viewer project', () => {
 
 test.describe('BCM app — editor project', () => {
     test('BCM app appears in App Launcher', async ({ page }) => {
-        await setupAutoDissmiss(page);
-        // Navigate directly to the Maps list (no Live Preview banner, nav bar rendered)
+        await setupAutoDismiss(page);
         await page.goto('/lightning/o/bcm_Map__c/home');
         await page.getByRole('button', { name: 'App Launcher' }).click();
-        // The panel shows "Recently Used" and "All Apps" — assert the app heading is visible
         await expect(
             page.getByRole('heading', { name: 'Business Capability Map' }).or(
                 page.locator('p.slds-text-heading_small, .appTileTitle').getByText('Business Capability Map')
@@ -104,13 +89,13 @@ test.describe('BCM app — editor project', () => {
     });
 
     test('Maps tab is visible to Editor', async ({ page }) => {
-        await setupAutoDissmiss(page);
+        await setupAutoDismiss(page);
         await page.goto(APP_PATH);
         await expect(page.getByRole('link', { name: 'Maps' })).toBeVisible();
     });
 
     test('Maps tab navigates to the Maps list', async ({ page }) => {
-        await setupAutoDissmiss(page);
+        await setupAutoDismiss(page);
         await page.goto(APP_PATH);
         await page.getByRole('link', { name: 'Maps' }).click();
         await expect(page).toHaveURL(/bcm_Map__c/);
@@ -119,9 +104,8 @@ test.describe('BCM app — editor project', () => {
 
 test.describe('BCM app — viewer project', () => {
     test('Maps tab is hidden from Viewer', async ({ page }) => {
-        await setupAutoDissmiss(page);
+        await setupAutoDismiss(page);
         await page.goto(APP_PATH);
-        // Wait for the nav bar to fully render before asserting absence
         await expect(page.getByRole('link', { name: 'Capabilities' })).toBeVisible();
         await expect(page.getByRole('link', { name: 'Maps' })).not.toBeVisible();
     });
