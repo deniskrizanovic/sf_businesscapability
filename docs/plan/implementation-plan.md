@@ -23,8 +23,8 @@
 |---|---|---|---|---|---|---|---|
 | 1 | `bcm_Map__c` — object, fields, permission sets, Maps tab, app | FP7–12 (Map CRUD) | 18 | 18 | 16% | `[x]` | 2026-05-25 |
 | 2 | `bcm_Capability__c` — object, fields, trigger, validation rules, Capabilities tab, Map record page | FP13, FP15–19 (Capability list + CRUD) | 21 | 39 | 35% | `[x]` | 2026-05-26 |
-| 3 | `bcm_Tag__c` — object, fields, validation rule, Tags tab | FP22–28 (Tag CRUD + detail) | 23 | 62 | 56% | `[ ]` | — |
-| 4 | `bcm_CapabilityTag__c` — junction object, permission additions | FP14, FP20–21 (Capability detail w/tags, tag junctions) | 15 | 77 | 69% | `[ ]` | — |
+| 3 | `bcm_Tag__c` — object, fields, validation rule, Tags tab | FP22–28 (Tag CRUD + detail) | 23 | 62 | 56% | `[x]` | 2026-05-27 |
+| 4 | `bcm_CapabilityTag__c` — junction object, permission additions | FP14, FP20–21 (Capability detail w/tags, tag junctions) | 15 | 77 | 69% | `[x]` | 2026-05-28 |
 | 5 | App structure — Custom Permission, FlexiPage stubs, Import tab | — | 0 | 77 | 69% | `[ ]` | — |
 | 6 | Import — `bcm_ImportController` Apex + `bcm_ImportUtility` LWC | FP4 (Import JSON) | 11 | 88 | 79% | `[ ]` | — |
 | 7 | Diagram — `bcm_CapabilityMap` LWC (read-only) | FP1–3 (Map / Capability / Tag diagram load) | 11 | 99 | 89% | `[ ]` | — |
