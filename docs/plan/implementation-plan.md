@@ -59,7 +59,7 @@
 - [ ] `bcm_Description__c` field present on the object
 - [ ] `bcm_BusinessCapabilityMap` Lightning App visible in App Launcher
 - [ ] Maps tab visible in the BCM app (when assigned `bcm_Editor`)
-- [ ] Maps tab hidden when assigned `bcm_Viewer`
+- [ ] Maps tab visible when assigned `bcm_Viewer`
 - [ ] Can create a Map record from the Maps tab
 - [ ] `bcm_Viewer` permission set exists and grants Read on `bcm_Map__c`
 - [ ] `bcm_Editor` permission set exists and grants Read/Create/Edit/Delete on `bcm_Map__c`
@@ -241,7 +241,7 @@
 
 ---
 
-## Step 5 — App Structure: Custom Permission, Import Tab, FlexiPage Stubs
+## Step 5 — App Structure: Custom Permission, Visualisation Tab, Import on Record Page
 
 **Spec:** [app-structure.md](../specs/app-structure.md)
 
@@ -249,31 +249,28 @@
 
 **What gets built:**
 - Custom Permission `bcm_CanEdit` (hand-written XML — explicit exception to the no-hand-write rule)
-- `bcm_Editor` permission set updated to grant `bcm_CanEdit`; Import tab Default On; Maps tab Default On
-- `bcm_Viewer` permission set updated: Import tab Hidden; Maps tab Hidden
-- Object Tab for `bcm_Map__c` is already deployed (Step 1) — just ensure tab visibility in permission sets is correct here
-- Import Object Tab added to `bcm_BusinessCapabilityMap` app
-- Lightning App Pages (stubs — placeholder text component):
-  - `bcm_MapPage` (full-width, single region — replaced by LWC in Step 7)
-  - `bcm_ImportPage` (full-width, single region — replaced by LWC in Step 6)
-- Map tab added to the app pointing to `bcm_MapPage`
+- `bcm_Editor` permission set updated to grant `bcm_CanEdit`; Visualisation tab Visible
+- `bcm_Viewer` permission set updated: Visualisation tab Visible
+- LWC `bcm_VisualisationButton` — opens `bcm_VisualisationModal` from the Map record page header
+- LWC `bcm_VisualisationModal` — stub modal (placeholder text; replaced by `bcm_CapabilityMap` in Step 7)
+- LWC `bcm_ImportButton` — opens `bcm_ImportModal` from the Map record page header
+- LWC `bcm_ImportModal` — stub modal (placeholder text; replaced by `bcm_ImportUtility` in Step 6)
+- `bcm_MapRecordPage` updated: Visualisation and Import buttons in header (no separate tabs or app pages)
 - Playwright tests in `tests/e2e/app-structure.spec.ts` covering all UI-visible scenarios from the spec
 
-**Skills to invoke (Claude must confirm before generating any file):**
+**Skills invoked:**
 - Hand-write `bcm_CanEdit` Custom Permission XML (noted exception)
-- `generating-permission-set` — update `bcm_Editor` with Custom Permission + tab visibility
-- `generating-permission-set` — update `bcm_Viewer` with tab visibility
-- `generating-custom-application` — update `bcm_BusinessCapabilityMap` to include Map and Import tabs
-- `generating-flexipage` — for `bcm_MapPage` stub
-- `generating-flexipage` — for `bcm_ImportPage` stub
+- `generating-permission-set` — update `bcm_Editor` and `bcm_Viewer`
+- `generating-flexipage` — update `bcm_MapRecordPage` (two buttons in header)
 
 **Manual inspection checklist:**
 - [ ] `bcm_CanEdit` Custom Permission visible in Setup → Custom Permissions
 - [ ] `bcm_Editor` permission set includes `bcm_CanEdit`
-- [ ] Assign `bcm_Editor` — all tabs visible: Map, Capabilities, Tags, Import, Maps
-- [ ] Assign `bcm_Viewer` — Import and Maps tabs are hidden; Map, Capabilities, Tags visible
-- [ ] Map tab in app navigates to `bcm_MapPage` (shows placeholder)
-- [ ] Import tab navigates to `bcm_ImportPage` (shows placeholder)
+- [ ] Assign `bcm_Editor` — tabs visible: Maps, Capabilities, Tags (no Visualisation or Import tabs)
+- [ ] Assign `bcm_Viewer` — same three tabs visible
+- [ ] Open a Map record → Visualisation and Import buttons visible in record header
+- [ ] Click Visualisation button → modal opens with placeholder text; close dismisses it
+- [ ] Click Import button → modal opens with placeholder text; close dismisses it
 - [ ] `npx playwright test tests/e2e/app-structure.spec.ts` passes with zero failures
 
 **Step complete:** `[ ]`
@@ -292,18 +289,15 @@
   - `bcm_ImportPayload`, `bcm_CapabilityNode`, `bcm_ImportResult` wrapper classes
   - `bcm_ImportControllerTest` (unit test, minimum 75% coverage)
 - LWC `bcm_ImportUtility` per `05-lwc-architecture.md`
-- `bcm_ImportPage` FlexiPage updated to host `bcm_ImportUtility` (replaces placeholder)
+- `bcm_ImportModal` updated to host `bcm_ImportUtility` in its modal body (replaces placeholder text)
 - Playwright tests in `tests/e2e/import.spec.ts` covering all UI-visible scenarios from the spec
-
-**Skills to invoke (Claude must confirm before generating any file):**
-- `generating-flexipage` — update `bcm_ImportPage` to add `bcm_ImportUtility` component
 - `generating-apex` — for `bcm_ImportController`, `bcm_ImportPayload`, `bcm_CapabilityNode`, `bcm_ImportResult`
 - `generating-apex-test` — for `bcm_ImportControllerTest`
 
 **Manual inspection checklist:**
 - [ ] Deploy succeeds with no errors
 - [ ] Apex test class passes with ≥75% coverage
-- [ ] Navigate to Import tab in BCM app — `bcm_ImportUtility` component visible
+- [ ] Open a Map record → click Import button → modal shows `bcm_ImportUtility` component
 - [ ] Paste the sample JSON from `02-import.md` and click Import → success message with counts
 - [ ] Navigate to Capabilities tab → imported capabilities visible
 - [ ] Navigate to Tags tab → imported tags visible (e.g. "NEW" tag present)
@@ -335,18 +329,19 @@
   - Tag colourisation
   - No drag-drop (handles hidden; drag-drop added in Step 8)
 - `bcm_ContextMenu` LWC stub (placeholder, no actions — v1 per `05-lwc-architecture.md`)
-- `bcm_MapPage` FlexiPage updated to host `bcm_CapabilityMap` (replaces placeholder)
+- `bcm_VisualisationModal` updated to host `bcm_CapabilityMap` in its modal body (replaces placeholder text)
 - Playwright tests in `tests/e2e/diagram.spec.ts` covering all UI-visible scenarios from the spec
 
 **Skills to invoke (Claude must confirm before generating any file):**
-- `generating-flexipage` — update `bcm_MapPage` to add `bcm_CapabilityMap` component
+- `generating-apex` — for `bcm_MapController`, `bcm_CapabilityController`, `bcm_TagController`
+- `generating-apex-test` — for test classes for all three controllers
 - `generating-apex` — for `bcm_MapController`, `bcm_CapabilityController`, `bcm_TagController`
 - `generating-apex-test` — for test classes for all three controllers
 
 **Manual inspection checklist:**
 - [ ] Deploy succeeds with no errors
 - [ ] All Apex test classes pass with ≥75% coverage
-- [ ] Navigate to Map tab → map selector combobox visible
+- [ ] Open a Map record → click Visualisation button → modal shows map selector combobox
 - [ ] Select the imported map → diagram renders with correct L1/L2/L3 structure
 - [ ] All L1 chevrons visible with correct labels
 - [ ] L2 boxes stacked within correct columns

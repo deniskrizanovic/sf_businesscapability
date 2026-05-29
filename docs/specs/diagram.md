@@ -5,13 +5,13 @@
 **Scenario: Map dropdown is populated on page load**
 
 Given at least one Map record exists  
-When the user navigates to the Map tab  
+When the user clicks the Visualisation button on a Map record  
 Then the Map dropdown displays all available Map names  
 
 **Scenario: No map is selected on initial load**
 
 Given the user has not previously selected a map  
-When the user navigates to the Map tab  
+When the Visualisation panel opens  
 Then the diagram canvas is empty and no capabilities are rendered  
 
 ---

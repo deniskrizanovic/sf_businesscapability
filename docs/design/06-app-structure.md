@@ -10,26 +10,23 @@
 
 | Tab # | Label | Type | Object / Component | Visible To |
 |---|---|---|---|---|
-| 1 | Map | Lightning App Page | `bcm_CapabilityMap` LWC | All BCM users |
+| 1 | Maps | Object Tab | `bcm_Map__c` | All BCM users |
 | 2 | Capabilities | Object Tab | `bcm_Capability__c` | All BCM users |
 | 3 | Tags | Object Tab | `bcm_Tag__c` | All BCM users |
-| 4 | Import | Lightning App Page | `bcm_ImportUtility` LWC | `bcm_Editor` only |
 
-## Lightning App Pages
+## Map Record Page (`bcm_MapRecordPage`)
 
-### BCM Map Page
-- **API Name:** `bcm_MapPage`
-- **Label:** Capability Map
-- **Layout:** Single region, full width (no sidebar)
-- **Component:** `bcm_CapabilityMap` occupies full region
-- **Activation:** Assigned to `bcm_BusinessCapabilityMap` app
+The `bcm_Map__c` record page is the primary entry point for both the diagram and import workflows. Two quick action buttons appear in the highlights panel:
 
-### BCM Import Page
-- **API Name:** `bcm_ImportPage`
-- **Label:** Capability Import
-- **Layout:** Single region, full width
-- **Component:** `bcm_ImportUtility` occupies full region
-- **Activation:** Assigned to `bcm_BusinessCapabilityMap` app
+### Visualisation Button (`bcm_VisualisationButton`)
+- **Type:** LWC quick action (`ScreenAction`) on `bcm_Map__c`
+- **Behaviour:** Opens a panel containing `bcm_CapabilityMap` (Step 7) — shows placeholder text until then
+- **Visible to:** All BCM users
+
+### Import Button (`bcm_ImportButton`)
+- **Type:** LWC quick action (`ScreenAction`) on `bcm_Map__c`
+- **Behaviour:** Opens a panel containing `bcm_ImportUtility` (Step 6) — shows placeholder text until then
+- **Visible to:** All BCM users (Import logic is guarded by `bcm_CanEdit` custom permission inside the LWC)
 
 ## Permission Sets
 
@@ -47,10 +44,9 @@ App Access:
 - `bcm_BusinessCapabilityMap`: Visible
 
 Tab Visibility:
-- Map: Default On
+- Maps: Default On
 - Capabilities: Default On
 - Tags: Default On
-- Import: Hidden
 
 ### bcm_Editor
 **Label:** BCM Editor
@@ -69,10 +65,9 @@ App Access:
 - `bcm_BusinessCapabilityMap`: Visible
 
 Tab Visibility:
-- Map: Default On
+- Maps: Default On
 - Capabilities: Default On
 - Tags: Default On
-- Import: Default On
 
 ## Custom Permission
 - **API Name:** `bcm_CanEdit`

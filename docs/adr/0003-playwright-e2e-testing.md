@@ -1,5 +1,7 @@
 # ADR 0003: Playwright for E2E testing
 
+See also: [Quality Plan](../design/08-quality-plan.md) — the authoritative reference for all test layers, coverage targets, and the definition of done.
+
 We use Playwright to test the application against a deployed Salesforce org.
 Playwright authenticates as a real user and exercises the Lightning UI directly,
 covering permission boundary enforcement, validation rule error messages, and

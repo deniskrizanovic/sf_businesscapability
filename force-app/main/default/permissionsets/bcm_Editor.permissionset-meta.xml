@@ -1,92 +1,101 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
-    <fullName>bcm_Editor</fullName>
-    <label>BCM Editor</label>
-    <description>Full read/write access to the Business Capability Map app.</description>
-    <objectPermissions>
-        <allowCreate>true</allowCreate>
-        <allowRead>true</allowRead>
-        <allowEdit>true</allowEdit>
-        <allowDelete>true</allowDelete>
-        <modifyAllRecords>false</modifyAllRecords>
-        <viewAllRecords>false</viewAllRecords>
-        <object>bcm_Map__c</object>
-    </objectPermissions>
-    <objectPermissions>
-        <allowCreate>true</allowCreate>
-        <allowRead>true</allowRead>
-        <allowEdit>true</allowEdit>
-        <allowDelete>true</allowDelete>
-        <modifyAllRecords>false</modifyAllRecords>
-        <viewAllRecords>false</viewAllRecords>
-        <object>bcm_Capability__c</object>
-    </objectPermissions>
-    <objectPermissions>
-        <allowCreate>true</allowCreate>
-        <allowRead>true</allowRead>
-        <allowEdit>true</allowEdit>
-        <allowDelete>true</allowDelete>
-        <modifyAllRecords>false</modifyAllRecords>
-        <viewAllRecords>false</viewAllRecords>
-        <object>bcm_Tag__c</object>
-    </objectPermissions>
-    <objectPermissions>
-        <allowCreate>true</allowCreate>
-        <allowRead>true</allowRead>
-        <allowEdit>true</allowEdit>
-        <allowDelete>true</allowDelete>
-        <modifyAllRecords>false</modifyAllRecords>
-        <viewAllRecords>false</viewAllRecords>
-        <object>bcm_CapabilityTag__c</object>
-    </objectPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
-        <readable>true</readable>
-        <field>bcm_Map__c.bcm_Description__c</field>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
-        <readable>true</readable>
-        <field>bcm_Capability__c.bcm_Parent__c</field>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
-        <readable>true</readable>
-        <field>bcm_Capability__c.bcm_ExternalId__c</field>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
-        <readable>true</readable>
-        <field>bcm_Capability__c.bcm_Definition__c</field>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
-        <readable>true</readable>
-        <field>bcm_Capability__c.bcm_StrategySupport__c</field>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
-        <readable>true</readable>
-        <field>bcm_Capability__c.bcm_ArchitecturalNuance__c</field>
-    </fieldPermissions>
-    <userPermissions>
-        <enabled>true</enabled>
-        <name>CreateCustomizeFilters</name>
-    </userPermissions>
     <applicationVisibilities>
         <application>bcm_BusinessCapabilityMap</application>
         <visible>true</visible>
     </applicationVisibilities>
+    <description>Full read/write access to the Business Capability Map app.</description>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>bcm_Capability__c.bcm_ArchitecturalNuance__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>bcm_Capability__c.bcm_Definition__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>bcm_Capability__c.bcm_ExternalId__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>bcm_Capability__c.bcm_Parent__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>bcm_Capability__c.bcm_StrategySupport__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>bcm_Map__c.bcm_Description__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>BCM Editor</label>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>bcm_CapabilityTag__c</object>
+        <viewAllFields>false</viewAllFields>
+        <viewAllRecords>false</viewAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>bcm_Capability__c</object>
+        <viewAllFields>false</viewAllFields>
+        <viewAllRecords>false</viewAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>bcm_Map__c</object>
+        <viewAllFields>false</viewAllFields>
+        <viewAllRecords>false</viewAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>bcm_Tag__c</object>
+        <viewAllFields>false</viewAllFields>
+        <viewAllRecords>false</viewAllRecords>
+    </objectPermissions>
     <tabSettings>
-        <tab>bcm_Map__c</tab>
+        <tab>bcm_Capability__c</tab>
         <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>
-        <tab>bcm_Capability__c</tab>
+        <tab>bcm_Map__c</tab>
         <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>
         <tab>bcm_Tag__c</tab>
         <visibility>Visible</visibility>
     </tabSettings>
+
+    <customPermissions>
+        <enabled>true</enabled>
+        <name>bcm_CanEdit</name>
+    </customPermissions>
+    <userPermissions>
+        <enabled>true</enabled>
+        <name>CreateCustomizeFilters</name>
+    </userPermissions>
 </PermissionSet>

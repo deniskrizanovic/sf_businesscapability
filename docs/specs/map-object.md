@@ -77,13 +77,13 @@ Then the Maps tab is visible in the navigation bar
 
 > Tested by: `e2e/map.spec.ts::"Maps tab is visible to Editor"`
 
-**Scenario: Maps tab is hidden from Viewers**
+**Scenario: Maps tab is visible to Viewers**
 
 Given the user has the `bcm_Viewer` permission set assigned  
 When the user opens the Business Capability Map app  
-Then the Maps tab is not visible in the navigation bar  
+Then the Maps tab is visible in the navigation bar  
 
-> Tested by: `e2e/map.spec.ts::"Maps tab is hidden from Viewer"`
+> Tested by: `e2e/map.spec.ts::"Maps tab is visible to Viewer"`
 
 **Scenario: Maps tab navigates to the Maps list**
 

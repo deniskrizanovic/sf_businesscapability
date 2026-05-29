@@ -2,53 +2,60 @@
 
 ## Feature: Full app navigation is correct for Editors
 
-**Scenario: Editor sees all five tabs**
+**Scenario: Editor sees all four tabs**
 
 Given the user has the `bcm_Editor` permission set assigned  
 When the user opens the Business Capability Map app  
-Then the following tabs are all visible in the navigation bar: Map, Capabilities, Tags, Import, Maps  
+Then the following tabs are all visible in the navigation bar: Visualisation, Maps, Capabilities, Tags  
 
-**Scenario: Map tab opens the Map page**
-
-Given the user has the `bcm_Editor` permission set assigned  
-When the user clicks the Map tab  
-Then the Map page opens and displays content  
-
-**Scenario: Import tab opens the Import page**
+**Scenario: Visualisation tab opens the Visualisation page**
 
 Given the user has the `bcm_Editor` permission set assigned  
-When the user clicks the Import tab  
-Then the Import page opens and displays content  
+When the user clicks the Visualisation tab  
+Then the Visualisation page opens and displays content  
+
+**Scenario: Visualisation button on Map record opens Visualisation page**
+
+Given the user has the `bcm_Editor` permission set assigned  
+And the user is viewing a `bcm_Map__c` record  
+When the user clicks the Visualisation button in the record header  
+Then the Visualisation page opens  
+
+**Scenario: Import tab on Map record page is visible to Editors**
+
+Given the user has the `bcm_Editor` permission set assigned  
+And the user is viewing a `bcm_Map__c` record  
+When the user clicks the Import tab on the record page  
+Then the Import tab content is displayed  
 
 ---
 
 ## Feature: Full app navigation is correct for Viewers
 
-**Scenario: Viewer sees Map, Capabilities, and Tags tabs only**
+**Scenario: Viewer sees Visualisation, Maps, Capabilities, and Tags tabs**
 
 Given the user has the `bcm_Viewer` permission set assigned  
 When the user opens the Business Capability Map app  
-Then the Map, Capabilities, and Tags tabs are visible  
-And the Import and Maps tabs are not visible  
+Then the Visualisation, Maps, Capabilities, and Tags tabs are visible  
 
-**Scenario: Viewer can open the Map page**
+**Scenario: Viewer can open the Visualisation page**
 
 Given the user has the `bcm_Viewer` permission set assigned  
-When the user clicks the Map tab  
-Then the Map page opens and displays content  
+When the user clicks the Visualisation tab  
+Then the Visualisation page opens and displays content  
 
 ---
 
 ## Feature: App pages open without errors
 
-**Scenario: Map page opens without errors for any BCM user**
+**Scenario: Visualisation page opens without errors for any BCM user**
 
 Given the user has either the `bcm_Editor` or `bcm_Viewer` permission set assigned  
-When the user clicks the Map tab  
-Then the Map page opens with no error messages  
+When the user clicks the Visualisation tab  
+Then the Visualisation page opens with no error messages  
 
-**Scenario: Import page opens without errors for Editors**
+**Scenario: Map record Import tab opens without errors for Editors**
 
 Given the user has the `bcm_Editor` permission set assigned  
-When the user clicks the Import tab  
-Then the Import page opens with no error messages  
+When the user views a `bcm_Map__c` record and clicks the Import tab  
+Then the Import tab opens with no error messages  

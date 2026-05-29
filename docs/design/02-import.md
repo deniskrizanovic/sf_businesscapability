@@ -144,9 +144,9 @@ bcm_ImportUtility
 - Display result or error message on completion
 
 ### Placement
-- Dedicated Lightning App Page: `bcm_ImportPage`
-- Tab in the `bcm_` app, visible only to users with `bcm_Editor` Permission Set
-- Tab label: "Import"
+- Hosted inside the `bcm_ImportButton` quick action panel on the `bcm_Map__c` record page
+- Opened via the Import button in the highlights panel — no dedicated tab or app page
+- Visible to all BCM users; import execution is guarded by `bcm_CanEdit` custom permission inside the LWC
 
 ## Governor Limit Considerations
 - A full capability map from the source document has approximately 150-200 capability records

@@ -24,7 +24,7 @@ When I click the Parent Capability field
 Then I can only search for and select other Capability records  
 
 **Scenario: Definition field displays formatted text**
-> Tested by: `e2e/capability.spec.ts::"Definition field renders formatted text after save"`
+> Tested by: `e2e/capability.spec.ts::"Definition RTF field is accessible via inline edit on the record detail view"`
 
 Given I am logged in as an Editor  
 When I create a Capability and enter formatted text in the Definition field  

@@ -1,19 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>View</actionName>
+        <comment>Action override created by Lightning App Builder during activation.</comment>
+        <content>bcm_MapRecordPage</content>
+        <formFactor>Large</formFactor>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Flexipage</type>
+        <pageOrSobjectType>bcm_Map__c</pageOrSobjectType>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <comment>Action override created by Lightning App Builder during activation.</comment>
+        <content>bcm_Capability_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Flexipage</type>
+        <pageOrSobjectType>bcm_Capability__c</pageOrSobjectType>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <comment>Action override created by Lightning App Builder during activation.</comment>
+        <content>bcm_Tag_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Flexipage</type>
+        <pageOrSobjectType>bcm_Tag__c</pageOrSobjectType>
+    </actionOverrides>
+    <brand>
+        <headerColor>#1B5E9B</headerColor>
+        <shouldOverrideOrgTheme>false</shouldOverrideOrgTheme>
+    </brand>
     <defaultLandingTab>bcm_Map__c</defaultLandingTab>
     <description>Business Capability Map application.</description>
     <formFactors>Large</formFactors>
     <isNavAutoTempTabsDisabled>false</isNavAutoTempTabsDisabled>
-    <isNavPersonalizationDisabled>false</isNavPersonalizationDisabled>
+    <isNavPersonalizationDisabled>true</isNavPersonalizationDisabled>
     <isNavTabPersistenceDisabled>false</isNavTabPersistenceDisabled>
+    <isOmniPinnedViewEnabled>false</isOmniPinnedViewEnabled>
     <label>Business Capability Map</label>
     <navType>Standard</navType>
     <tabs>bcm_Map__c</tabs>
     <tabs>bcm_Capability__c</tabs>
     <tabs>bcm_Tag__c</tabs>
     <uiType>Lightning</uiType>
-    <brand>
-        <headerColor>#1B5E9B</headerColor>
-        <shouldOverrideOrgTheme>false</shouldOverrideOrgTheme>
-    </brand>
 </CustomApplication>

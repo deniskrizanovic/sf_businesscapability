@@ -103,10 +103,9 @@ test.describe('BCM app — editor project', () => {
 });
 
 test.describe('BCM app — viewer project', () => {
-    test('Maps tab is hidden from Viewer', async ({ page }) => {
+    test('Maps tab is visible to Viewer', async ({ page }) => {
         await setupAutoDismiss(page);
         await page.goto(APP_PATH);
-        await expect(page.getByRole('link', { name: 'Capabilities' })).toBeVisible();
-        await expect(page.getByRole('link', { name: 'Maps' })).not.toBeVisible();
+        await expect(page.getByRole('link', { name: 'Maps' })).toBeVisible();
     });
 });

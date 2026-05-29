@@ -23,7 +23,7 @@
                 <field>bcm_Parent__c</field>
             </layoutItems>
             <layoutItems>
-                <behavior>Required</behavior>
+                <behavior>Edit</behavior>
                 <field>bcm_SortOrder__c</field>
             </layoutItems>
         </layoutColumns>

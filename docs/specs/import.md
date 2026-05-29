@@ -1,18 +1,20 @@
 # Acceptance Criteria — Import
 
-## Feature: Import UI is accessible to Editors
+## Feature: Import UI is accessible from a Map record
 
-**Scenario: Import form is visible on the Import page**
+**Scenario: Import form opens when Editor clicks the Import button**
 
 Given the user has the `bcm_Editor` permission set assigned  
-When the user navigates to the Import tab in the Business Capability Map app  
-Then the import form is displayed with a text area for pasting JSON and an "Import" button  
+And the user is viewing a `bcm_Map__c` record  
+When the user clicks the Import button in the highlights panel  
+Then the import panel opens displaying a text area for pasting JSON and an "Import" button  
 
-**Scenario: Import page is not accessible to Viewers**
+**Scenario: Import panel is not accessible to Viewers**
 
 Given the user has the `bcm_Viewer` permission set assigned  
-When the user opens the Business Capability Map app  
-Then the Import tab is not visible in the navigation bar  
+And the user is viewing a `bcm_Map__c` record  
+When the user clicks the Import button in the highlights panel  
+Then the import panel opens but the Import button is disabled or hidden  
 
 ---
 

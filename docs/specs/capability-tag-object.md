@@ -56,7 +56,7 @@ And the user has the `bcm_Viewer` permission set assigned
 When the user views the related list on a Capability or Tag record  
 Then the link is visible  
 
-> Tested by: UI only
+> Deferred: Viewer read access is permission-set-enforced; no Apex assertion possible without a running org user context
 
 **Scenario: Viewer cannot create a Capability-Tag link**
 

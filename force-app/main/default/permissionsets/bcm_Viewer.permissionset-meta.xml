@@ -75,7 +75,7 @@
     </applicationVisibilities>
     <tabSettings>
         <tab>bcm_Map__c</tab>
-        <visibility>None</visibility>
+        <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>
         <tab>bcm_Capability__c</tab>
@@ -85,4 +85,5 @@
         <tab>bcm_Tag__c</tab>
         <visibility>Visible</visibility>
     </tabSettings>
+
 </PermissionSet>

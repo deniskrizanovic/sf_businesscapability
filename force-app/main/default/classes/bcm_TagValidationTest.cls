@@ -3,7 +3,7 @@ private class bcm_TagValidationTest {
 
     // ─── Valid picklist values save successfully ──────────────────────────────
 
-    // @spec tag-object.md · "Tag colour validation rule fires correctly" · "Valid uppercase hex colour is accepted"
+    // @spec tag-object.md · "Tag colour picklist enforces allowed values" · "Valid picklist value saves successfully"
     @IsTest
     static void colour_validBlue_succeeds() {
         // Given
@@ -19,7 +19,7 @@ private class bcm_TagValidationTest {
         Assert.areEqual('#3A86FF', saved.bcm_Colour__c, 'Colour should be persisted as #3A86FF');
     }
 
-    // @spec tag-object.md · "Tag colour validation rule fires correctly" · "Valid lowercase hex colour is accepted"
+    // @spec tag-object.md · "Tag colour picklist enforces allowed values" · "Second valid picklist value saves successfully"
     @IsTest
     static void colour_validEmerald_succeeds() {
         // Given
@@ -37,7 +37,7 @@ private class bcm_TagValidationTest {
 
     // ─── Invalid / blank colour values are rejected ───────────────────────────
 
-    // @spec tag-object.md · "Tag colour validation rule fires correctly" · "Empty colour value is rejected"
+    // @spec tag-object.md · "Tag colour picklist enforces allowed values" · "Blank colour is rejected"
     @IsTest
     static void colour_blank_isRejected() {
         // Given — null colour; picklist is required
@@ -57,7 +57,7 @@ private class bcm_TagValidationTest {
         Test.stopTest();
     }
 
-    // @spec tag-object.md · "Tag colour validation rule fires correctly" · "Plain text colour name is rejected"
+    // @spec tag-object.md · "Tag colour picklist enforces allowed values" · "Value not in the picklist is rejected"
     @IsTest
     static void colour_invalidPicklistValue_isRejected() {
         // Given — "red" is not one of the 10 allowed picklist values
