@@ -5,8 +5,8 @@
 This document is the single reference for quality in the Business Capability Map
 project. It covers four concerns:
 
-1. **Prevention** — static analysis and formatting enforced before code is committed
-2. **Specification** — how requirements are written and how they frame the application
+1. **Specification** — how requirements are written and how they frame the application
+2. **Prevention** — static analysis and formatting enforced before code is committed
 3. **Verification** — the test layers that prove the application behaves correctly
 4. **Measurement** — coverage thresholds and traceability completeness
 
@@ -18,47 +18,7 @@ push to `main`.
 
 ---
 
-## 1. Prevention
-
-### Static analysis and formatting (pre-commit)
-
-Every `git commit` triggers a Husky pre-commit hook that runs lint-staged over the
-staged files:
-
-
-| Files                   | Tool                                                 | What it enforces                                 |
-| ----------------------- | ---------------------------------------------------- | ------------------------------------------------ |
-| `**/*.{cls,trigger}`    | `sf code-analyzer run -s 2`                          | PMD + CPD rules at severity ≥ 2                 |
-| `**/{aura,lwc}/**/*.js` | ESLint (`@salesforce/eslint-config-lwc`)             | LWC component quality rules                      |
-| `**/lwc/**`             | Jest (`--bail --findRelatedTests --passWithNoTests`) | Related LWC unit tests must pass                 |
-| All source files        | Prettier                                             | Consistent formatting (auto-fixed before commit) |
-
-`code-analyzer.yml` configures the engines: PMD and CPD use Java 17 Temurin; SFGE
-and Flow analysis are disabled for this project.
-
-Running tools manually:
-
-```bash
-npm run lint          # ESLint only
-npm run scan          # sf code-analyzer across all of force-app at severity ≥ 2
-npm run prettier      # auto-format everything
-npm run prettier:verify  # check formatting without writing
-```
-
-### What the tools do not catch
-
-The pre-commit hook cannot enforce:
-
-- Missing `Tested by:` or `Deferred:` markers in spec files
-- Missing `@spec` traceability comments in test methods
-- FP count not updated after adding a functional process
-- Implementation plan step not marked complete
-
-These are enforced by the **definition of done checklist** in Section 5.
-
----
-
-## 2. Specification
+## 1. Specification
 
 ### Acceptance Criteria and spec files
 
@@ -137,6 +97,46 @@ applies to all test methods from that point forward.
 
 ---
 
+## 2. Prevention
+
+### Static analysis and formatting (pre-commit)
+
+Every `git commit` triggers a Husky pre-commit hook that runs lint-staged over the
+staged files:
+
+
+| Files                   | Tool                                                 | What it enforces                                 |
+| ----------------------- | ---------------------------------------------------- | ------------------------------------------------ |
+| `**/*.{cls,trigger}`    | `sf code-analyzer run -s 2`                          | PMD + CPD rules at severity ≥ 2                 |
+| `**/{aura,lwc}/**/*.js` | ESLint (`@salesforce/eslint-config-lwc`)             | LWC component quality rules                      |
+| `**/lwc/**`             | Jest (`--bail --findRelatedTests --passWithNoTests`) | Related LWC unit tests must pass                 |
+| All source files        | Prettier                                             | Consistent formatting (auto-fixed before commit) |
+
+`code-analyzer.yml` configures the engines: PMD and CPD use Java 17 Temurin; SFGE
+and Flow analysis are disabled for this project.
+
+Running tools manually:
+
+```bash
+npm run lint          # ESLint only
+npm run scan          # sf code-analyzer across all of force-app at severity ≥ 2
+npm run prettier      # auto-format everything
+npm run prettier:verify  # check formatting without writing
+```
+
+### What the tools do not catch
+
+The pre-commit hook cannot enforce:
+
+- Missing `Tested by:` or `Deferred:` markers in spec files
+- Missing `@spec` traceability comments in test methods
+- FP count not updated after adding a functional process
+- Implementation plan step not marked complete
+
+These are enforced by the **definition of done checklist** in Section 5.
+
+---
+
 ## 3. Verification
 
 The project uses three test layers. Two are active; one is deferred.
@@ -177,7 +177,7 @@ Lightning Experience UI directly.
 **Does not own:** Business logic already validated by Apex. Playwright tests assume
 valid data and do not re-test Apex constraints through the UI.
 
-The decision to use Playwright for browser-layer testing — including the alternatives considered and rejected — is recorded in [ADR 0003: Playwright for E2E testing](file:///Users/dkrizanovic/projects/businesscapabilitymap/docs/adr/0003-playwright-e2e-testing.md).
+The decision to use Playwright for browser-layer testing — including the alternatives considered and rejected — is recorded in [ADR 0003: Playwright for E2E testing](../adr/0003-playwright-e2e-testing.md).
 
 ### Layer 3: Jest LWC Unit Tests (deferred)
 
@@ -185,7 +185,8 @@ The decision to use Playwright for browser-layer testing — including the alter
 
 **Would own:** LWC component logic that is purely JavaScript — computed properties,
 conditional rendering driven by JS state, custom event firing and handling, and any
-pure-function utilities in component files.
+pure-function utilities in component files. These tests run in Node, require no org
+connection, and are fast.
 
 **Current status:** Deferred until Steps 7–8 when `bcm_CapabilityMap` and
 `bcm_CapabilityNode` are implemented. `jest.config.js` is present and the dependency
@@ -193,7 +194,11 @@ is installed.
 
 ### Test Users
 
-Two static users exist in the target org:
+Two static users exist in the target org. They are created once and never recreated
+by the test suite. Static users are used rather than programmatic provisioning
+because Salesforce user creation from Apex is slow and unreliable in automated
+contexts. The usernames and passwords are stored in `.env` (gitignored);
+`.env.example` documents the required variables.
 
 
 | User                  | Permission Set | Purpose                                         |
@@ -230,6 +235,18 @@ The Apex script uses `Database.upsert` on `User.Fields.Username`, so re-running 
 is safe — it updates the existing users rather than attempting to create duplicates.
 Permission set assignments are checked before insert to avoid duplicate-assignment
 errors.
+
+### Authentication
+
+`tests/e2e/fixtures/auth.setup.ts` runs as a Playwright setup project before any
+spec. It logs in as each user via the Salesforce login page, then saves the browser
+session to `tests/e2e/.auth/editor.json` and `tests/e2e/.auth/viewer.json`
+(gitignored). Subsequent test projects consume the saved session via `storageState`,
+avoiding repeated logins.
+
+Sessions are refreshed on every `npx playwright test` invocation and are not
+persisted between runs.
+
 ---
 
 ## Data Management inside the Org
@@ -424,5 +441,8 @@ npm run lint
 npm run scan
 ```
 
-Prerequisites for E2E: copy `.env.example` → `.env`, fill in org URL and credentials,
-ensure both test users exist via `./scripts/create-e2e-users.sh [org-alias]`.
+Prerequisites for E2E:
+
+1. Copy `.env.example` to `.env` and fill in the org URL and test user credentials.
+2. Ensure `SF_ORG_ALIAS` in `.env` matches your target org alias in the `sf` CLI.
+3. Ensure both test users exist in the org with the correct permission sets assigned via `./scripts/create-e2e-users.sh [org-alias]`.
