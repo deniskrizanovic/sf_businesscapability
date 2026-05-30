@@ -25,7 +25,7 @@
 | 2 | `bcm_Capability__c` — object, fields, trigger, validation rules, Capabilities tab, Map record page | FP13, FP15–19 (Capability list + CRUD) | 21 | 39 | 35% | `[x]` | 2026-05-26 |
 | 3 | `bcm_Tag__c` — object, fields, validation rule, Tags tab | FP22–28 (Tag CRUD + detail) | 23 | 62 | 56% | `[x]` | 2026-05-27 |
 | 4 | `bcm_CapabilityTag__c` — junction object, permission additions | FP14, FP20–21 (Capability detail w/tags, tag junctions) | 15 | 77 | 69% | `[x]` | 2026-05-28 |
-| 5 | App structure — Custom Permission, FlexiPage stubs, Import tab | — | 0 | 77 | 69% | `[ ]` | — |
+| 5 | App structure — Custom Permission, FlexiPage stubs, Import tab | — | 0 | 77 | 69% | `[x]` | 2026-05-30 |
 | 6 | Import — `bcm_ImportController` Apex + `bcm_ImportUtility` LWC | FP4 (Import JSON) | 11 | 88 | 79% | `[ ]` | — |
 | 7 | Diagram — `bcm_CapabilityMap` LWC (read-only) | FP1–3 (Map / Capability / Tag diagram load) | 11 | 99 | 89% | `[ ]` | — |
 | 8 | Drag-drop — `bcm_DragDropController` Apex + LWC interactions | FP5–6 (Reorder + Reparent) | 12 | 111 | 100% | `[ ]` | — |
@@ -273,7 +273,7 @@
 - [ ] Click Import button → modal opens with placeholder text; close dismisses it
 - [ ] `npx playwright test tests/e2e/app-structure.spec.ts` passes with zero failures
 
-**Step complete:** `[ ]`
+**Step complete:** `[x]` — deployed to `home-denispoc` 2026-05-30
 
 ---
 
@@ -283,24 +283,26 @@
 
 **Before starting:** Claude must confirm Step 5 checkbox is `[x]`. If not, stop and ask why.
 
+**Design decisions:**
+- **Tags are not imported.** `bcm_Colour__c` is a restricted required picklist with no grey value; adding `#CCCCCC` would require a field schema change that is out of scope. Tags must be created manually via the Tags tab after import.
+- Wrapper classes (`bcm_ImportPayload`, `bcm_CapabilityNode`, `bcm_ImportResult`) are inner classes inside `bcm_ImportController`, not separate files.
+- `bcm_ImportResult` has no `tagsCreated` field (tags not imported).
+- `bcm_CanEdit` custom permission is checked at the top of the controller; missing permission throws `AuraHandledException`.
+
 **What gets built:**
-- Apex classes (no skill exists — hand-written Apex is permitted):
-  - `bcm_ImportController` with `importCapabilities(String jsonPayload)` per `02-import.md`
-  - `bcm_ImportPayload`, `bcm_CapabilityNode`, `bcm_ImportResult` wrapper classes
+- Apex (use skills: `generating-apex` for controller, `generating-apex-test` for test class):
+  - `bcm_ImportController` with `importCapabilities(String jsonPayload)` per `02-import.md`; inner classes: `bcm_ImportPayload`, `bcm_CapabilityNode`, `bcm_ImportResult`
   - `bcm_ImportControllerTest` (unit test, minimum 75% coverage)
 - LWC `bcm_ImportUtility` per `05-lwc-architecture.md`
-- `bcm_ImportModal` updated to host `bcm_ImportUtility` in its modal body (replaces placeholder text)
+- `bcm_ImportButton` updated to host `bcm_ImportUtility` in its panel body (replaces placeholder text from Step 5)
 - Playwright tests in `tests/e2e/import.spec.ts` covering all UI-visible scenarios from the spec
-- `generating-apex` — for `bcm_ImportController`, `bcm_ImportPayload`, `bcm_CapabilityNode`, `bcm_ImportResult`
-- `generating-apex-test` — for `bcm_ImportControllerTest`
 
 **Manual inspection checklist:**
 - [ ] Deploy succeeds with no errors
 - [ ] Apex test class passes with ≥75% coverage
-- [ ] Open a Map record → click Import button → modal shows `bcm_ImportUtility` component
-- [ ] Paste the sample JSON from `02-import.md` and click Import → success message with counts
-- [ ] Navigate to Capabilities tab → imported capabilities visible
-- [ ] Navigate to Tags tab → imported tags visible (e.g. "NEW" tag present)
+- [ ] Open a Map record → click Import button → panel shows `bcm_ImportUtility` component
+- [ ] Paste the sample JSON from `02-import.md` and click Import → success message with capability counts
+- [ ] Navigate to Capabilities tab → imported capabilities visible with correct parent hierarchy
 - [ ] Re-run import with same JSON → idempotent, no duplicates created
 - [ ] Paste malformed JSON → error message displayed (no unhandled exception)
 - [ ] `npx playwright test tests/e2e/import.spec.ts` passes with zero failures
