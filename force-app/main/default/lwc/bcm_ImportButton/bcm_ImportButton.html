@@ -1,6 +1,6 @@
 <template>
-    <div class="slds-p-around_medium">
-        <p>Import placeholder — replaced by bcm_ImportUtility in Step 6.</p>
-        <lightning-button label="Close" onclick={close} class="slds-m-top_small"></lightning-button>
-    </div>
+    <lightning-flow
+        flow-api-name="bcm_Import_Flow"
+        onstatuschange={handleStatusChange}>
+    </lightning-flow>
 </template>

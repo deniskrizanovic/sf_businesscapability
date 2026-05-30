@@ -19,16 +19,17 @@
 
 ## Progress Tracker
 
-| Step | Description | FPs Unlocked | CFP | Cumul. | % Done | Status | Completed |
-|---|---|---|---|---|---|---|---|
-| 1 | `bcm_Map__c` — object, fields, permission sets, Maps tab, app | FP7–12 (Map CRUD) | 18 | 18 | 16% | `[x]` | 2026-05-25 |
-| 2 | `bcm_Capability__c` — object, fields, trigger, validation rules, Capabilities tab, Map record page | FP13, FP15–19 (Capability list + CRUD) | 21 | 39 | 35% | `[x]` | 2026-05-26 |
-| 3 | `bcm_Tag__c` — object, fields, validation rule, Tags tab | FP22–28 (Tag CRUD + detail) | 23 | 62 | 56% | `[x]` | 2026-05-27 |
-| 4 | `bcm_CapabilityTag__c` — junction object, permission additions | FP14, FP20–21 (Capability detail w/tags, tag junctions) | 15 | 77 | 69% | `[x]` | 2026-05-28 |
-| 5 | App structure — Custom Permission, FlexiPage stubs, Import tab | — | 0 | 77 | 69% | `[x]` | 2026-05-30 |
-| 6 | Import — `bcm_ImportController` Apex + `bcm_ImportUtility` LWC | FP4 (Import JSON) | 11 | 88 | 79% | `[ ]` | — |
-| 7 | Diagram — `bcm_CapabilityMap` LWC (read-only) | FP1–3 (Map / Capability / Tag diagram load) | 11 | 99 | 89% | `[ ]` | — |
-| 8 | Drag-drop — `bcm_DragDropController` Apex + LWC interactions | FP5–6 (Reorder + Reparent) | 12 | 111 | 100% | `[ ]` | — |
+
+| Step | Description                                                                                         | FPs Unlocked                                             | CFP | Cumul. | % Done | Status | Completed  |
+| ---- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --- | ------ | ------ | ------ | ---------- |
+| 1    | `bcm_Map__c` — object, fields, permission sets, Maps tab, app                                      | FP7–12 (Map CRUD)                                       | 18  | 18     | 16%    | `[x]`  | 2026-05-25 |
+| 2    | `bcm_Capability__c` — object, fields, trigger, validation rules, Capabilities tab, Map record page | FP13, FP15–19 (Capability list + CRUD)                  | 21  | 39     | 35%    | `[x]`  | 2026-05-26 |
+| 3    | `bcm_Tag__c` — object, fields, validation rule, Tags tab                                           | FP22–28 (Tag CRUD + detail)                             | 23  | 62     | 56%    | `[x]`  | 2026-05-27 |
+| 4    | `bcm_CapabilityTag__c` — junction object, permission additions                                     | FP14, FP20–21 (Capability detail w/tags, tag junctions) | 15  | 77     | 69%    | `[x]`  | 2026-05-28 |
+| 5    | App structure — Custom Permission, FlexiPage stubs, Import tab                                     | —                                                       | 0   | 77     | 69%    | `[x]`  | 2026-05-30 |
+| 6    | Import —`bcm_ImportController` Apex + `bcm_Import_Flow` Screen Flow                                | FP4 (Import JSON)                                        | 11  | 88     | 79%    | `[x]`  | 2026-05-30 |
+| 7    | Diagram —`bcm_CapabilityMap` LWC (read-only)                                                       | FP1–3 (Map / Capability / Tag diagram load)             | 11  | 99     | 89%    | `[ ]`  | —         |
+| 8    | Drag-drop —`bcm_DragDropController` Apex + LWC interactions                                        | FP5–6 (Reorder + Reparent)                              | 12  | 111    | 100%   | `[ ]`  | —         |
 
 ---
 
@@ -39,6 +40,7 @@
 **Before starting:** No prior step. Proceed directly.
 
 **What gets built:**
+
 - Custom object `bcm_Map__c`
 - Fields: `bcm_Description__c` (Rich Text Area)
 - Permission sets `bcm_Viewer` and `bcm_Editor` (created here; both expanded in later steps)
@@ -48,6 +50,7 @@
 - Lightning App `bcm_BusinessCapabilityMap` with the Maps tab included
 
 **Skills to invoke (Claude must confirm before generating any file):**
+
 - `generating-custom-object` — for `bcm_Map__c`
 - `generating-custom-tab` — for the Maps tab
 - `generating-permission-set` — for `bcm_Viewer`
@@ -55,15 +58,16 @@
 - `generating-custom-application` — for `bcm_BusinessCapabilityMap`
 
 **Manual inspection checklist:**
-- [ ] `bcm_Map__c` visible in Setup → Object Manager
-- [ ] `bcm_Description__c` field present on the object
-- [ ] `bcm_BusinessCapabilityMap` Lightning App visible in App Launcher
-- [ ] Maps tab visible in the BCM app (when assigned `bcm_Editor`)
-- [ ] Maps tab visible when assigned `bcm_Viewer`
-- [ ] Can create a Map record from the Maps tab
-- [ ] `bcm_Viewer` permission set exists and grants Read on `bcm_Map__c`
-- [ ] `bcm_Editor` permission set exists and grants Read/Create/Edit/Delete on `bcm_Map__c`
-- [ ] `npx playwright test tests/e2e/map.spec.ts` passes with zero failures
+
+- [ ]  `bcm_Map__c` visible in Setup → Object Manager
+- [ ]  `bcm_Description__c` field present on the object
+- [ ]  `bcm_BusinessCapabilityMap` Lightning App visible in App Launcher
+- [ ]  Maps tab visible in the BCM app (when assigned `bcm_Editor`)
+- [ ]  Maps tab visible when assigned `bcm_Viewer`
+- [ ]  Can create a Map record from the Maps tab
+- [ ]  `bcm_Viewer` permission set exists and grants Read on `bcm_Map__c`
+- [ ]  `bcm_Editor` permission set exists and grants Read/Create/Edit/Delete on `bcm_Map__c`
+- [ ]  `npx playwright test tests/e2e/map.spec.ts` passes with zero failures
 
 **Step complete:** `[x]` — deployed to `home-denispoc` 2026-05-25
 
@@ -76,6 +80,7 @@
 **Before starting:** Claude must confirm Step 1 checkbox is `[x]`. If not, stop and ask why.
 
 **What gets built:**
+
 - Custom object `bcm_Capability__c`
 - Fields:
   - `bcm_Map__c` (Lookup → `bcm_Map__c`, Required, deleteConstraint: Restrict)
@@ -111,6 +116,7 @@
 - Lightning Record Page `bcm_MapRecordPage` for `bcm_Map__c` — assigned as default for the app; includes highlights panel, detail, and Capabilities related list
 
 **Skills to invoke (Claude must confirm before generating any file):**
+
 - `generating-custom-object` — for `bcm_Capability__c`
 - `generating-custom-field` — for each field (invoke per field or in batch as skill allows)
 - `generating-validation-rule` — for each validation rule
@@ -122,22 +128,23 @@
 - `generating-flexipage` — for `bcm_MapRecordPage` (Record Page for `bcm_Map__c`)
 
 **Manual inspection checklist:**
-- [ ] `bcm_Capability__c` visible in Setup → Object Manager
-- [ ] All 8 custom fields present
-- [ ] Capability record layout shows fields in order: Map, Level, Capability Name, Parent Capability, Sort Order
-- [ ] `bcm_ExternalId__c` marked as External ID in field detail
-- [ ] `bcm_Parent__c` is a self-referencing lookup (not Master-Detail)
-- [ ] All 4 validation rules active on the object
-- [ ] Create a Capability with no Parent, no Level → record saves; Level = 1 set by trigger
-- [ ] Create a Capability with an L1 Parent, no Level → record saves; Level = 2 set by trigger
-- [ ] Create a Capability with no SortOrder → record saves; SortOrder = MAX+1 within siblings
-- [ ] `bcm_CapabilityValidationTest` passes with all test methods green
-- [ ] Capabilities tab visible in the BCM app
-- [ ] `bcm_Viewer` now grants Read on `bcm_Capability__c`
-- [ ] `bcm_Editor` now grants Read/Create/Edit/Delete on `bcm_Capability__c`
-- [ ] Open a `bcm_Map__c` record → `bcm_MapRecordPage` loads with Capabilities related list visible
-- [ ] Create a Capability linked to that Map → it appears in the related list without page refresh
-- [ ] `npx playwright test tests/e2e/capability.spec.ts` passes with zero failures
+
+- [ ]  `bcm_Capability__c` visible in Setup → Object Manager
+- [ ]  All 8 custom fields present
+- [ ]  Capability record layout shows fields in order: Map, Level, Capability Name, Parent Capability, Sort Order
+- [ ]  `bcm_ExternalId__c` marked as External ID in field detail
+- [ ]  `bcm_Parent__c` is a self-referencing lookup (not Master-Detail)
+- [ ]  All 4 validation rules active on the object
+- [ ]  Create a Capability with no Parent, no Level → record saves; Level = 1 set by trigger
+- [ ]  Create a Capability with an L1 Parent, no Level → record saves; Level = 2 set by trigger
+- [ ]  Create a Capability with no SortOrder → record saves; SortOrder = MAX+1 within siblings
+- [ ]  `bcm_CapabilityValidationTest` passes with all test methods green
+- [ ]  Capabilities tab visible in the BCM app
+- [ ]  `bcm_Viewer` now grants Read on `bcm_Capability__c`
+- [ ]  `bcm_Editor` now grants Read/Create/Edit/Delete on `bcm_Capability__c`
+- [ ]  Open a `bcm_Map__c` record → `bcm_MapRecordPage` loads with Capabilities related list visible
+- [ ]  Create a Capability linked to that Map → it appears in the related list without page refresh
+- [ ]  `npx playwright test tests/e2e/capability.spec.ts` passes with zero failures
 
 **Step complete:** `[x]` — deployed to `home-denispoc` 2026-05-26
 
@@ -150,6 +157,7 @@
 **Before starting:** Claude must confirm Step 2 checkbox is `[x]`. If not, stop and ask why.
 
 **What gets built:**
+
 - Custom object `bcm_Tag__c`
 - Fields:
   - `bcm_Colour__c` (Restricted Picklist — Required; 10 values, label = colour name, stored value = hex code)
@@ -171,6 +179,7 @@
 - FlexiPage `bcm_Tag_Record_Page` — highlights panel + colour swatch + tabset (Detail + Related)
 
 **Skills invoked:**
+
 - `generating-custom-object` — for `bcm_Tag__c`
 - `generating-custom-field` — for `bcm_Colour__c` (Picklist)
 - `generating-custom-tab` — for the Tags tab
@@ -180,16 +189,17 @@
 - `generating-flexipage` — updated `bcm_Tag_Record_Page` to add `bcm_ColourSwatch`
 
 **Manual inspection checklist:**
-- [ ] `bcm_Tag__c` visible in Setup → Object Manager
-- [ ] `bcm_Colour__c` is a picklist — opens a dropdown with 10 named colours
-- [ ] `bcm_TagValidationTest` passes with all 6 test methods green
-- [ ] Create a Tag, leave Colour blank → save blocked (required field error)
-- [ ] Create a Tag, select "Blue" → saves; record shows a blue-filled `lightning-card` tile above the detail tabs with "Blue" in white centred text
-- [ ] Swatch tile colour and label match the selected picklist value visually
-- [ ] Tags tab visible in the BCM app for both Viewer and Editor
-- [ ] `bcm_Viewer` grants Read on `bcm_Tag__c`
-- [ ] `bcm_Editor` grants Read/Create/Edit/Delete on `bcm_Tag__c`
-- [ ] `npx playwright test tests/e2e/tag.spec.ts` passes with zero failures
+
+- [ ]  `bcm_Tag__c` visible in Setup → Object Manager
+- [ ]  `bcm_Colour__c` is a picklist — opens a dropdown with 10 named colours
+- [ ]  `bcm_TagValidationTest` passes with all 6 test methods green
+- [ ]  Create a Tag, leave Colour blank → save blocked (required field error)
+- [ ]  Create a Tag, select "Blue" → saves; record shows a blue-filled `lightning-card` tile above the detail tabs with "Blue" in white centred text
+- [ ]  Swatch tile colour and label match the selected picklist value visually
+- [ ]  Tags tab visible in the BCM app for both Viewer and Editor
+- [ ]  `bcm_Viewer` grants Read on `bcm_Tag__c`
+- [ ]  `bcm_Editor` grants Read/Create/Edit/Delete on `bcm_Tag__c`
+- [ ]  `npx playwright test tests/e2e/tag.spec.ts` passes with zero failures
 
 **Step complete:** `[x]` — deployed to `home-denispoc` 2026-05-27
 
@@ -202,6 +212,7 @@
 **Before starting:** Claude must confirm Step 3 checkbox is `[x]`. If not, stop and ask why.
 
 **What gets built:**
+
 - Custom object `bcm_CapabilityTag__c`
 - Fields:
   - `bcm_Capability__c` (Master-Detail → `bcm_Capability__c`)
@@ -220,22 +231,24 @@
 - Playwright tests in `tests/e2e/capability-tag.spec.ts` covering all UI-visible scenarios from the spec
 
 **Skills to invoke (Claude must confirm before generating any file):**
+
 - `generating-custom-object` — for `bcm_CapabilityTag__c`
 - `generating-custom-field` — for both Master-Detail fields
 - `generating-permission-set` — update `bcm_Viewer` and `bcm_Editor`
 - `generating-apex-test` — for `bcm_CapabilityTagTest`
 
 **Manual inspection checklist:**
-- [ ] `bcm_CapabilityTag__c` visible in Setup → Object Manager
-- [ ] Both Master-Detail relationships present and pointing to correct objects
-- [ ] Related list "Tags" appears on a `bcm_Capability__c` record detail page
-- [ ] `bcm_Capability_Record_Page` assigned as default record page for `bcm_BusinessCapabilityMap` app
-- [ ] Create a junction record linking a test Capability to a test Tag → saves successfully
-- [ ] Delete the parent Capability → junction record is deleted (cascade)
-- [ ] `bcm_CapabilityTagTest` passes with all 5 test methods green
-- [ ] `bcm_Viewer` grants Read on `bcm_CapabilityTag__c`
-- [ ] `bcm_Editor` grants Read/Create/Edit/Delete on `bcm_CapabilityTag__c`
-- [ ] `npx playwright test tests/e2e/capability-tag.spec.ts` passes with zero failures
+
+- [ ]  `bcm_CapabilityTag__c` visible in Setup → Object Manager
+- [ ]  Both Master-Detail relationships present and pointing to correct objects
+- [ ]  Related list "Tags" appears on a `bcm_Capability__c` record detail page
+- [ ]  `bcm_Capability_Record_Page` assigned as default record page for `bcm_BusinessCapabilityMap` app
+- [ ]  Create a junction record linking a test Capability to a test Tag → saves successfully
+- [ ]  Delete the parent Capability → junction record is deleted (cascade)
+- [ ]  `bcm_CapabilityTagTest` passes with all 5 test methods green
+- [ ]  `bcm_Viewer` grants Read on `bcm_CapabilityTag__c`
+- [ ]  `bcm_Editor` grants Read/Create/Edit/Delete on `bcm_CapabilityTag__c`
+- [ ]  `npx playwright test tests/e2e/capability-tag.spec.ts` passes with zero failures
 
 **Step complete:** `[x]`
 
@@ -248,6 +261,7 @@
 **Before starting:** Claude must confirm Step 4 checkbox is `[x]`. If not, stop and ask why.
 
 **What gets built:**
+
 - Custom Permission `bcm_CanEdit` (hand-written XML — explicit exception to the no-hand-write rule)
 - `bcm_Editor` permission set updated to grant `bcm_CanEdit`; Visualisation tab Visible
 - `bcm_Viewer` permission set updated: Visualisation tab Visible
@@ -259,55 +273,64 @@
 - Playwright tests in `tests/e2e/app-structure.spec.ts` covering all UI-visible scenarios from the spec
 
 **Skills invoked:**
+
 - Hand-write `bcm_CanEdit` Custom Permission XML (noted exception)
 - `generating-permission-set` — update `bcm_Editor` and `bcm_Viewer`
 - `generating-flexipage` — update `bcm_MapRecordPage` (two buttons in header)
 
 **Manual inspection checklist:**
-- [ ] `bcm_CanEdit` Custom Permission visible in Setup → Custom Permissions
-- [ ] `bcm_Editor` permission set includes `bcm_CanEdit`
-- [ ] Assign `bcm_Editor` — tabs visible: Maps, Capabilities, Tags (no Visualisation or Import tabs)
-- [ ] Assign `bcm_Viewer` — same three tabs visible
-- [ ] Open a Map record → Visualisation and Import buttons visible in record header
-- [ ] Click Visualisation button → modal opens with placeholder text; close dismisses it
-- [ ] Click Import button → modal opens with placeholder text; close dismisses it
-- [ ] `npx playwright test tests/e2e/app-structure.spec.ts` passes with zero failures
+
+- [ ]  `bcm_CanEdit` Custom Permission visible in Setup → Custom Permissions
+- [ ]  `bcm_Editor` permission set includes `bcm_CanEdit`
+- [ ]  Assign `bcm_Editor` — tabs visible: Maps, Capabilities, Tags (no Visualisation or Import tabs)
+- [ ]  Assign `bcm_Viewer` — same three tabs visible
+- [ ]  Open a Map record → Visualisation and Import buttons visible in record header
+- [ ]  Click Visualisation button → modal opens with placeholder text; close dismisses it
+- [ ]  Click Import button → modal opens with placeholder text; close dismisses it
+- [ ]  `npx playwright test tests/e2e/app-structure.spec.ts` passes with zero failures
 
 **Step complete:** `[x]` — deployed to `home-denispoc` 2026-05-30
 
 ---
 
-## Step 6 — Import: `bcm_ImportController` Apex + `bcm_ImportUtility` LWC
+## Step 6 — Import: `bcm_ImportController` Apex + `bcm_Import_Flow` Screen Flow
 
 **Spec:** [import.md](../specs/import.md)
 
 **Before starting:** Claude must confirm Step 5 checkbox is `[x]`. If not, stop and ask why.
 
 **Design decisions:**
-- **Tags are not imported.** `bcm_Colour__c` is a restricted required picklist with no grey value; adding `#CCCCCC` would require a field schema change that is out of scope. Tags must be created manually via the Tags tab after import.
+
+- **Tags are not imported.** `bcm_Colour__c` is a restricted required picklist with no grey value. Tags must be created manually via the Tags tab after import.
 - Wrapper classes (`bcm_ImportPayload`, `bcm_CapabilityNode`, `bcm_ImportResult`) are inner classes inside `bcm_ImportController`, not separate files.
 - `bcm_ImportResult` has no `tagsCreated` field (tags not imported).
 - `bcm_CanEdit` custom permission is checked at the top of the controller; missing permission throws `AuraHandledException`.
+- **`@AuraEnabled` is not used.** `bcm_ImportResult` fields use `@InvocableVariable`; `bcm_ImportController` exposes `@InvocableMethod execute(List<FlowInput>)` as the Flow entry point. No separate wrapper class is needed.
+- `bcm_ImportButton` embeds the Flow via `<lightning-flow>` — the `bcm_ImportUtility` LWC is never created.
 
 **What gets built:**
+
 - Apex (use skills: `generating-apex` for controller, `generating-apex-test` for test class):
-  - `bcm_ImportController` with `importCapabilities(String jsonPayload)` per `02-import.md`; inner classes: `bcm_ImportPayload`, `bcm_CapabilityNode`, `bcm_ImportResult`
-  - `bcm_ImportControllerTest` (unit test, minimum 75% coverage)
-- LWC `bcm_ImportUtility` per `05-lwc-architecture.md`
-- `bcm_ImportButton` updated to host `bcm_ImportUtility` in its panel body (replaces placeholder text from Step 5)
+  - `bcm_ImportController` with `importCapabilities(String jsonPayload)`, `@InvocableMethod execute(List<FlowInput>)`, inner classes: `bcm_ImportPayload`, `bcm_CapabilityNode`, `bcm_ImportResult`, `FlowInput`
+  - `bcm_ImportControllerTest` (unit test, minimum 75% coverage; includes invocable path tests)
+- Screen Flow `bcm_Import_Flow` (use `generating-flow` skill): Screen 1 JSON input → Apex action → decision → Screen 2a success / Screen 2b error
+- `bcm_ImportButton` updated to embed `<lightning-flow flow-api-name="bcm_Import_Flow">` (replaces placeholder text from Step 5)
 - Playwright tests in `tests/e2e/import.spec.ts` covering all UI-visible scenarios from the spec
 
 **Manual inspection checklist:**
-- [ ] Deploy succeeds with no errors
-- [ ] Apex test class passes with ≥75% coverage
-- [ ] Open a Map record → click Import button → panel shows `bcm_ImportUtility` component
-- [ ] Paste the sample JSON from `02-import.md` and click Import → success message with capability counts
-- [ ] Navigate to Capabilities tab → imported capabilities visible with correct parent hierarchy
-- [ ] Re-run import with same JSON → idempotent, no duplicates created
-- [ ] Paste malformed JSON → error message displayed (no unhandled exception)
-- [ ] `npx playwright test tests/e2e/import.spec.ts` passes with zero failures
 
-**Step complete:** `[ ]`
+- [ ]  Deploy succeeds with no errors
+- [ ]  Apex test class passes with ≥75% coverage (all 8 methods green)
+- [ ]  Open a Map record → click Import button → panel shows Flow Screen 1 with JSON textarea
+- [ ]  Paste the sample JSON from `02-import.md` and click Import → Screen 2a shows "Successfully imported N capabilities."
+- [ ]  Click Close → action panel closes
+- [ ]  Navigate to Capabilities tab → imported capabilities visible with correct parent hierarchy
+- [ ]  Re-run import with same JSON → idempotent, no duplicates created
+- [ ]  Paste malformed JSON → Screen 2b shows error message → click Previous → returns to Screen 1
+- [ ]  As Viewer: click Import → Screen 2b shows "Access denied" (no generic unhandled Flow error)
+- [ ]  `npx playwright test tests/e2e/import.spec.ts` passes with zero failures
+
+**Step complete:** `[x]` — deployed to `home-denispoc` 2026-05-30
 
 ---
 
@@ -318,7 +341,8 @@
 **Before starting:** Claude must confirm Step 6 checkbox is `[x]`. If not, stop and ask why.
 
 **What gets built:**
-- Apex controllers (hand-written):
+
+- Apex controllers (use skills):
   - `bcm_MapController.getMaps()`
   - `bcm_CapabilityController.getCapabilities(Id mapId)`
   - `bcm_TagController.getTags()`
@@ -335,26 +359,28 @@
 - Playwright tests in `tests/e2e/diagram.spec.ts` covering all UI-visible scenarios from the spec
 
 **Skills to invoke (Claude must confirm before generating any file):**
+
 - `generating-apex` — for `bcm_MapController`, `bcm_CapabilityController`, `bcm_TagController`
 - `generating-apex-test` — for test classes for all three controllers
 - `generating-apex` — for `bcm_MapController`, `bcm_CapabilityController`, `bcm_TagController`
 - `generating-apex-test` — for test classes for all three controllers
 
 **Manual inspection checklist:**
-- [ ] Deploy succeeds with no errors
-- [ ] All Apex test classes pass with ≥75% coverage
-- [ ] Open a Map record → click Visualisation button → modal shows map selector combobox
-- [ ] Select the imported map → diagram renders with correct L1/L2/L3 structure
-- [ ] All L1 chevrons visible with correct labels
-- [ ] L2 boxes stacked within correct columns
-- [ ] L3 bullets listed inside correct L2 boxes
-- [ ] Mouse wheel zoom works (in and out)
-- [ ] Click-drag on background pans the diagram
-- [ ] Select a tag in the Tag combobox → capabilities with that tag highlight in tag colour
-- [ ] Select "None" → highlights clear
-- [ ] Left-click a node → context menu appears with placeholder text
-- [ ] No drag handles visible (drag-drop not yet built)
-- [ ] `npx playwright test tests/e2e/diagram.spec.ts` passes with zero failures
+
+- [ ]  Deploy succeeds with no errors
+- [ ]  All Apex test classes pass with ≥75% coverage
+- [ ]  Open a Map record → click Visualisation button → modal shows map selector combobox
+- [ ]  Select the imported map → diagram renders with correct L1/L2/L3 structure
+- [ ]  All L1 chevrons visible with correct labels
+- [ ]  L2 boxes stacked within correct columns
+- [ ]  L3 bullets listed inside correct L2 boxes
+- [ ]  Mouse wheel zoom works (in and out)
+- [ ]  Click-drag on background pans the diagram
+- [ ]  Select a tag in the Tag combobox → capabilities with that tag highlight in tag colour
+- [ ]  Select "None" → highlights clear
+- [ ]  Left-click a node → context menu appears with placeholder text
+- [ ]  No drag handles visible (drag-drop not yet built)
+- [ ]  `npx playwright test tests/e2e/diagram.spec.ts` passes with zero failures
 
 **Step complete:** `[ ]`
 
@@ -367,6 +393,7 @@
 **Before starting:** Claude must confirm Step 7 checkbox is `[x]`. If not, stop and ask why.
 
 **What gets built:**
+
 - Apex controller `bcm_DragDropController` (hand-written):
   - `reorderCapabilities(List<Id> orderedIds)`
   - `reparentCapability(Id capabilityId, Id newParentId, List<Id> newSiblingIds, List<Id> oldSiblingIds)`
@@ -381,20 +408,22 @@
 - Playwright tests in `tests/e2e/drag-drop.spec.ts` covering all UI-visible scenarios from the spec
 
 **Skills to invoke (Claude must confirm before generating any file):**
+
 - `generating-apex` — for `bcm_DragDropController`
 - `generating-apex-test` — for `bcm_DragDropControllerTest`
 
 **Manual inspection checklist:**
-- [ ] Deploy succeeds with no errors
-- [ ] Apex test class passes with ≥75% coverage
-- [ ] Assign `bcm_Editor` to yourself — drag handles visible on diagram nodes
-- [ ] Drag an L2 box to a new position within the same column → diagram re-renders in new order; refresh page → order persists in org
-- [ ] Drag an L2 box to a different L1 column → capability reparented; refresh → persists
-- [ ] Drag an L1 chevron to a new column position → reorders correctly; refresh → persists
-- [ ] Drag an L3 item within its L2 box → reorders; refresh → persists
-- [ ] Drag an L3 item to a different L2 box → reparents; refresh → persists
-- [ ] Assign `bcm_Viewer` to a test user — confirm drag handles not visible
-- [ ] Simulate Apex failure (temporarily break controller) → toast error appears and diagram reverts
-- [ ] `npx playwright test tests/e2e/drag-drop.spec.ts` passes with zero failures
+
+- [ ]  Deploy succeeds with no errors
+- [ ]  Apex test class passes with ≥75% coverage
+- [ ]  Assign `bcm_Editor` to yourself — drag handles visible on diagram nodes
+- [ ]  Drag an L2 box to a new position within the same column → diagram re-renders in new order; refresh page → order persists in org
+- [ ]  Drag an L2 box to a different L1 column → capability reparented; refresh → persists
+- [ ]  Drag an L1 chevron to a new column position → reorders correctly; refresh → persists
+- [ ]  Drag an L3 item within its L2 box → reorders; refresh → persists
+- [ ]  Drag an L3 item to a different L2 box → reparents; refresh → persists
+- [ ]  Assign `bcm_Viewer` to a test user — confirm drag handles not visible
+- [ ]  Simulate Apex failure (temporarily break controller) → toast error appears and diagram reverts
+- [ ]  `npx playwright test tests/e2e/drag-drop.spec.ts` passes with zero failures
 
 **Step complete:** `[ ]`

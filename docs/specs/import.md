@@ -19,6 +19,7 @@ When the user clicks the Import button in the highlights panel
 Then the import panel opens but the Import button is disabled or hidden  
 
 > Tested by: bcm_ImportControllerTest.permission_viewer_cannotCallImport
+> Tested by: bcm_ImportControllerTest.invocable_viewer_returnsAccessDenied
 
 ---
 

@@ -105,6 +105,6 @@ test.describe('Map record page buttons — editor project', () => {
         await page.goto(mapUrl);
         await page.getByRole('button', { name: 'Import', exact: true }).click();
         await expect(page.locator('force-user-message-popup, .messageText')).toHaveCount(0);
-        await expect(page.getByRole('button', { name: 'Close', exact: true })).toBeVisible();
+        await expect(page.getByLabel('Paste JSON')).toBeVisible();
     });
 });

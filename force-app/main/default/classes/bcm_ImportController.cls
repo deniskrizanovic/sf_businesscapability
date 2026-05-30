@@ -1,5 +1,5 @@
 /**
- * @AuraEnabled controller that imports a capability map from a nested JSON payload.
+ * Imports a capability map from a nested JSON payload.
  *
  * <p>Upserts {@code bcm_Map__c} and all {@code bcm_Capability__c} records, including
  * parent–child links. Because the {@code No_Parent_Must_Be_Level_1} validation rule
@@ -34,7 +34,6 @@ public with sharing class bcm_ImportController {
      *         '{ "mapName": "My Map", "capabilities": [] }'
      *     );
      */
-    @AuraEnabled(cacheable=false)
     public static bcm_ImportResult importCapabilities(String jsonPayload) {
         if (String.isBlank(jsonPayload)) {
             return errorResult(ERROR_PAYLOAD_REQUIRED);
@@ -43,9 +42,8 @@ public with sharing class bcm_ImportController {
             throw new AuraHandledException(ERROR_ACCESS_DENIED);
         }
         try {
-            bcm_ImportPayload payload = (bcm_ImportPayload) JSON.deserialize(
-                jsonPayload, bcm_ImportPayload.class
-            );
+            Map<String, Object> raw = (Map<String, Object>) JSON.deserializeUntyped(jsonPayload);
+            bcm_ImportPayload payload = parsePayload(raw);
             return runImport(payload);
         } catch (JSONException jsonEx) {
             return errorResult('Invalid JSON: ' + jsonEx.getMessage());
@@ -54,6 +52,44 @@ public with sharing class bcm_ImportController {
         } catch (Exception ex) {
             return errorResult(ex.getMessage());
         }
+    }
+
+    // ─── Manual JSON parsers ─────────────────────────────────────────────────
+    // JSON.deserialize is avoided for bcm_ImportPayload because bcm_CapabilityNode
+    // is self-recursive. Salesforce's Flow-to-Apex bridge reflects on inner classes
+    // during InvocableMethod setup and reports duplicate fields on recursive types.
+
+    private static bcm_ImportPayload parsePayload(Map<String, Object> raw) {
+        bcm_ImportPayload p = new bcm_ImportPayload();
+        p.mapName        = (String) raw.get('mapName');
+        p.mapDescription = (String) raw.get('mapDescription');
+        p.capabilities   = new List<bcm_CapabilityNode>();
+        Object caps = raw.get('capabilities');
+        if (caps instanceof List<Object>) {
+            for (Object item : (List<Object>) caps) {
+                p.capabilities.add(parseNode((Map<String, Object>) item));
+            }
+        }
+        return p;
+    }
+
+    private static bcm_CapabilityNode parseNode(Map<String, Object> raw) {
+        bcm_CapabilityNode n = new bcm_CapabilityNode();
+        n.externalId          = (String)  raw.get('externalId');
+        n.name                = (String)  raw.get('name');
+        n.level               = raw.get('level')      != null ? Integer.valueOf(String.valueOf(raw.get('level')))     : null;
+        n.sortOrder           = raw.get('sortOrder')  != null ? Integer.valueOf(String.valueOf(raw.get('sortOrder'))) : null;
+        n.definition          = (String)  raw.get('definition');
+        n.strategySupport     = (String)  raw.get('strategySupport');
+        n.architecturalNuance = (String)  raw.get('architecturalNuance');
+        n.children            = new List<bcm_CapabilityNode>();
+        Object kids = raw.get('children');
+        if (kids instanceof List<Object>) {
+            for (Object item : (List<Object>) kids) {
+                n.children.add(parseNode((Map<String, Object>) item));
+            }
+        }
+        return n;
     }
 
     // ─── Private orchestration ───────────────────────────────────────────────
@@ -276,16 +312,42 @@ public with sharing class bcm_ImportController {
     }
 
     /**
-     * Returned to the LWC after an import attempt.
+     * Returned from an import attempt. Fields are exposed to Screen Flows via
+     * {@code @InvocableVariable}.
      */
     public class bcm_ImportResult {
         /** Number of bcm_Capability__c records created in this import. */
-        @AuraEnabled public Integer capabilitiesInserted = 0;
+        @InvocableVariable public Integer capabilitiesInserted = 0;
         /** Number of bcm_Capability__c records updated in this import. */
-        @AuraEnabled public Integer capabilitiesUpdated  = 0;
+        @InvocableVariable public Integer capabilitiesUpdated  = 0;
         /** {@code true} when the import completed without a hard error. */
-        @AuraEnabled public Boolean success              = false;
+        @InvocableVariable public Boolean success              = false;
         /** Human-readable description when {@code success} is {@code false}. */
-        @AuraEnabled public String  errorMessage;
+        @InvocableVariable public String  errorMessage;
+    }
+
+    // ─── Flow entry point ────────────────────────────────────────────────────
+
+    public class FlowInput {
+        @InvocableVariable(label='JSON Payload' required=true)
+        public String jsonPayload;
+    }
+
+    @InvocableMethod(
+        label='Import Capability Map from JSON'
+        description='Calls importCapabilities and surfaces result for a Screen Flow.'
+        category='BCM'
+    )
+    public static List<bcm_ImportResult> execute(List<FlowInput> inputs) {
+        try {
+            return new List<bcm_ImportResult>{ importCapabilities(inputs.get(0).jsonPayload) };
+        } catch (AuraHandledException e) {
+            bcm_ImportResult err = new bcm_ImportResult();
+            err.success              = false;
+            err.errorMessage         = e.getMessage();
+            err.capabilitiesInserted = 0;
+            err.capabilitiesUpdated  = 0;
+            return new List<bcm_ImportResult>{ err };
+        }
     }
 }

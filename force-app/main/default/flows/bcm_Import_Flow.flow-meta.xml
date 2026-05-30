@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>66.0</apiVersion>
+    <description>Screen Flow that accepts a JSON payload, calls bcm_ImportController.execute, and displays a success or error screen.</description>
+    <interviewLabel>Import Capability Map {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Import Capability Map</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>Flow</processType>
+
+    <!-- actionCalls come before decisions/screens in the XSD sequence -->
+
+    <actionCalls>
+        <name>Apex_ImportCapabilities</name>
+        <label>Import Capabilities</label>
+        <locationX>176</locationX>
+        <locationY>288</locationY>
+        <actionName>bcm_ImportController</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Decision_ImportSuccess</targetReference>
+        </connector>
+        <inputParameters>
+            <name>jsonPayload</name>
+            <value>
+                <elementReference>jsonPayload</elementReference>
+            </value>
+        </inputParameters>
+        <outputParameters>
+            <assignToReference>importSuccess</assignToReference>
+            <name>success</name>
+        </outputParameters>
+        <outputParameters>
+            <assignToReference>importErrorMessage</assignToReference>
+            <name>errorMessage</name>
+        </outputParameters>
+        <outputParameters>
+            <assignToReference>capabilitiesInserted</assignToReference>
+            <name>capabilitiesInserted</name>
+        </outputParameters>
+        <outputParameters>
+            <assignToReference>capabilitiesUpdated</assignToReference>
+            <name>capabilitiesUpdated</name>
+        </outputParameters>
+    </actionCalls>
+
+    <!-- decisions come after actionCalls, before screens -->
+
+    <decisions>
+        <name>Decision_ImportSuccess</name>
+        <label>Import Succeeded?</label>
+        <locationX>176</locationX>
+        <locationY>408</locationY>
+        <defaultConnector>
+            <targetReference>Screen_Error</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Error</defaultConnectorLabel>
+        <rules>
+            <name>Rule_Success</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>importSuccess</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Screen_Success</targetReference>
+            </connector>
+            <label>Success</label>
+        </rules>
+    </decisions>
+
+    <!-- ALL screens grouped together (XSD requires same-type elements adjacent) -->
+
+    <screens>
+        <name>Screen_PasteJSON</name>
+        <label>Paste JSON</label>
+        <locationX>176</locationX>
+        <locationY>168</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <connector>
+            <targetReference>Apex_ImportCapabilities</targetReference>
+        </connector>
+        <fields>
+            <name>jsonPayload</name>
+            <dataType>String</dataType>
+            <fieldText>Paste JSON</fieldText>
+            <fieldType>LargeTextArea</fieldType>
+            <isRequired>true</isRequired>
+        </fields>
+        <nextOrFinishButtonLabel>Import</nextOrFinishButtonLabel>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+
+    <screens>
+        <name>Screen_Success</name>
+        <label>Import Complete</label>
+        <locationX>48</locationX>
+        <locationY>528</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>Text_Success</name>
+            <fieldText>Successfully imported {!capabilitiesInserted} capabilities.</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <nextOrFinishButtonLabel>Close</nextOrFinishButtonLabel>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+
+    <screens>
+        <name>Screen_Error</name>
+        <label>Import Error</label>
+        <locationX>304</locationX>
+        <locationY>528</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>false</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>Text_Error</name>
+            <fieldText>{!importErrorMessage}</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+
+    <start>
+        <locationX>176</locationX>
+        <locationY>48</locationY>
+        <connector>
+            <targetReference>Screen_PasteJSON</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+
+    <variables>
+        <name>importSuccess</name>
+        <dataType>Boolean</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>importErrorMessage</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>capabilitiesInserted</name>
+        <dataType>Number</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <scale>0</scale>
+    </variables>
+    <variables>
+        <name>capabilitiesUpdated</name>
+        <dataType>Number</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <scale>0</scale>
+    </variables>
+
+</Flow>

@@ -257,4 +257,57 @@ private class bcm_ImportControllerTest {
         Integer capCount = [SELECT COUNT() FROM bcm_Capability__c];
         Assert.areEqual(0, capCount, 'No Capability records should be created by a Viewer');
     }
+
+    // ─── Invocable (Flow) entry point ─────────────────────────────────────────
+
+    // @spec import.md · "Feature: Successful import from valid JSON" · "Scenario: Valid JSON creates a Map, Capabilities, and Tags"
+    @IsTest
+    static void invocable_execute_delegatesAndReturnsResult() {
+        // Given
+        bcm_ImportController.FlowInput input = new bcm_ImportController.FlowInput();
+        input.jsonPayload = SAMPLE_JSON;
+
+        // When
+        Test.startTest();
+        List<bcm_ImportController.bcm_ImportResult> results =
+                bcm_ImportController.execute(new List<bcm_ImportController.FlowInput>{ input });
+        Test.stopTest();
+
+        // Then
+        Assert.areEqual(1, results.size(), 'execute() should return a single-element list');
+        bcm_ImportController.bcm_ImportResult result = results[0];
+        Assert.isTrue(result.success, 'Invocable import should succeed for valid JSON');
+        Assert.areEqual(3, result.capabilitiesInserted,
+                'Three capabilities should be inserted via the invocable path');
+        Assert.isNull(result.errorMessage, 'errorMessage should be null on success');
+    }
+
+    // @spec import.md · "Feature: Import UI is accessible from a Map record" · "Scenario: Import panel is not accessible to Viewers"
+    @IsTest
+    static void invocable_viewer_returnsAccessDenied() {
+        // Given — create Viewer user before startTest to avoid mixed-DML issue
+        User viewer = TestDataFactory.createUserWithPermSet('bcm_Viewer');
+
+        bcm_ImportController.FlowInput input = new bcm_ImportController.FlowInput();
+        input.jsonPayload = SAMPLE_JSON;
+
+        // When
+        Test.startTest();
+        List<bcm_ImportController.bcm_ImportResult> results;
+        System.runAs(viewer) {
+            results = bcm_ImportController.execute(
+                    new List<bcm_ImportController.FlowInput>{ input });
+        }
+        Test.stopTest();
+
+        // Then — AuraHandledException is caught and returned as a failure result (not re-thrown)
+        Assert.areEqual(1, results.size(), 'execute() should return a single-element list');
+        bcm_ImportController.bcm_ImportResult result = results[0];
+        Assert.isFalse(result.success, 'Viewer should not be able to import via the Flow path');
+        Assert.isNotNull(result.errorMessage,
+                'errorMessage should be populated when permission is denied');
+
+        Integer capCount = [SELECT COUNT() FROM bcm_Capability__c];
+        Assert.areEqual(0, capCount, 'No Capability records should be created by a Viewer');
+    }
 }
