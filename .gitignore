@@ -45,6 +45,7 @@ $RECYCLE.BIN/
 # Playwright auth sessions and run state
 tests/e2e/.auth/
 tests/e2e/.run_id
+tests/e2e/.diagram_map_url
 tests/e2e/.teardown_*.apex
 
 # Playwright test results
@@ -67,6 +68,7 @@ target/
 
 # Local strategy docs
 docs/Detailed Strategy Mapping*
+docs/homes-nsw-bcm.json
 
 # IDE config
 .idea/

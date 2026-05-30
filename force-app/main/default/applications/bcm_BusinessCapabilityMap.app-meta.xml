@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>View</actionName>
+        <comment>Action override created by Lightning App Builder during activation.</comment>
+        <content>bcm_MapRecordPage</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>bcm_Map__c</pageOrSobjectType>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Flexipage</type>
+    </actionOverrides>
     <defaultLandingTab>bcm_Map__c</defaultLandingTab>
     <description>Business Capability Map application.</description>
     <formFactors>Large</formFactors>
@@ -9,6 +18,7 @@
     <label>Business Capability Map</label>
     <navType>Standard</navType>
     <tabs>bcm_Map__c</tabs>
+    <tabs>bcm_Visualisation</tabs>
     <tabs>bcm_Capability__c</tabs>
     <tabs>bcm_Tag__c</tabs>
     <uiType>Lightning</uiType>

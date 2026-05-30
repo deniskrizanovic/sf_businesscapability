@@ -1,0 +1,23 @@
+.bcm-toolbar {
+    background: #f3f3f3;
+    border-bottom: 1px solid #dddbda;
+}
+
+.bcm-canvas-container {
+    position: relative;
+    overflow: auto;
+    background: #fafafa;
+}
+
+.bcm-canvas {
+    display: block;
+    cursor: grab;
+}
+
+.bcm-canvas:active {
+    cursor: grabbing;
+}
+
+.bcm-node {
+    cursor: pointer;
+}

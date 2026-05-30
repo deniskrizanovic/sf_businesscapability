@@ -17,10 +17,12 @@ export default function globalTeardown() {
     // Delete in FK order: CapabilityTag → Capability → Tag → Map
     const apex = `
 List<bcm_CapabilityTag__c> ct = [SELECT Id FROM bcm_CapabilityTag__c
-    WHERE bcm_Capability__r.Name LIKE '%${runId}%' OR bcm_Tag__r.Name LIKE '%${runId}%' LIMIT 10000];
+    WHERE bcm_Capability__r.Name LIKE '%${runId}%'
+       OR bcm_Capability__r.bcm_Map__r.Name LIKE '%${runId}%'
+       OR bcm_Tag__r.Name LIKE '%${runId}%' LIMIT 10000];
 if (!ct.isEmpty()) delete ct;
 
-List<bcm_Capability__c> caps = [SELECT Id FROM bcm_Capability__c WHERE Name LIKE '%${runId}%' LIMIT 10000];
+List<bcm_Capability__c> caps = [SELECT Id FROM bcm_Capability__c WHERE Name LIKE '%${runId}%' OR bcm_Map__r.Name LIKE '%${runId}%' LIMIT 10000];
 if (!caps.isEmpty()) delete caps;
 
 List<bcm_Tag__c> tags = [SELECT Id FROM bcm_Tag__c WHERE Name LIKE '%${runId}%' LIMIT 10000];
