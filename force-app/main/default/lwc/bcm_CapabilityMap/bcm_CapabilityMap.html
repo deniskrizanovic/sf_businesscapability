@@ -1,0 +1,148 @@
+<template>
+    <!-- Toolbar -->
+    <div class="bcm-toolbar slds-grid slds-grid_align-spread slds-p-around_x-small slds-border_bottom">
+        <div class="slds-grid slds-grid_vertical-align-center slds-gutters_x-small">
+            <div class="slds-col">
+                <lightning-combobox
+                    label="Map"
+                    placeholder="Select a map…"
+                    options={mapOptions}
+                    value={selectedMapId}
+                    onchange={handleMapChange}>
+                </lightning-combobox>
+            </div>
+            <div class="slds-col">
+                <lightning-combobox
+                    label="Colour by Tag"
+                    placeholder="None"
+                    options={tagOptions}
+                    value={selectedTagId}
+                    onchange={handleTagChange}>
+                </lightning-combobox>
+            </div>
+        </div>
+        <div class="slds-grid slds-grid_vertical-align-end slds-gutters_xx-small">
+            <div class="slds-col">
+                <lightning-button-icon
+                    icon-name="utility:add"
+                    title="Zoom In"
+                    onclick={handleZoomIn}>
+                </lightning-button-icon>
+            </div>
+            <div class="slds-col">
+                <lightning-button-icon
+                    icon-name="utility:dash"
+                    title="Zoom Out"
+                    onclick={handleZoomOut}>
+                </lightning-button-icon>
+            </div>
+            <div class="slds-col">
+                <lightning-button-icon
+                    icon-name="utility:refresh"
+                    title="Reset View"
+                    onclick={handleResetView}>
+                </lightning-button-icon>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error -->
+    <template if:true={errorMessage}>
+        <div class="slds-notify slds-notify_alert slds-theme_error slds-m-around_small" role="alert">
+            <span>{errorMessage}</span>
+        </div>
+    </template>
+
+    <!-- Spinner -->
+    <template if:true={isLoading}>
+        <lightning-spinner alternative-text="Loading…" size="medium"></lightning-spinner>
+    </template>
+
+    <!-- SVG Canvas -->
+    <div class="bcm-canvas-container">
+        <svg
+            class="bcm-canvas"
+            width={canvasWidth}
+            height={canvasHeight}
+            onmousedown={handleSvgMouseDown}
+            onmousemove={handleSvgMouseMove}
+            onmouseup={handleSvgMouseUp}
+            onmouseleave={handleSvgMouseUp}
+            onwheel={handleWheel}>
+
+            <g transform={viewportTransform}>
+
+                <!-- L1 Chevrons -->
+                <template for:each={l1Nodes} for:item="node">
+                    <g key={node.id} onclick={handleNodeClick} data-node-id={node.id} class="bcm-node">
+                        <polygon points={node.points} fill={node.fill} stroke="#333333" stroke-width="1"></polygon>
+                        <template for:each={node.labelLines} for:item="line">
+                            <text
+                                key={line.key}
+                                x={line.x}
+                                y={line.y}
+                                text-anchor="middle"
+                                dominant-baseline="middle"
+                                fill="#FFFFFF"
+                                font-size="13"
+                                font-weight="bold">
+                                {line.text}
+                            </text>
+                        </template>
+                    </g>
+                </template>
+
+                <!-- L2 Boxes -->
+                <template for:each={l2Nodes} for:item="node">
+                    <g key={node.id} onclick={handleNodeClick} data-node-id={node.id} class="bcm-node">
+                        <rect
+                            x={node.x}
+                            y={node.y}
+                            width={node.width}
+                            height={node.height}
+                            rx="6"
+                            fill={node.fill}
+                            stroke="#CCCCCC"
+                            stroke-width="1">
+                        </rect>
+                        <template for:each={node.labelLines} for:item="line">
+                            <text
+                                key={line.key}
+                                x={line.x}
+                                y={line.y}
+                                dominant-baseline="middle"
+                                fill="#222222"
+                                font-size="12"
+                                font-weight="bold">
+                                {line.text}
+                            </text>
+                        </template>
+                        <!-- L3 bullets -->
+                        <template for:each={node.bulletLines} for:item="bullet">
+                            <text
+                                key={bullet.key}
+                                x={bullet.x}
+                                y={bullet.y}
+                                dominant-baseline="middle"
+                                fill="#444444"
+                                font-size="11">
+                                {bullet.text}
+                            </text>
+                        </template>
+                    </g>
+                </template>
+
+            </g>
+        </svg>
+
+        <!-- Context menu overlay -->
+        <template if:true={contextMenuVisible}>
+            <c-bcm_-context-menu
+                x={contextMenuX}
+                y={contextMenuY}
+                node={contextMenuNode}
+                onclose={handleContextMenuClose}>
+            </c-bcm_-context-menu>
+        </template>
+    </div>
+</template>

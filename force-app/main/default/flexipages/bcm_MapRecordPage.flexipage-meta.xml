@@ -41,16 +41,13 @@
                             <value>Delete</value>
                         </valueListItems>
                         <valueListItems>
-                            <value>bcm_Map__c.Visualisation</value>
-                        </valueListItems>
-                        <valueListItems>
                             <value>bcm_Map__c.Import</value>
                         </valueListItems>
                     </valueList>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
                     <name>numVisibleActions</name>
-                    <value>4</value>
+                    <value>3</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
                     <name>primaryField</name>

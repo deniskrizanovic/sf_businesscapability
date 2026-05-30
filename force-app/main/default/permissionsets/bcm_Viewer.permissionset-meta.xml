@@ -85,8 +85,24 @@
         <tab>bcm_Tag__c</tab>
         <visibility>Visible</visibility>
     </tabSettings>
+    <tabSettings>
+        <tab>bcm_Visualisation</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
     <userPermissions>
         <enabled>true</enabled>
         <name>RunFlow</name>
     </userPermissions>
+    <classAccesses>
+        <apexClass>bcm_MapController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>bcm_CapabilityController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>bcm_TagController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
 </PermissionSet>
