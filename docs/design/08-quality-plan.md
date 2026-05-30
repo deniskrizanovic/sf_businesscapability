@@ -114,16 +114,21 @@ annotation, linking it back to the scenario it covers:
 static void myTest() { ... }
 ```
 
-Every Playwright test carries a `// spec:` comment inside the test body:
+The feature and scenario titles must match the exact wording in the spec file.
+Running `grep -r "@spec"` across the codebase produces the full Apex reverse
+traceability map.
+
+For Playwright tests, the test description string *is* the reverse link. No
+`// spec:` comment is required. Instead, the test description must exactly match
+the string in the spec's `Tested by:` marker:
 
 ```typescript
-test('editor can create a map', async ({ page }) => {
-    // spec: map-object.md · "Feature title" · "Scenario title"
+// spec says: > Tested by: `e2e/map.spec.ts::"editor creates a Map record with a description"`
+test('editor creates a Map record with a description', async ({ page }) => {
 ```
 
-The feature and scenario titles must match the exact wording in the spec file.
-Running `grep -r "@spec"` across the codebase produces the full reverse traceability
-map. Running the same against the spec `Tested by:` markers produces the forward map.
+If a test description changes, the `Tested by:` marker in the spec must be updated
+in the same commit. The traceability checker verifies this linkage automatically.
 
 Bi-directional traceability was introduced retroactively at Step 4 completion and
 applies to all test methods from that point forward.
@@ -237,16 +242,84 @@ quality gap, not an acceptable state.
 
 ---
 
+## 4a. Automated DoD Tools
+
+Two project-level skills cover the automated parts of the definition of done.
+Both are defined under `.claude/skills/`.
+
+### `/dod` — primary DoD command
+
+`/dod step 4` (or `/dod capability-tag-object.md`) is the single command to run
+before closing any implementation step. It does two things in sequence:
+
+1. **Calls `/check-traceability`** — full output, unchanged (see below)
+2. **Executes tests and reports results:**
+   - Runs the Apex test class(es) for the step via
+     `sf apex run test --synchronous --code-coverage` against `SF_ORG_ALIAS`
+     from `.env`, then reports pass/fail and per-class coverage
+   - Runs the Playwright e2e spec for the step and reports pass/fail and test counts
+
+The skill derives the Apex class name(s) and e2e spec path directly from the
+manual inspection checklist in `docs/plan/implementation-plan.md` — there is no
+hardcoded mapping in the skill itself. The implementation plan is the single
+source of truth.
+
+**Coverage threshold:** ≥ 90% per Apex class. A class below 90% is reported as
+a failure even if all test methods pass. (Note: the implementation plan checklist
+for steps 6–8 says ≥75% — those rows should be updated to 90% when those steps
+are started.)
+
+Output shape:
+
+```
+## Traceability checks          ← /check-traceability output (unchanged)
+...
+
+## Test execution
+
+### Apex
+| Class | Tests | Failures | Coverage | Result |
+...
+
+### Playwright
+| Spec | Tests | Failures | Result |
+...
+```
+
+### `/check-traceability` — traceability only
+
+Run this when you want traceability verification without triggering test
+execution (faster, no org connection required).
+
+| # | Direction | What is checked |
+|---|---|---|
+| 1 | Forward | Every spec scenario has a `> Tested by:` or `> Deferred:` marker |
+| 2 | Forward | Every `Tested by:` Apex reference resolves to a real method in the `.cls` file |
+| 3 | Forward | Every `Tested by:` e2e reference resolves to a test with that exact description |
+| 4 | Reverse | Every `// @spec` comment in Apex resolves to a real feature + scenario |
+| 5 | Format | Any banned marker (`not yet covered`, `UI only`) is flagged |
+
+By default, only spec files for steps marked `[x]` complete in the implementation
+plan are checked. Pass an optional filename to check a single spec regardless of
+step status.
+
+---
+
 ## 5. Definition of Done
 
-Before marking any implementation step complete, verify each item:
+Before marking any implementation step complete:
 
-- [ ] Every new spec scenario has a `Tested by:` or `Deferred:` marker
-- [ ] Every new Apex test method has a `@spec` comment pointing to the correct scenario
-- [ ] Every new Playwright test has a `// spec:` comment inside the test body
-- [ ] All Apex classes in scope are at or above 90% line coverage
-- [ ] `npm run lint` passes with no errors
-- [ ] `npm run scan` passes with no severity ≥ 2 violations
+**Run `/dod step N`** — this covers all automated checks. A clean run requires:
+- All traceability checks pass (Checks 1–5 in `/check-traceability`)
+- All Apex test methods pass with ≥ 90% coverage per class
+- All Playwright tests pass with zero failures
+- `npm run lint` passes with no errors
+- `npm run scan` passes with no severity ≥ 2 violations
+
+**Then verify the remaining items manually:**
+
+- [ ] Org: objects, fields, and permission grants visible in Setup → Object Manager
+- [ ] Org: manual CRUD and cascade-delete scenarios verified in the browser
 - [ ] FP count updated in `docs/design/99-cosmic-function-point-count.md` if new functional processes were added
 - [ ] Implementation plan row marked complete with date in `docs/plan/implementation-plan.md`
 

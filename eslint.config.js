@@ -18,7 +18,13 @@ module.exports = defineConfig([
     // LWC configuration
     {
         files: ['**/lwc/**/*.js'],
-        extends: [lwcConfig]
+        extends: [lwcConfig],
+        rules: {
+            // eslint-plugin-jest auto-detects jest via require.resolve, which fails when run
+            // inside sf code-analyzer's bundled ESLint process. Disable the rule explicitly
+            // since this is not a Jest test codebase.
+            'jest/no-deprecated-functions': 'off'
+        }
     },
 
     // LWC configuration with override for LWC test files
