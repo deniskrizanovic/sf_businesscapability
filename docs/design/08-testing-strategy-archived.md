@@ -139,7 +139,7 @@ then discards the substituted file. Credentials are never written to disk
 permanently.
 
 ```bash
-./scripts/create-e2e-users.sh [org-alias]   # defaults to home-denispoc
+./scripts/create-e2e-users.sh [org-alias] 
 ```
 
 The Apex script uses `Database.upsert` on `User.Fields.Username`, so re-running it
