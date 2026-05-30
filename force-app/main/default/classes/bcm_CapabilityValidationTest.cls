@@ -426,6 +426,70 @@ private class bcm_CapabilityValidationTest {
         }
     }
 
+    // ─── Handler guard: empty list ────────────────────────────────────────────
+
+    // Direct invocation of the handler with an empty list exercises the early-return guard (line 22)
+    @IsTest
+    static void handler_withEmptyList_isNoop() {
+        Test.startTest();
+        bcm_CapabilityHandler.handle(new List<bcm_Capability__c>(), null);
+        Test.stopTest();
+        // No exception thrown = guard executed correctly
+    }
+
+    // ─── SortOrder derivation for child capabilities ──────────────────────────
+
+    // @spec capability-object.md · "Level and Sort Order fill in automatically" · "Sort Order is assigned as the next available number when left blank"
+    @IsTest
+    static void sortOrder_autoAssigned_forChildCapability() {
+        // Given — parent with two Level 2 children already at positions 1 and 2
+        bcm_Map__c m = [SELECT Id FROM bcm_Map__c LIMIT 1];
+        bcm_Capability__c parent = TestDataFactory.createCapability(m.Id, null, null, 1, true);
+        TestDataFactory.createCapability(m.Id, parent.Id, null, 1, true);
+        TestDataFactory.createCapability(m.Id, parent.Id, null, 2, true);
+        bcm_Capability__c child = TestDataFactory.createCapability(m.Id, parent.Id, null, null, false);
+
+        // When
+        Test.startTest();
+        insert child;
+        Test.stopTest();
+
+        // Then
+        bcm_Capability__c saved = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :child.Id];
+        Assert.areEqual(3, (Integer) saved.bcm_SortOrder__c,
+            'SortOrder should auto-assign as 3 when two siblings already occupy 1 and 2');
+    }
+
+    // @spec capability-object.md · "Level and Sort Order fill in automatically" · "Existing siblings shift down when I insert a Capability at a taken Sort Order"
+    @IsTest
+    static void sortOrder_shiftsSiblings_forChildCapabilityAtExplicitPosition() {
+        // Given — parent with three Level 2 children at positions 1, 2, 3
+        bcm_Map__c m = [SELECT Id FROM bcm_Map__c LIMIT 1];
+        bcm_Capability__c parent = TestDataFactory.createCapability(m.Id, null, null, 1, true);
+        TestDataFactory.createCapability(m.Id, parent.Id, null, 1, true);
+        bcm_Capability__c sib2 = TestDataFactory.createCapability(m.Id, parent.Id, null, 2, true);
+        bcm_Capability__c sib3 = TestDataFactory.createCapability(m.Id, parent.Id, null, 3, true);
+        bcm_Capability__c child = TestDataFactory.createCapability(m.Id, parent.Id, null, 2, false);
+
+        // When
+        Test.startTest();
+        insert child;
+        Test.stopTest();
+
+        // Then — new child sits at 2; run [2,3] shifts up
+        bcm_Capability__c savedChild = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :child.Id];
+        Assert.areEqual(2, (Integer) savedChild.bcm_SortOrder__c,
+            'New child should land at the requested position 2');
+
+        bcm_Capability__c updatedSib2 = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :sib2.Id];
+        Assert.areEqual(3, (Integer) updatedSib2.bcm_SortOrder__c,
+            'Sibling originally at 2 should shift to 3');
+
+        bcm_Capability__c updatedSib3 = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :sib3.Id];
+        Assert.areEqual(4, (Integer) updatedSib3.bcm_SortOrder__c,
+            'Sibling originally at 3 should shift to 4');
+    }
+
     // @spec capability-object.md · "Level and Sort Order fill in automatically" · "Inserting a Capability at a free Sort Order leaves siblings with higher Sort Orders unchanged"
     @IsTest
     static void sortOrder_doesNotShiftSiblings_whenInsertedAtFreePosition() {
