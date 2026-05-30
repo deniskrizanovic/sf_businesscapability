@@ -6,7 +6,9 @@
 
 Given a Capability record exists  
 When the user opens the record detail page  
-Then a Tags related list is visible  
+Then a Tags related list is visible in the sidebar (not in a Related tab)  
+
+> Tested by: `e2e/capability-tag.spec.ts::"Tags related list is visible in the sidebar"`
 
 **Scenario: Capabilities related list appears on a Tag record**
 
@@ -27,7 +29,7 @@ And the user has the `bcm_Editor` permission set assigned
 When the user creates a link between the two records  
 Then the link saves successfully and appears in both related lists  
 
-> Tested by: bcm_CapabilityTagTest.editor_insertsJunction_succeeds
+> Tested by: `bcm_CapabilityTagTest.editor_insertsJunction_succeeds`, `e2e/capability-tag.spec.ts::"Editor can link a Tag to a Capability and it appears in the sidebar"`
 
 **Scenario: Deleting a Capability deletes its tag links**
 
@@ -56,7 +58,7 @@ And the user has the `bcm_Viewer` permission set assigned
 When the user views the related list on a Capability or Tag record  
 Then the link is visible  
 
-> Deferred: Viewer read access is permission-set-enforced; no Apex assertion possible without a running org user context
+> Tested by: `e2e/capability-tag.spec.ts::"Tags related list has no New button for Viewer"`
 
 **Scenario: Viewer cannot create a Capability-Tag link**
 
@@ -64,7 +66,7 @@ Given the user has the `bcm_Viewer` permission set assigned
 When the user attempts to create a link between a Capability and a Tag  
 Then access is denied and the link is not created  
 
-> Tested by: bcm_CapabilityTagTest.viewer_cannotCreateJunction
+> Tested by: `bcm_CapabilityTagTest.viewer_cannotCreateJunction`, `e2e/capability-tag.spec.ts::"Tags related list has no New button for Viewer"`
 
 **Scenario: Editor can create and delete a Capability-Tag link**
 

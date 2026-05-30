@@ -15,20 +15,22 @@ private class bcm_CapabilityTagTest {
     static void editor_insertsJunction_succeeds() {
         // Given
         User editor = TestDataFactory.createUserWithPermSet('bcm_Editor');
-        bcm_Capability__c cap = [SELECT Id FROM bcm_Capability__c LIMIT 1];
-        bcm_Tag__c tag = [SELECT Id FROM bcm_Tag__c LIMIT 1];
-        bcm_CapabilityTag__c junction = TestDataFactory.createCapabilityTag(cap.Id, tag.Id, false);
 
         // When
+        bcm_CapabilityTag__c junction;
         Test.startTest();
         System.runAs(editor) {
+            bcm_Map__c m = TestDataFactory.createMap('Editor Map', true);
+            bcm_Capability__c cap = TestDataFactory.createCapability(m.Id, null, null, null, true);
+            bcm_Tag__c tag = TestDataFactory.createTag('Editor Tag', '#3A86FF', true);
+            junction = TestDataFactory.createCapabilityTag(cap.Id, tag.Id, false);
             insert junction;
         }
         Test.stopTest();
 
         // Then
         Assert.isNotNull(junction.Id, 'Editor should be able to insert a CapabilityTag junction record');
-        Integer count = [SELECT COUNT() FROM bcm_CapabilityTag__c WHERE bcm_Capability__c = :cap.Id AND bcm_Tag__c = :tag.Id];
+        Integer count = [SELECT COUNT() FROM bcm_CapabilityTag__c WHERE Id = :junction.Id];
         Assert.areEqual(1, count, 'Exactly one junction record should exist');
     }
 
@@ -92,17 +94,17 @@ private class bcm_CapabilityTagTest {
     // @spec capability-tag-object.md · "Permission sets grant correct access to Capability-Tag links" · "Editor can create and delete a Capability-Tag link"
     @IsTest
     static void editor_deletesJunction_succeeds() {
-        // Given — user created before System.runAs to avoid mixed-DML; junction inserted inside runAs
+        // Given — user created before System.runAs to avoid mixed-DML; records created inside runAs so editor owns them
         User editor = TestDataFactory.createUserWithPermSet('bcm_Editor');
-        bcm_Capability__c cap = [SELECT Id FROM bcm_Capability__c LIMIT 1];
-        bcm_Tag__c tag = [SELECT Id FROM bcm_Tag__c LIMIT 1];
-        bcm_CapabilityTag__c junction = TestDataFactory.createCapabilityTag(cap.Id, tag.Id, false);
 
         // When
         Id junctionId;
         Test.startTest();
         System.runAs(editor) {
-            insert junction;
+            bcm_Map__c m = TestDataFactory.createMap('Editor Map', true);
+            bcm_Capability__c cap = TestDataFactory.createCapability(m.Id, null, null, null, true);
+            bcm_Tag__c tag = TestDataFactory.createTag('Editor Tag', '#3A86FF', true);
+            bcm_CapabilityTag__c junction = TestDataFactory.createCapabilityTag(cap.Id, tag.Id, true);
             junctionId = junction.Id;
             delete junction;
         }
