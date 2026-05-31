@@ -14,7 +14,8 @@ export default function globalTeardown() {
 
     const runId = fs.readFileSync(runIdFile, 'utf-8').trim();
 
-    // Delete in FK order: CapabilityTag → Capability → Tag → Map
+    // Delete in FK order: CapabilityTag → Tag → Capability → Map
+    // Tags deleted before Capabilities to avoid cascade-on-Capability interfering with Tag DML in same transaction.
     const apex = `
 List<bcm_CapabilityTag__c> ct = [SELECT Id FROM bcm_CapabilityTag__c
     WHERE bcm_Capability__r.Name LIKE '%${runId}%'
@@ -22,11 +23,11 @@ List<bcm_CapabilityTag__c> ct = [SELECT Id FROM bcm_CapabilityTag__c
        OR bcm_Tag__r.Name LIKE '%${runId}%' LIMIT 10000];
 if (!ct.isEmpty()) delete ct;
 
-List<bcm_Capability__c> caps = [SELECT Id FROM bcm_Capability__c WHERE Name LIKE '%${runId}%' OR bcm_Map__r.Name LIKE '%${runId}%' LIMIT 10000];
-if (!caps.isEmpty()) delete caps;
-
 List<bcm_Tag__c> tags = [SELECT Id FROM bcm_Tag__c WHERE Name LIKE '%${runId}%' LIMIT 10000];
 if (!tags.isEmpty()) delete tags;
+
+List<bcm_Capability__c> caps = [SELECT Id FROM bcm_Capability__c WHERE Name LIKE '%${runId}%' OR bcm_Map__r.Name LIKE '%${runId}%' LIMIT 10000];
+if (!caps.isEmpty()) delete caps;
 
 List<bcm_Map__c> maps = [SELECT Id FROM bcm_Map__c WHERE Name LIKE '%${runId}%' LIMIT 10000];
 if (!maps.isEmpty()) delete maps;
