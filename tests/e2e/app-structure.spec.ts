@@ -86,10 +86,10 @@ test.describe('Map record page buttons — editor project', () => {
         await expect(page.getByRole('button', { name: 'Visualisation', exact: true })).toBeVisible();
     });
 
-    test('Import button is visible in highlights panel', async ({ page }) => {
+    test('Import button is absent from record page highlights panel', async ({ page }) => {
         await setupAutoDismiss(page);
         await page.goto(mapUrl);
-        await expect(page.getByRole('button', { name: 'Import', exact: true })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Import', exact: true })).not.toBeVisible();
     });
 
     test('Visualisation button opens panel without errors', async ({ page }) => {
@@ -100,11 +100,11 @@ test.describe('Map record page buttons — editor project', () => {
         await expect(page.getByRole('button', { name: 'Close', exact: true })).toBeVisible();
     });
 
-    test('Import button opens panel without errors', async ({ page }) => {
+    test('JSON Import button on list view opens flow without errors', async ({ page }) => {
         await setupAutoDismiss(page);
-        await page.goto(mapUrl);
-        await page.getByRole('button', { name: 'Import', exact: true }).click();
+        await page.goto('/lightning/o/bcm_Map__c/list?filterName=All');
+        await page.getByRole('button', { name: 'JSON Import', exact: true }).click();
         await expect(page.locator('force-user-message-popup, .messageText')).toHaveCount(0);
-        await expect(page.getByLabel('Paste JSON')).toBeVisible();
+        await expect(page.frameLocator('iframe').getByLabel('Paste JSON')).toBeVisible({ timeout: 40000 });
     });
 });
