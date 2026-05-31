@@ -272,3 +272,206 @@ Then the focused L1 chevron shows a blue stroke ring and darkened fill
 And the focused L2 box shows a blue stroke ring and lightened fill  
 
 > Deferred: focus styling is a JS invariant (isFocused flag → strokeColour/fill in layout nodes); no Playwright assertion on SVG stroke colour added; verified manually
+
+**Scenario: Focused L3 bullet shows highlight background rect**
+
+Given a Level 3 capability is focused  
+When the diagram re-renders  
+Then a blue-tint background rectangle is drawn behind the focused L3 bullet text  
+
+> Deferred: L3 focus rect is a JS invariant (isFocused flag → background rect in L3 layout); verified manually
+
+---
+
+## Feature: Node click UX — focus then menu
+
+**Scenario: First click on L1 or L2 node sets focus**
+
+Given a map is loaded and no node is focused  
+When the user left-clicks an L1 or L2 node  
+Then that node receives focus and is highlighted  
+And the context menu does not open  
+
+> Deferred: click-to-focus is level-aware JS invariant in handleNodeClick; verified manually
+
+**Scenario: Second click on already-focused L1 or L2 node opens context menu**
+
+Given a node is focused  
+When the user left-clicks that same node again  
+Then the context menu opens anchored to the node's right edge  
+
+> Deferred: double-click-to-menu is JS invariant; context menu position tested via manual checklist
+
+**Scenario: First click on L3 bullet sets focus**
+
+Given a map is loaded and no node is focused  
+When the user left-clicks an L3 bullet  
+Then that bullet receives focus (blue-tint background rect shown)  
+And the context menu does not open  
+
+> Deferred: L3 click-to-focus is JS invariant; verified manually
+
+**Scenario: Second click on already-focused L3 bullet opens context menu**
+
+Given an L3 bullet is focused  
+When the user left-clicks that same bullet again  
+Then the context menu opens anchored to the bullet's position  
+
+> Deferred: JS invariant; verified manually
+
+**Scenario: Clicking a different node switches focus without opening menu**
+
+Given node A is focused  
+When the user clicks node B  
+Then focus moves to node B  
+And the context menu does not open  
+
+> Deferred: JS invariant in handleNodeClick; verified manually
+
+---
+
+## Feature: Keyboard navigation — L3 level
+
+**Scenario: ArrowDown moves focus to next L3 bullet in same L2 box**
+
+Given an L3 bullet is focused and a sibling exists below it  
+When the user presses ArrowDown  
+Then focus moves to the next L3 bullet in the same L2 box  
+
+> Deferred: L3 ArrowDown is a JS invariant in _navigateFromKey; verified manually
+
+**Scenario: ArrowUp moves focus to previous L3 bullet in same L2 box**
+
+Given an L3 bullet is focused and a sibling exists above it  
+When the user presses ArrowUp  
+Then focus moves to the previous L3 bullet in the same L2 box  
+
+> Deferred: L3 ArrowUp is a JS invariant in _navigateFromKey; verified manually
+
+**Scenario: ArrowUp from first L3 bullet moves focus to parent L2 node**
+
+Given the first L3 bullet in an L2 box is focused  
+When the user presses ArrowUp  
+Then focus moves to the parent L2 node  
+
+> Deferred: JS invariant; verified manually
+
+**Scenario: ArrowLeft and ArrowRight are ignored when an L3 bullet is focused**
+
+Given an L3 bullet is focused  
+When the user presses ArrowLeft or ArrowRight  
+Then focus does not change  
+
+> Deferred: JS invariant; verified manually
+
+---
+
+## Feature: Context menu actions
+
+**Scenario: View detail navigates to Capability record page**
+
+Given the context menu is open for an L3 capability  
+When the user clicks "View detail"  
+Then the browser navigates to that Capability's Salesforce record page  
+
+> Deferred: NavigationMixin.Navigate call is a JS invariant; verified manually
+
+**Scenario: Hide action is visible only to Editors**
+
+Given the context menu is open  
+When the user has only the bcm_Viewer permission set  
+Then the "Hide" menu item is not rendered  
+
+> Deferred: canEdit permission gate is a JS invariant; verified manually
+
+**Scenario: Hide persists the node as hidden and re-renders**
+
+Given an Editor has the context menu open for a capability  
+When the user clicks "Hide"  
+Then bcm_HideFromDiagram__c is set to true on the record via Apex  
+And the diagram re-renders with that capability absent (Show Hidden toggle off)  
+
+> Deferred: Apex DML + re-render is a JS invariant; integration tested manually
+
+---
+
+## Feature: Toolbar zoom buttons
+
+**Scenario: Zoom In button scales diagram toward cursor position**
+
+Given a map is loaded  
+When the user clicks the "+" button in the toolbar  
+Then the diagram scales up by one step (10%) toward the current cursor position  
+
+> Tested by: diagram.spec.ts — "Zoom In button changes viewport transform"
+
+**Scenario: Zoom Out button scales diagram toward cursor position**
+
+Given a map is loaded  
+When the user clicks the "-" button in the toolbar  
+Then the diagram scales down by one step (10%) toward the current cursor position  
+
+> Tested by: diagram.spec.ts — "Zoom Out button changes viewport transform"
+
+**Scenario: Zoom In button does not exceed maximum zoom**
+
+Given the diagram is at maximum zoom (300%)  
+When the user clicks the "+" button  
+Then the zoom level remains at 300% and does not increase further  
+
+> Deferred: ZOOM_MAX clamp is a JS invariant; verified manually
+
+**Scenario: Zoom Out button does not go below minimum zoom**
+
+Given the diagram is at minimum zoom (20%)  
+When the user clicks the "-" button  
+Then the zoom level remains at 20% and does not decrease further  
+
+> Deferred: ZOOM_MIN clamp is a JS invariant; verified manually
+
+---
+
+## Feature: Fit to window
+
+**Scenario: Fit to window scales and centres the diagram in the viewport**
+
+Given a map is loaded  
+When the user clicks the "Fit to Window" button  
+Then the diagram is scaled so the full capability map is visible within the canvas  
+And the diagram is horizontally centred  
+And the vertical position is aligned to the top  
+
+> Tested by: diagram.spec.ts — "Fit to Window button is present in toolbar"
+
+**Scenario: Fit to window respects zoom bounds**
+
+Given a very small map that would require a zoom above 300% to fill the viewport  
+When the user clicks "Fit to Window"  
+Then the zoom is clamped at 300%  
+
+> Deferred: fitZoom clamp to ZOOM_MAX is a JS invariant; verified manually
+
+---
+
+## Feature: Reset view
+
+**Scenario: Reset view restores zoom to 100% and pan to origin**
+
+Given the user has zoomed or panned the diagram  
+When the user clicks the reset view button  
+Then zoom returns to 100%  
+And pan offsets return to (0, 0)  
+
+> Deferred: reset sets zoom=ZOOM_DEFAULT, panX=0, panY=0; JS invariant; verified manually
+
+---
+
+## Feature: Zoom and pan reset on map switch
+
+**Scenario: Zoom resets to 100% when a new map is selected**
+
+Given the user has zoomed the diagram  
+When the user selects a different map from the dropdown  
+Then zoom resets to 100% and pan resets to (0, 0) before rendering the new map  
+
+> Deferred: map switch reset is a JS invariant in _loadCapabilities; verified manually
