@@ -419,7 +419,7 @@ export default class BcmCapabilityMap extends LightningElement {
         const rect          = this.template.querySelector('.bcm-canvas-container').getBoundingClientRect();
         this.contextMenuX   = evt.clientX - rect.left;
         this.contextMenuY   = evt.clientY - rect.top;
-        this.contextMenuNode = nodeId;
+        this.contextMenuNode = { id: nodeId, name: nodeId, level: 2 };
         this.contextMenuVisible = true;
         this.focusedNodeId = nodeId;
         this._keyNavMode   = true;

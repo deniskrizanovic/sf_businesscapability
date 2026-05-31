@@ -1,16 +1,26 @@
 import { LightningElement, api } from 'lwc';
 
 export default class BcmContextMenu extends LightningElement {
-    @api x    = 0;
-    @api y    = 0;
-    @api node = null;
+    @api anchorX = 0;
+    @api anchorY = 0;
+    @api node    = null;  // { id, name, level }
 
-    get menuPositionStyle() {
-        return `position:absolute;left:${this.x}px;top:${this.y}px;z-index:9000;`;
+    get menuTitle() {
+        return this.node?.name || 'Actions';
+    }
+
+    get isL3() {
+        return this.node?.level === 3;
+    }
+
+    // Position wrapper so left edge aligns with node's right edge,
+    // vertically centred on anchorY (compensated after render via CSS transform)
+    get wrapperStyle() {
+        return `position:absolute;left:${this.anchorX}px;top:${this.anchorY}px;z-index:9000;transform:translateY(-50%);`;
     }
 
     connectedCallback() {
-        this._handleDocClick  = this._onDocumentClick.bind(this);
+        this._handleDocClick   = this._onDocumentClick.bind(this);
         this._handleDocKeyDown = this._onDocumentKeyDown.bind(this);
         document.addEventListener('click',   this._handleDocClick);
         document.addEventListener('keydown', this._handleDocKeyDown);
@@ -28,9 +38,20 @@ export default class BcmContextMenu extends LightningElement {
     }
 
     _onDocumentKeyDown(evt) {
-        if (evt.key === 'Escape') {
-            this._close();
-        }
+        if (evt.key === 'Escape') this._close();
+    }
+
+    handleClose() {
+        this._close();
+    }
+
+    handleViewDetail() {
+        // stub — navigation wired later
+        this._close();
+    }
+
+    handleHide() {
+        this._close();
     }
 
     _close() {
