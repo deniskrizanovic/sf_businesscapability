@@ -409,6 +409,22 @@ export default class BcmCapabilityMap extends LightningElement {
         this.panY = 0;
     }
 
+    handleFitToWindow() {
+        const container = this.template.querySelector('.bcm-canvas-container');
+        if (!container) return;
+        const rect = container.getBoundingClientRect();
+        const cw = rect.width;
+        const ch = rect.height;
+        const dw = this.canvasWidth;
+        const dh = this.canvasHeight;
+        if (!dw || !dh || !cw || !ch) return;
+        const fitZoom = Math.min(cw / dw, ch / dh, ZOOM_MAX);
+        const clampedZoom = Math.max(ZOOM_MIN, fitZoom);
+        this.zoom = Math.round(clampedZoom * 100) / 100;
+        this.panX = (cw - dw * this.zoom) / 2;
+        this.panY = 0;
+    }
+
     handleWheel(evt) {
         evt.preventDefault();
         const delta    = evt.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP;
@@ -421,12 +437,14 @@ export default class BcmCapabilityMap extends LightningElement {
         const mouseX = evt.clientX - rect.left;
         const mouseY = evt.clientY - rect.top;
         this.panX    = mouseX - (mouseX - this.panX) * (newZoom / this.zoom);
-        this.panY    = mouseY - (mouseY - this.panY) * (newZoom / this.zoom);
+        this.panY    = Math.min(0, mouseY - (mouseY - this.panY) * (newZoom / this.zoom));
         this.zoom    = newZoom;
     }
 
     handleSvgMouseDown(evt) {
         if (evt.target.closest('.bcm-node')) return;
+        this.focusedNodeId      = null;
+        this.contextMenuVisible = false;
         this._keyNavMode = false;
         this._isDragging = true;
         this._dragStartX = evt.clientX;
@@ -438,7 +456,7 @@ export default class BcmCapabilityMap extends LightningElement {
     handleSvgMouseMove(evt) {
         if (!this._isDragging) return;
         this.panX = this._panStartX + (evt.clientX - this._dragStartX);
-        this.panY = this._panStartY + (evt.clientY - this._dragStartY);
+        this.panY = Math.min(0, this._panStartY + (evt.clientY - this._dragStartY));
     }
 
     handleSvgMouseUp() {
@@ -446,16 +464,84 @@ export default class BcmCapabilityMap extends LightningElement {
     }
 
     handleNodeClick(evt) {
-        const nodeId = evt.currentTarget.dataset.nodeId;
+        evt.stopPropagation();
+        // Check if click landed on an L3 bullet text element
+        const targetLevel = evt.target.dataset?.nodeLevel;
+        const targetId    = evt.target.dataset?.nodeId;
+        const targetName  = evt.target.dataset?.nodeName;
+
+        const nodeId    = evt.currentTarget.dataset.nodeId;
+        const nodeLevel = targetLevel || evt.currentTarget.dataset.nodeLevel;
+        const nodeName  = targetName  || evt.currentTarget.dataset.nodeName;
         if (!nodeId) return;
-        const rect          = this.template.querySelector('.bcm-canvas-container').getBoundingClientRect();
-        this.contextMenuX   = evt.clientX - rect.left;
-        this.contextMenuY   = evt.clientY - rect.top;
-        this.contextMenuNode = { id: nodeId, name: nodeId, level: 2 };
-        this.contextMenuVisible = true;
+
+        // L3 bullet click — open menu directly, no focus state needed
+        if (nodeLevel === '3' && targetId) {
+            const l3 = (this._layoutL3Map || new Map()).get(targetId);
+            if (!l3) return;
+            if (this.contextMenuVisible && this.contextMenuNode?.id === targetId) {
+                this.contextMenuVisible = false;
+                return;
+            }
+            this.contextMenuX    = l3.anchorX * this.zoom + this.panX;
+            this.contextMenuY    = l3.anchorY * this.zoom + this.panY;
+            this.contextMenuNode = { id: targetId, name: targetName || l3.name, level: 3 };
+            this.contextMenuVisible = true;
+            return;
+        }
+
+        // Find node geometry in layout arrays
+        const l2Node = (this._layoutL2 || []).find(n => n.id === nodeId);
+        const l1Node = (this._layoutL1 || []).find(n => n.id === nodeId);
+
+        let svgRightX, svgMidY;
+        if (l2Node) {
+            svgRightX = l2Node.x + l2Node.width;
+            svgMidY   = l2Node.y + l2Node.height / 2;
+        } else if (l1Node) {
+            // Chevron tip is 3rd point
+            const pts = l1Node.points.split(' ').map(p => p.split(',').map(Number));
+            svgRightX = pts[2][0];
+            svgMidY   = pts[2][1];
+        } else {
+            // Fallback to click position
+            const alreadyFocusedFb = this.focusedNodeId === nodeId;
+            this.focusedNodeId = nodeId;
+            this._keyNavMode   = true;
+            this._buildLayout(this._capabilities);
+            if (alreadyFocusedFb) {
+                if (this.contextMenuVisible && this.contextMenuNode?.id === nodeId) {
+                    this.contextMenuVisible = false;
+                } else {
+                    const rect = this.template.querySelector('.bcm-canvas-container').getBoundingClientRect();
+                    this.contextMenuX    = evt.clientX - rect.left;
+                    this.contextMenuY    = evt.clientY - rect.top;
+                    this.contextMenuNode = { id: nodeId, name: nodeName || nodeId, level: l1Node ? 1 : 2 };
+                    this.contextMenuVisible = true;
+                }
+            }
+            return;
+        }
+
+        const alreadyFocused = this.focusedNodeId === nodeId;
         this.focusedNodeId = nodeId;
         this._keyNavMode   = true;
         this._buildLayout(this._capabilities);
+
+        if (!alreadyFocused) return;
+
+        // Second click opens, third click (menu already visible) closes
+        if (this.contextMenuVisible && this.contextMenuNode?.id === nodeId) {
+            this.contextMenuVisible = false;
+            return;
+        }
+
+        const resolvedName = l1Node ? l1Node.name : l2Node.name;
+        const isL1 = !!l1Node;
+        this.contextMenuX    = svgRightX * this.zoom + this.panX;
+        this.contextMenuY    = svgMidY   * this.zoom + (isL1 ? 0 : this.panY);
+        this.contextMenuNode = { id: nodeId, name: resolvedName, level: isL1 ? 1 : 2 };
+        this.contextMenuVisible = true;
     }
 
     handleContextMenuClose() {
@@ -469,8 +555,8 @@ export default class BcmCapabilityMap extends LightningElement {
         if (!this._keyNavMode) {
             if (evt.key === 'ArrowLeft')  this.panX += PAN_STEP;
             if (evt.key === 'ArrowRight') this.panX -= PAN_STEP;
-            if (evt.key === 'ArrowUp')    this.panY += PAN_STEP;
-            if (evt.key === 'ArrowDown')  this.panY -= PAN_STEP;
+            if (evt.key === 'ArrowUp')    this.panY = Math.min(0, this.panY + PAN_STEP);
+            if (evt.key === 'ArrowDown')  this.panY += -PAN_STEP;
         } else {
             if (evt.key === 'Escape') {
                 this._keyNavMode   = false;
@@ -483,6 +569,7 @@ export default class BcmCapabilityMap extends LightningElement {
     }
 
     _navigateFromKey(key) {
+        this.contextMenuVisible = false;
         const l1 = this._layoutL1 || [];
         const l2Map = new Map((this._layoutL2 || []).map(n => [n.id, n]));
 
