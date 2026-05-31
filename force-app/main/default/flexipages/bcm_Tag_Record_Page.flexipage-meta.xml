@@ -171,12 +171,6 @@
     <flexiPageRegions>
         <itemInstances>
             <componentInstance>
-                <componentName>c:bcm_ColourSwatch</componentName>
-                <identifier>bcmColourSwatch_main_1</identifier>
-            </componentInstance>
-        </itemInstances>
-        <itemInstances>
-            <componentInstance>
                 <componentInstanceProperties>
                     <name>label</name>
                     <value>Tabs</value>
@@ -194,6 +188,12 @@
         <type>Region</type>
     </flexiPageRegions>
     <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentName>bcm_ColourSwatch</componentName>
+                <identifier>bcmColourSwatch_main_1</identifier>
+            </componentInstance>
+        </itemInstances>
         <mode>Replace</mode>
         <name>sidebar</name>
         <type>Region</type>
