@@ -10,7 +10,6 @@ const COLUMN_GAP        = 16;
 const CHEVRON_HEIGHT    = 60;
 const CHEVRON_NOTCH     = 16;
 const BOX_PADDING       = 12;
-const BOX_HEADER_HEIGHT = 40;
 const LINE_HEIGHT       = 20;
 const BOX_GAP           = 12;
 const DIAGRAM_PADDING   = 24;
@@ -44,11 +43,6 @@ function wrapText(text, maxWidth, fontSize, maxLines) {
     return lines;
 }
 
-function truncateText(text, maxWidth, fontSize) {
-    const charWidth = fontSize * 0.6;
-    const maxChars  = Math.floor(maxWidth / charWidth);
-    return text.length > maxChars ? text.slice(0, maxChars - 1) + '…' : text;
-}
 
 export default class BcmCapabilityMap extends LightningElement {
 
@@ -89,6 +83,8 @@ export default class BcmCapabilityMap extends LightningElement {
     @track contextMenuX          = 0;
     @track contextMenuY          = 0;
     @track contextMenuNode       = null;
+    @track showHidden            = false;
+    @track focusedNodeId         = null;
 
     _capabilities   = [];
     _tagColourMap   = new Map();
@@ -102,9 +98,16 @@ export default class BcmCapabilityMap extends LightningElement {
         return hasPermission;
     }
 
+    get showHiddenVariant() {
+        return this.showHidden ? 'brand' : 'border';
+    }
+
     // ── Computed SVG dimensions & transform ───────────────────────────────────
     get canvasWidth() {
-        const cols = this._l1Roots?.length || 0;
+        const roots = this._l1Roots || [];
+        const cols  = this.showHidden
+            ? roots.length
+            : roots.filter(r => !r._hidden).length;
         if (cols === 0) return 600;
         return DIAGRAM_PADDING * 2 + cols * COLUMN_WIDTH + Math.max(0, cols - 1) * COLUMN_GAP;
     }
@@ -118,6 +121,14 @@ export default class BcmCapabilityMap extends LightningElement {
         return `translate(${this.panX}, ${this.panY}) scale(${this.zoom})`;
     }
 
+    get l1Transform() {
+        return `translate(${this.panX}, 0) scale(${this.zoom})`;
+    }
+
+    get l2ClipY() {
+        return (DIAGRAM_PADDING + CHEVRON_HEIGHT) * this.zoom;
+    }
+
     // ── Tree & layout ─────────────────────────────────────────────────────────
     get l1Nodes() { return this._layoutL1 || []; }
     get l2Nodes() { return this._layoutL2 || []; }
@@ -128,6 +139,8 @@ export default class BcmCapabilityMap extends LightningElement {
             this._tallestColumnHeight = 0;
             this._layoutL1           = [];
             this._layoutL2           = [];
+            this._colMap             = {};
+            this._l2ByCol            = {};
             return;
         }
 
@@ -158,12 +171,34 @@ export default class BcmCapabilityMap extends LightningElement {
 
         this._l1Roots = roots;
 
+        // ── Two-pass hidden cascade ──────────────────────────────────────────
+        // Pass 1: mark nodes explicitly hidden
+        for (const node of nodeMap.values()) {
+            node._hidden = !!node.bcm_HideFromDiagram__c;
+        }
+        // Pass 2: propagate hide to children (BFS from roots)
+        const queue = [...roots];
+        while (queue.length) {
+            const n = queue.shift();
+            for (const child of n.children) {
+                if (n._hidden) child._hidden = true;
+                queue.push(child);
+            }
+        }
+
         // ── Layout L1 chevrons ───────────────────────────────────────────────
         const l1Nodes = [];
         const l2Nodes = [];
         let tallest   = 0;
+        const colMap   = {};   // colIdx → l1 id
+        const l2ByCol  = {};   // colIdx → [l2 ids]
 
-        roots.forEach((l1, colIdx) => {
+        let visibleColIdx = 0;
+        roots.forEach((l1) => {
+            // Skip hidden L1 when toggle is OFF
+            if (l1._hidden && !this.showHidden) return;
+
+            const colIdx = visibleColIdx++;
             const colX = DIAGRAM_PADDING + colIdx * (COLUMN_WIDTH + COLUMN_GAP);
             const x    = colX;
             const y    = DIAGRAM_PADDING;
@@ -183,11 +218,19 @@ export default class BcmCapabilityMap extends LightningElement {
             const lineSpacing = 16;
             const totalH      = textLines.length * lineSpacing;
             const startY      = y + h / 2 - totalH / 2 + lineSpacing / 2;
+            const l1Dashed  = l1._hidden && this.showHidden;
+            const l1Focused = l1.Id === this.focusedNodeId;
+            colMap[colIdx]  = l1.Id;
+            l2ByCol[colIdx] = [];
 
             l1Nodes.push({
-                id        : l1.Id,
+                id          : l1.Id,
+                colIdx,
+                fill        : l1Focused ? '#2A2A2A' : '#4A4A4A',
+                strokeColour: l1Focused ? '#0070D2' : '#333333',
+                strokeWidth : l1Focused ? '3' : '1',
+                strokeDash  : l1Dashed ? '4 2' : '',
                 points,
-                fill      : '#4A4A4A',
                 labelLines: textLines.map((text, i) => ({
                     key : l1.Id + '-label-' + i,
                     text,
@@ -201,37 +244,54 @@ export default class BcmCapabilityMap extends LightningElement {
             let colH   = 0;
 
             for (const l2 of l1.children) {
-                const l3Count   = l2.children?.length || 0;
-                const boxHeight = BOX_HEADER_HEIGHT + l3Count * LINE_HEIGHT + BOX_PADDING * 2;
+                // Skip hidden L2 when toggle is OFF
+                if (l2._hidden && !this.showHidden) continue;
 
                 // Tag fill
                 const tagFill = this._getTagFill(l2.Id, l2.Tags__r);
 
-                // L2 header text
-                const l2MaxW   = COLUMN_WIDTH - BOX_PADDING * 2;
-                const l2Lines  = wrapText(l2.Name, l2MaxW, FONT_SIZE_L2, 2);
-                const l2StartY = boxY + BOX_PADDING + FONT_SIZE_L2 / 2;
+                // L2 header — uncapped wrap, dynamic height
+                const l2MaxW      = COLUMN_WIDTH - BOX_PADDING * 2;
+                const l2Lines     = wrapText(l2.Name, l2MaxW, FONT_SIZE_L2, 10);
+                const headerHeight = l2Lines.length * (FONT_SIZE_L2 + 4) + BOX_PADDING * 2;
+                const l2StartY    = boxY + BOX_PADDING + FONT_SIZE_L2 / 2;
 
-                // L3 bullets
-                const bulletLines = (l2.children || []).map((l3, bIdx) => {
-                    const raw       = '• ' + l3.Name;
-                    const maxBullet = COLUMN_WIDTH - BOX_PADDING * 2 - 8;
-                    const text      = truncateText(raw, maxBullet, FONT_SIZE_L3);
-                    return {
-                        key  : l3.Id + '-bullet',
-                        text,
-                        x    : colX + BOX_PADDING + 8,
-                        y    : boxY + BOX_HEADER_HEIGHT + bIdx * LINE_HEIGHT + LINE_HEIGHT / 2,
-                    };
-                });
+                // L3 bullets — wrapped, cap at 5 lines each, flattened
+                const maxBullet = COLUMN_WIDTH - BOX_PADDING * 2 - 8;
+                const bulletLines = [];
+                let   bulletY   = boxY + headerHeight;
+                for (const l3 of (l2.children || [])) {
+                    const wrappedLines = wrapText('• ' + l3.Name, maxBullet, FONT_SIZE_L3, 5);
+                    wrappedLines.forEach((text, wIdx) => {
+                        bulletLines.push({
+                            key : l3.Id + '-bullet-' + wIdx,
+                            text,
+                            x   : colX + BOX_PADDING + 8,
+                            y   : bulletY + LINE_HEIGHT / 2,
+                        });
+                        bulletY += LINE_HEIGHT;
+                    });
+                }
+
+                const boxHeight = headerHeight + (bulletY - (boxY + headerHeight)) + BOX_PADDING;
+
+                const l2Dashed  = l2._hidden && this.showHidden;
+                const l2Focused = l2.Id === this.focusedNodeId;
+                const rowIdx    = l2ByCol[colIdx].length;
+                l2ByCol[colIdx].push(l2.Id);
 
                 l2Nodes.push({
-                    id         : l2.Id,
-                    x          : colX,
-                    y          : boxY,
-                    width      : COLUMN_WIDTH,
-                    height     : boxHeight,
-                    fill       : tagFill,
+                    id          : l2.Id,
+                    colIdx,
+                    rowIdx,
+                    x           : colX,
+                    y           : boxY,
+                    width       : COLUMN_WIDTH,
+                    height      : boxHeight,
+                    fill        : l2Focused ? '#E8F4FF' : tagFill,
+                    strokeColour: l2Focused ? '#0070D2' : '#CCCCCC',
+                    strokeWidth : l2Focused ? '3' : '1',
+                    strokeDash  : l2Dashed ? '4 2' : '',
                     labelLines : l2Lines.map((text, i) => ({
                         key  : l2.Id + '-label-' + i,
                         text,
@@ -251,6 +311,8 @@ export default class BcmCapabilityMap extends LightningElement {
         this._tallestColumnHeight = tallest;
         this._layoutL1 = l1Nodes;
         this._layoutL2 = l2Nodes;
+        this._colMap   = colMap;
+        this._l2ByCol  = l2ByCol;
     }
 
     _getTagFill(capId, tagsRelation) {
@@ -273,6 +335,11 @@ export default class BcmCapabilityMap extends LightningElement {
 
     handleTagChange(evt) {
         this.selectedTagId = evt.detail.value;
+        this._buildLayout(this._capabilities);
+    }
+
+    handleToggleHidden() {
+        this.showHidden = !this.showHidden;
         this._buildLayout(this._capabilities);
     }
 
@@ -350,9 +417,84 @@ export default class BcmCapabilityMap extends LightningElement {
         this.contextMenuY   = evt.clientY - rect.top;
         this.contextMenuNode = nodeId;
         this.contextMenuVisible = true;
+        this.focusedNodeId = nodeId;
+        this._buildLayout(this._capabilities);
     }
 
     handleContextMenuClose() {
         this.contextMenuVisible = false;
+    }
+
+    handleKeyDown(evt) {
+        const ARROW_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+        if (ARROW_KEYS.includes(evt.key)) evt.preventDefault();
+        const PAN_STEP = 50;
+        if (!this.focusedNodeId) {
+            if (evt.key === 'ArrowLeft')  this.panX += PAN_STEP;
+            if (evt.key === 'ArrowRight') this.panX -= PAN_STEP;
+            if (evt.key === 'ArrowUp')    this.panY += PAN_STEP;
+            if (evt.key === 'ArrowDown')  this.panY -= PAN_STEP;
+        } else {
+            if (evt.key === 'Escape') {
+                this.focusedNodeId = null;
+                this._buildLayout(this._capabilities);
+            } else {
+                this._navigateFromKey(evt.key);
+            }
+        }
+    }
+
+    _navigateFromKey(key) {
+        const l1 = this._layoutL1 || [];
+        const l2Map = new Map((this._layoutL2 || []).map(n => [n.id, n]));
+
+        // Determine if focused node is L1 or L2
+        const focusedL1 = l1.find(n => n.id === this.focusedNodeId);
+        const focusedL2 = l2Map.get(this.focusedNodeId);
+
+        if (focusedL1) {
+            const colIdx = focusedL1.colIdx;
+            if (key === 'ArrowLeft' && colIdx > 0) {
+                const nextL1Id = this._colMap[colIdx - 1];
+                const firstL2 = (this._l2ByCol[colIdx - 1] || [])[0];
+                this.focusedNodeId = firstL2 || nextL1Id;
+            } else if (key === 'ArrowRight') {
+                const maxCol = l1.length - 1;
+                if (colIdx < maxCol) {
+                    const nextL1Id = this._colMap[colIdx + 1];
+                    const firstL2 = (this._l2ByCol[colIdx + 1] || [])[0];
+                    this.focusedNodeId = firstL2 || nextL1Id;
+                }
+            } else if (key === 'ArrowDown') {
+                const firstL2 = (this._l2ByCol[colIdx] || [])[0];
+                if (firstL2) this.focusedNodeId = firstL2;
+            }
+        } else if (focusedL2) {
+            const { colIdx, rowIdx } = focusedL2;
+            const colL2 = this._l2ByCol[colIdx] || [];
+            if (key === 'ArrowUp') {
+                if (rowIdx > 0) {
+                    this.focusedNodeId = colL2[rowIdx - 1];
+                } else {
+                    this.focusedNodeId = this._colMap[colIdx];
+                }
+            } else if (key === 'ArrowDown') {
+                if (rowIdx < colL2.length - 1) {
+                    this.focusedNodeId = colL2[rowIdx + 1];
+                }
+            } else if (key === 'ArrowLeft' && colIdx > 0) {
+                const prevL2s = this._l2ByCol[colIdx - 1] || [];
+                const idx = Math.min(rowIdx, prevL2s.length - 1);
+                this.focusedNodeId = prevL2s[idx] || this._colMap[colIdx - 1];
+            } else if (key === 'ArrowRight') {
+                const maxCol = l1.length - 1;
+                if (colIdx < maxCol) {
+                    const nextL2s = this._l2ByCol[colIdx + 1] || [];
+                    const idx = Math.min(rowIdx, nextL2s.length - 1);
+                    this.focusedNodeId = nextL2s[idx] || this._colMap[colIdx + 1];
+                }
+            }
+        }
+        this._buildLayout(this._capabilities);
     }
 }

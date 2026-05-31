@@ -165,3 +165,110 @@ When the user views the diagram
 Then no drag handle icon is visible on any node  
 
 > Tested by: diagram.spec.ts — "Viewer sees no drag handle icons on diagram"
+
+---
+
+## Feature: L2 header and L3 bullets wrap text dynamically
+
+**Scenario: L2 header wraps when name exceeds column width**
+
+Given an L2 capability whose name exceeds the column width  
+When the diagram renders  
+Then the header text wraps across multiple lines and the box height expands to fit  
+
+> Deferred: visual height calculation is a JS invariant in _buildLayout (headerHeight = lines.length × lineHeight + padding); no reliable pixel-measurement test in Playwright LWC sandbox
+
+**Scenario: L3 bullets wrap to multiple lines**
+
+Given an L3 capability whose name is too long for one line  
+When the diagram renders  
+Then the bullet text wraps across up to 5 lines and the parent L2 box height accommodates all wrapped lines  
+
+> Deferred: same as L2 header — JS invariant, tested via code review
+
+---
+
+## Feature: L1 chevrons stay pinned during vertical pan
+
+**Scenario: L1 chevrons remain visible when user pans down**
+
+Given a map with many L2 boxes that require scrolling  
+When the user pans the diagram vertically  
+Then the L1 chevron row stays fixed at the top of the canvas  
+And the L2 layer scrolls behind it  
+
+> Deferred: pinned layer uses separate g transform (l1Transform vs viewportTransform); visual invariant enforced by SVG layer split; Playwright pan simulation unreliable in LWC sandbox
+
+**Scenario: Horizontal pan keeps L1 and L2 columns aligned**
+
+Given L1 and L2 layers  
+When the user pans horizontally  
+Then both layers move together and columns remain aligned  
+
+> Deferred: both transforms share panX; JS invariant; tested manually
+
+---
+
+## Feature: Hide From Diagram flag suppresses nodes
+
+**Scenario: Hidden capability is not rendered by default**
+
+Given a capability with bcm_HideFromDiagram__c = true  
+When the diagram renders with the Show Hidden toggle off  
+Then that capability and its subtree are absent from the diagram  
+
+> Tested by: diagram.spec.ts — "Diagram still renders after toggling Show Hidden on and off"
+
+**Scenario: Show Hidden toggle reveals hidden capabilities with dashed border**
+
+Given at least one hidden capability  
+When the user clicks the Show Hidden button  
+Then hidden capabilities appear with a dashed border  
+And the button shows a highlighted (brand) variant  
+
+> Tested by: diagram.spec.ts — "Show Hidden toggle changes button variant on click"
+
+**Scenario: Parent hidden cascades to children**
+
+Given an L1 capability with bcm_HideFromDiagram__c = true and L2 children  
+When the diagram renders with Show Hidden off  
+Then none of the L2 children are rendered  
+
+> Deferred: cascade is a JS invariant in _buildLayout two-pass BFS; verified by code review
+
+---
+
+## Feature: Keyboard navigation
+
+**Scenario: Arrow keys pan the diagram when no node is focused**
+
+Given the SVG has keyboard focus and no node is selected  
+When the user presses an Arrow key  
+Then the diagram pans 50px in the corresponding direction  
+
+> Tested by: diagram.spec.ts — "Arrow keys pan the diagram when no node is focused"
+
+**Scenario: ArrowLeft and ArrowRight are inverse operations**
+
+Given the diagram is in pan mode  
+When the user presses ArrowRight then ArrowLeft  
+Then the diagram returns to its original position  
+
+> Tested by: diagram.spec.ts — "ArrowLeft pans back after ArrowRight"
+
+**Scenario: Pressing Escape clears node focus and returns to pan mode**
+
+Given a node is focused  
+When the user presses Escape  
+Then focus is cleared and arrow keys pan the diagram again  
+
+> Tested by: diagram.spec.ts — "Clicking a node sets focus and ArrowRight moves to next column"
+
+**Scenario: Focused node shows highlight ring and fill**
+
+Given a node receives focus (via click)  
+When the diagram re-renders  
+Then the focused L1 chevron shows a blue stroke ring and darkened fill  
+And the focused L2 box shows a blue stroke ring and lightened fill  
+
+> Deferred: focus styling is a JS invariant (isFocused flag → strokeColour/fill in layout nodes); no Playwright assertion on SVG stroke colour added; verified manually

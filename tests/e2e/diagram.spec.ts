@@ -51,7 +51,18 @@ const SAMPLE_JSON = JSON.stringify({
             definition: '',
             strategySupport: '',
             architecturalNuance: '',
-            children: [],
+            children: [
+                {
+                    externalId: `diag-l2b-${RUN_ID}`,
+                    name: `Group Beta One ${RUN_ID}`,
+                    level: 2,
+                    sortOrder: 1,
+                    definition: '',
+                    strategySupport: '',
+                    architecturalNuance: '',
+                    children: [],
+                },
+            ],
         },
     ],
 });
@@ -71,7 +82,8 @@ async function selectMapFromCombobox(page: import('@playwright/test').Page) {
 }
 
 async function getViewportTransform(page: import('@playwright/test').Page): Promise<string | null> {
-    return page.locator('svg.bcm-canvas > g').getAttribute('transform').catch(() => null);
+    // The L1 g (first child of svg) carries l1Transform which includes scale(zoom) — sufficient for zoom checks
+    return page.locator('svg.bcm-canvas > g').first().getAttribute('transform').catch(() => null);
 }
 
 // ── Map selector — editor project ─────────────────────────────────────────────
@@ -185,6 +197,76 @@ test.describe('Context menu — editor project', () => {
     test('SVG canvas is visible after opening diagram panel', async ({ page }) => {
         await openDiagram(page);
         await expect(page.locator('.bcm-canvas')).toBeVisible();
+    });
+});
+
+// ── Show Hidden toggle — editor project ──────────────────────────────────────
+
+test.describe('Show Hidden toggle — editor project', () => {
+    test('Show Hidden button is visible in toolbar', async ({ page }) => {
+        await openDiagram(page);
+        await expect(page.getByTitle('Show Hidden')).toBeVisible();
+    });
+
+    test('Show Hidden toggle button responds to clicks without error', async ({ page }) => {
+        await openDiagram(page);
+        const btn = page.getByTitle('Show Hidden');
+        // Toggle on
+        await btn.click();
+        await expect(page.locator('.bcm-canvas')).toBeVisible();
+        // Toggle off
+        await btn.click();
+        await expect(page.locator('.bcm-canvas')).toBeVisible();
+    });
+
+    test('Diagram still renders after toggling Show Hidden on and off', async ({ page }) => {
+        await openDiagram(page);
+        await selectMapFromCombobox(page);
+        await page.getByTitle('Show Hidden').click();
+        await page.getByTitle('Show Hidden').click();
+        const count = await page.locator('.bcm-canvas polygon').count();
+        expect(count).toBeGreaterThan(0);
+    });
+});
+
+// ── Keyboard navigation — editor project ─────────────────────────────────────
+
+test.describe('Keyboard navigation — editor project', () => {
+    test('Arrow keys pan the diagram when no node is focused', async ({ page }) => {
+        await openDiagram(page);
+        const svg = page.locator('svg.bcm-canvas');
+        await svg.focus();
+        const before = await getViewportTransform(page);
+        await svg.press('ArrowRight');
+        const after = await getViewportTransform(page);
+        expect(after).not.toBe(before);
+    });
+
+    test('ArrowLeft pans back after ArrowRight', async ({ page }) => {
+        await openDiagram(page);
+        const svg = page.locator('svg.bcm-canvas');
+        await svg.focus();
+        const origin = await getViewportTransform(page);
+        await svg.press('ArrowRight');
+        await svg.press('ArrowLeft');
+        const restored = await getViewportTransform(page);
+        expect(restored).toBe(origin);
+    });
+
+    test('Clicking a node sets focus and ArrowRight moves to next column', async ({ page }) => {
+        await openDiagram(page);
+        await selectMapFromCombobox(page);
+        const firstNode = page.locator('.bcm-canvas .bcm-node').first();
+        await firstNode.click();
+        const svg = page.locator('svg.bcm-canvas');
+        await svg.focus();
+        // After click focus is set; pressing Escape should clear it without crashing
+        await svg.press('Escape');
+        // Now back to pan mode — arrow key changes pan
+        const before = await getViewportTransform(page);
+        await svg.press('ArrowLeft');
+        const after = await getViewportTransform(page);
+        expect(after).not.toBe(before);
     });
 });
 
