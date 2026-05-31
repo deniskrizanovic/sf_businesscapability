@@ -80,33 +80,8 @@
             onmouseleave={handleSvgMouseUp}
             onwheel={handleWheel}>
 
-            <!-- L1 layer: pans horizontally only, not vertically -->
-            <g transform={l1Transform}>
-                <template for:each={l1Nodes} for:item="node">
-                    <g key={node.id} onclick={handleNodeClick} data-node-id={node.id} class="bcm-node">
-                        <polygon points={node.points} fill={node.fill} stroke={node.strokeColour} stroke-width={node.strokeWidth} stroke-dasharray={node.strokeDash}></polygon>
-                        <template for:each={node.labelLines} for:item="line">
-                            <text
-                                key={line.key}
-                                x={line.x}
-                                y={line.y}
-                                text-anchor="middle"
-                                dominant-baseline="middle"
-                                fill="#FFFFFF"
-                                font-size="13"
-                                font-weight="bold">
-                                {line.text}
-                            </text>
-                        </template>
-                    </g>
-                </template>
-            </g>
-
-            <!-- L2 layer: full pan + zoom, clipped below L1 chevrons -->
-            <clipPath id="bcm-l2-clip">
-                <rect x="0" y={l2ClipY} width={canvasWidth} height="9999"></rect>
-            </clipPath>
-            <g transform={viewportTransform} clip-path="url(#bcm-l2-clip)">
+            <!-- L2 layer: full pan + zoom -->
+            <g transform={viewportTransform}>
                 <!-- L2 Boxes -->
                 <template for:each={l2Nodes} for:item="node">
                     <g key={node.id} onclick={handleNodeClick} data-node-id={node.id} class="bcm-node">
@@ -143,6 +118,28 @@
                                 fill="#444444"
                                 font-size="11">
                                 {bullet.text}
+                            </text>
+                        </template>
+                    </g>
+                </template>
+            </g>
+
+            <!-- L1 layer: pans horizontally only, not vertically — drawn last so always on top -->
+            <g transform={l1Transform}>
+                <template for:each={l1Nodes} for:item="node">
+                    <g key={node.id} onclick={handleNodeClick} data-node-id={node.id} class="bcm-node">
+                        <polygon points={node.points} fill={node.fill} stroke={node.strokeColour} stroke-width={node.strokeWidth} stroke-dasharray={node.strokeDash}></polygon>
+                        <template for:each={node.labelLines} for:item="line">
+                            <text
+                                key={line.key}
+                                x={line.x}
+                                y={line.y}
+                                text-anchor="middle"
+                                dominant-baseline="middle"
+                                fill="#FFFFFF"
+                                font-size="13"
+                                font-weight="bold">
+                                {line.text}
                             </text>
                         </template>
                     </g>
