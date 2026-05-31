@@ -1,9 +1,8 @@
+import { test, expect } from '@playwright/test';
+import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import { test, expect } from '@playwright/test';
 import { RUN_ID, setupAutoDismiss } from './fixtures/helpers';
-
-const DIAGRAM_SEED_MAP_URL_FILE = path.resolve('tests/e2e/.diagram_map_url');
 
 // ── Seed data ─────────────────────────────────────────────────────────────────
 const MAP_NAME = `E2E Diagram Map ${RUN_ID}`;
@@ -14,7 +13,7 @@ const SAMPLE_JSON = JSON.stringify({
     capabilities: [
         {
             externalId: `diag-l1a-${RUN_ID}`,
-            name: 'Domain Alpha',
+            name: `Domain Alpha ${RUN_ID}`,
             level: 1,
             sortOrder: 1,
             definition: '',
@@ -23,7 +22,7 @@ const SAMPLE_JSON = JSON.stringify({
             children: [
                 {
                     externalId: `diag-l2a-${RUN_ID}`,
-                    name: 'Group Alpha One',
+                    name: `Group Alpha One ${RUN_ID}`,
                     level: 2,
                     sortOrder: 1,
                     definition: '',
@@ -32,7 +31,7 @@ const SAMPLE_JSON = JSON.stringify({
                     children: [
                         {
                             externalId: `diag-l3a-${RUN_ID}`,
-                            name: 'Capability Alpha One One',
+                            name: `Capability Alpha One One ${RUN_ID}`,
                             level: 3,
                             sortOrder: 1,
                             definition: '',
@@ -46,7 +45,7 @@ const SAMPLE_JSON = JSON.stringify({
         },
         {
             externalId: `diag-l1b-${RUN_ID}`,
-            name: 'Domain Beta',
+            name: `Domain Beta ${RUN_ID}`,
             level: 1,
             sortOrder: 2,
             definition: '',
@@ -56,9 +55,6 @@ const SAMPLE_JSON = JSON.stringify({
         },
     ],
 });
-
-// Module-level map URL set by first describe's beforeAll; reused by later suites.
-let diagramMapUrl = '';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -82,31 +78,22 @@ async function getViewportTransform(page: import('@playwright/test').Page): Prom
 // This suite seeds the shared map used by all later suites.
 
 test.describe('Map selector — editor project', () => {
-    let mapUrl: string;
-
     test.beforeAll(async ({ browser }) => {
         test.setTimeout(180000);
         const ctx  = await browser.newContext({ storageState: 'tests/e2e/.auth/editor.json' });
         const page = await ctx.newPage();
         await setupAutoDismiss(page);
 
-        // Create map and import capabilities (needed by Diagram structure tests later)
-        await page.goto('/lightning/o/bcm_Map__c/new');
-        await page.getByLabel('Map Name').fill(MAP_NAME);
-        await page.getByRole('button', { name: 'Save', exact: true }).click();
-        await page.waitForURL(/\/view$/);
-        mapUrl = page.url();
-        diagramMapUrl = mapUrl;
-        // Write URL to file so the viewer project (separate process) can read it
-        fs.writeFileSync(DIAGRAM_SEED_MAP_URL_FILE, mapUrl, 'utf-8');
-
-        await page.getByRole('button', { name: 'JSON Import', exact: true }).waitFor({ state: 'visible', timeout: 60000 });
+        // Import map + capabilities via list-view JSON Import button (lives in an iframe)
+        const flow = page.frameLocator('iframe');
+        await page.goto('/lightning/o/bcm_Map__c/list?filterName=All');
         await page.getByRole('button', { name: 'JSON Import', exact: true }).click();
-        await page.getByLabel('Paste JSON').waitFor({ state: 'visible', timeout: 30000 });
-        await page.getByLabel('Paste JSON').fill(SAMPLE_JSON);
-        await page.locator('lightning-flow').getByRole('button', { name: 'Import', exact: true }).click();
-        await page.getByText(/Successfully imported \d+ capabilities/).waitFor({ timeout: 90000 });
-        await page.locator('lightning-flow').getByRole('button', { name: 'Close', exact: true }).click();
+        await flow.getByLabel('Paste JSON').waitFor({ state: 'visible', timeout: 40000 });
+        await flow.getByLabel('Paste JSON').fill(SAMPLE_JSON);
+        await flow.getByRole('button', { name: 'Import', exact: true }).click();
+        await flow.getByText(/Successfully imported \d+ capabilities/).waitFor({ timeout: 90000 });
+        await flow.getByRole('button', { name: 'Close', exact: true }).click();
+
         await ctx.close();
     });
 
@@ -211,4 +198,30 @@ test.describe('Permission — viewer project', () => {
         const handles = await page.locator('.bcm-drag-handle').count();
         expect(handles).toBe(0);
     });
+});
+
+// ── Teardown — editor project ─────────────────────────────────────────────────
+
+test.describe('Teardown — editor project', () => {
+    test.afterAll(() => {
+        const orgAlias = process.env.SF_ORG_ALIAS;
+        if (!orgAlias) throw new Error('SF_ORG_ALIAS not set');
+
+        const apex = `
+List<bcm_Capability__c> caps = [SELECT Id FROM bcm_Capability__c WHERE bcm_Map__r.Name LIKE '%${RUN_ID}%' LIMIT 10000];
+if (!caps.isEmpty()) delete caps;
+List<bcm_Map__c> maps = [SELECT Id FROM bcm_Map__c WHERE Name LIKE '%${RUN_ID}%' AND Name LIKE '%Diagram%' LIMIT 10000];
+if (!maps.isEmpty()) delete maps;
+`.trim();
+
+        const apexFile = path.resolve(`tests/e2e/.teardown_diagram_${RUN_ID}.apex`);
+        fs.writeFileSync(apexFile, apex, 'utf-8');
+        try {
+            execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], { stdio: 'inherit' });
+        } finally {
+            fs.unlinkSync(apexFile);
+        }
+    });
+
+    test('placeholder so afterAll runs', () => { /* intentional */ });
 });
