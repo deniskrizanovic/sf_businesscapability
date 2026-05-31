@@ -31,6 +31,22 @@ If any test failed, append immediately below the table:
 - bcm_CapabilityTagTest.viewer_cannotCreateJunction — System.AssertException: ...
 ```
 
+### Playwright verification points
+
+Emitted before the test run. Format mirrors parser output:
+
+```
+describe: Map selector — editor project
+  test: Map combobox is present in diagram toolbar
+    → expect(page.getByRole('combobox', { name: 'Map' }).first()).toBeVisible()
+  test: Canvas shows no chevrons before a map is selected
+    → expect(polygonCount).toBe(0)
+describe: Diagram structure — editor project
+  ...
+```
+
+If the parser emits a `⚠` warning line, include it verbatim.
+
 ### Playwright
 
 | Total | Failures | Result |

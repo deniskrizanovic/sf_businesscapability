@@ -14,7 +14,7 @@ description: Full Definition of Done check for a completed Business Capability M
 
 ### Step 0 — resolve step inputs
 
-Read `docs/plan/implementation-plan.md`. Find the section for the requested step. Extract:
+Read `docs/plans/implementation-plan.md`. Find the section for the requested step. Extract:
 
 - **Spec file** — filename in the `**Spec:**` line
 - **E2E spec** — path in the `` `npx playwright test tests/e2e/<file>` `` checklist line
@@ -22,6 +22,16 @@ Read `docs/plan/implementation-plan.md`. Find the section for the requested step
 ### Step 1 — traceability check
 
 Read `.claude/skills/check-traceability/SKILL.md` and follow its instructions for the resolved spec file. Do NOT use the Skill tool — execute the checks directly so this skill retains control and continues to Steps 2–4.
+
+### Step 1.5 — Playwright verification preview
+
+Run the parser against the resolved E2E spec file:
+
+```
+python3 .claude/skills/dod/parse_playwright_assertions.py <e2e-spec-path>
+```
+
+Emit the output as the **Playwright verification points** section (see OUTPUT_FORMAT.md) before running any tests. This is a preview — the test run in Step 3 is the authoritative result.
 
 ### Steps 2, 3, 4 — run in parallel (fully independent)
 
