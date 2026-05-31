@@ -16,7 +16,7 @@ Given the user has not previously selected a map
 When the Visualisation panel opens  
 Then the diagram canvas is empty and no capabilities are rendered  
 
-> Tested by: diagram.spec.ts — "Canvas shows empty SVG before a map is selected"
+> Tested by: diagram.spec.ts — "Canvas shows no chevrons before a map is selected"
 
 ---
 
