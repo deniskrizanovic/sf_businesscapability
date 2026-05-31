@@ -85,9 +85,12 @@ export default class BcmCapabilityMap extends LightningElement {
     @track contextMenuNode       = null;
     @track showHidden            = false;
     @track focusedNodeId         = null;
+    @track _layoutL1             = [];
+    @track _layoutL2             = [];
 
     _capabilities   = [];
     _tagColourMap   = new Map();
+    _keyNavMode     = false;
     _isDragging     = false;
     _dragStartX     = 0;
     _dragStartY     = 0;
@@ -392,6 +395,7 @@ export default class BcmCapabilityMap extends LightningElement {
 
     handleSvgMouseDown(evt) {
         if (evt.target.closest('.bcm-node')) return;
+        this._keyNavMode = false;
         this._isDragging = true;
         this._dragStartX = evt.clientX;
         this._dragStartY = evt.clientY;
@@ -418,6 +422,7 @@ export default class BcmCapabilityMap extends LightningElement {
         this.contextMenuNode = nodeId;
         this.contextMenuVisible = true;
         this.focusedNodeId = nodeId;
+        this._keyNavMode   = true;
         this._buildLayout(this._capabilities);
     }
 
@@ -429,13 +434,14 @@ export default class BcmCapabilityMap extends LightningElement {
         const ARROW_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
         if (ARROW_KEYS.includes(evt.key)) evt.preventDefault();
         const PAN_STEP = 50;
-        if (!this.focusedNodeId) {
+        if (!this._keyNavMode) {
             if (evt.key === 'ArrowLeft')  this.panX += PAN_STEP;
             if (evt.key === 'ArrowRight') this.panX -= PAN_STEP;
             if (evt.key === 'ArrowUp')    this.panY += PAN_STEP;
             if (evt.key === 'ArrowDown')  this.panY -= PAN_STEP;
         } else {
             if (evt.key === 'Escape') {
+                this._keyNavMode   = false;
                 this.focusedNodeId = null;
                 this._buildLayout(this._capabilities);
             } else {
