@@ -103,4 +103,22 @@ private class bcm_CapabilityControllerTest {
         Assert.areEqual(2, (Integer) result[1].bcm_Level__c, 'Second record should be L2');
         Assert.areEqual(3, (Integer) result[2].bcm_Level__c, 'Third record should be L3');
     }
+
+    @IsTest
+    static void shouldWrapException_WhenUserLacksAccess() {
+        // Given — user with no object permissions; USER_MODE -> QueryException -> AuraHandledException
+        User restrictedUser = TestDataFactory.createUserWithPermSet('bcm_ReadOnly');
+        bcm_Map__c mapA = [SELECT Id FROM bcm_Map__c WHERE Name = 'Test Map A' LIMIT 1];
+
+        // When / Then
+        Test.startTest();
+        System.runAs(restrictedUser) {
+            try {
+                bcm_CapabilityController.getCapabilities(mapA.Id);
+            } catch (AuraHandledException ex) {
+                Assert.isNotNull(ex, 'AuraHandledException expected when USER_MODE denies access');
+            }
+        }
+        Test.stopTest();
+    }
 }

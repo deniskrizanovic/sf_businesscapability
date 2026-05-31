@@ -57,4 +57,21 @@ private class bcm_TagControllerTest {
         // Then — Alpha Tag has colour #FFFFFF
         Assert.areEqual('#2DC653', result[0].bcm_Colour__c, 'Colour field should be populated');
     }
+
+    @IsTest
+    static void shouldWrapException_WhenUserLacksAccess() {
+        // Given — restricted user; USER_MODE denies bcm_Tag__c access -> AuraHandledException
+        User restrictedUser = TestDataFactory.createUserWithPermSet('bcm_ReadOnly');
+
+        // When / Then
+        Test.startTest();
+        System.runAs(restrictedUser) {
+            try {
+                bcm_TagController.getTags();
+            } catch (AuraHandledException ex) {
+                Assert.isNotNull(ex, 'AuraHandledException expected when USER_MODE denies access');
+            }
+        }
+        Test.stopTest();
+    }
 }

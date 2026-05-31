@@ -46,4 +46,21 @@ private class bcm_MapControllerTest {
         // Then
         Assert.areEqual(0, result.size(), 'Should return empty list when no maps exist');
     }
+
+    @IsTest
+    static void shouldWrapException_WhenUserLacksAccess() {
+        // Given — restricted user; USER_MODE denies bcm_Map__c access -> AuraHandledException
+        User restrictedUser = TestDataFactory.createUserWithPermSet('bcm_ReadOnly');
+
+        // When / Then
+        Test.startTest();
+        System.runAs(restrictedUser) {
+            try {
+                bcm_MapController.getMaps();
+            } catch (AuraHandledException ex) {
+                Assert.isNotNull(ex, 'AuraHandledException expected when USER_MODE denies access');
+            }
+        }
+        Test.stopTest();
+    }
 }

@@ -30,8 +30,6 @@ public with sharing class bcm_CapabilityController {
                 WITH USER_MODE
                 ORDER BY bcm_Level__c ASC, bcm_SortOrder__c ASC
             ];
-        } catch (AuraHandledException ahe) {
-            throw ahe;
         } catch (Exception ex) {
             throw new AuraHandledException(ex.getMessage());
         }
