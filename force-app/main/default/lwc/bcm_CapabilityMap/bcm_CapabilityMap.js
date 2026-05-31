@@ -16,6 +16,7 @@ const DIAGRAM_PADDING   = 24;
 const FONT_SIZE_L1      = 13;
 const FONT_SIZE_L2      = 12;
 const FONT_SIZE_L3      = 11;
+const BULLET_INDENT     = Math.round(FONT_SIZE_L3 * 0.6 * 2);
 
 const ZOOM_MIN   = 0.2;
 const ZOOM_MAX   = 3.0;
@@ -228,6 +229,7 @@ export default class BcmCapabilityMap extends LightningElement {
 
             l1Nodes.push({
                 id          : l1.Id,
+                name        : l1.Name,
                 colIdx,
                 fill        : l1Focused ? '#2A2A2A' : '#4A4A4A',
                 strokeColour: l1Focused ? '#0070D2' : '#333333',
@@ -259,19 +261,37 @@ export default class BcmCapabilityMap extends LightningElement {
                 const headerHeight = l2Lines.length * (FONT_SIZE_L2 + 4) + BOX_PADDING * 2;
                 const l2StartY    = boxY + BOX_PADDING + FONT_SIZE_L2 / 2;
 
-                // L3 bullets — wrapped, cap at 5 lines each, flattened
-                const maxBullet = COLUMN_WIDTH - BOX_PADDING * 2 - 8;
+                // L3 bullets — hanging indent: first line gets "• ", continuations indented
+                const bulletBaseX    = colX + BOX_PADDING + 8;
+                const bulletContX    = bulletBaseX + BULLET_INDENT;
+                const maxBulletFirst = COLUMN_WIDTH - BOX_PADDING * 2 - 8;
+                const maxBulletCont  = maxBulletFirst - BULLET_INDENT;
                 const bulletLines = [];
                 let   bulletY   = boxY + headerHeight;
                 for (const l3 of (l2.children || [])) {
-                    const wrappedLines = wrapText('• ' + l3.Name, maxBullet, FONT_SIZE_L3, 5);
-                    wrappedLines.forEach((text, wIdx) => {
-                        bulletLines.push({
-                            key : l3.Id + '-bullet-' + wIdx,
-                            text,
-                            x   : colX + BOX_PADDING + 8,
-                            y   : bulletY + LINE_HEIGHT / 2,
-                        });
+                    const allLines = wrapText(l3.Name, maxBulletFirst, FONT_SIZE_L3, 5);
+                    allLines.forEach((text, wIdx) => {
+                        if (wIdx === 0) {
+                            bulletLines.push({
+                                key         : l3.Id + '-bullet-0',
+                                l3Id        : l3.Id,
+                                l3Name      : l3.Name,
+                                cursorStyle : 'cursor:pointer',
+                                text        : '• ' + text,
+                                x           : bulletBaseX,
+                                y           : bulletY + LINE_HEIGHT / 2,
+                            });
+                        } else {
+                            bulletLines.push({
+                                key         : l3.Id + '-bullet-' + wIdx,
+                                l3Id        : null,
+                                l3Name      : null,
+                                cursorStyle : '',
+                                text,
+                                x           : bulletContX,
+                                y           : bulletY + LINE_HEIGHT / 2,
+                            });
+                        }
                         bulletY += LINE_HEIGHT;
                     });
                 }
@@ -285,6 +305,7 @@ export default class BcmCapabilityMap extends LightningElement {
 
                 l2Nodes.push({
                     id          : l2.Id,
+                    name        : l2.Name,
                     colIdx,
                     rowIdx,
                     x           : colX,
@@ -316,6 +337,17 @@ export default class BcmCapabilityMap extends LightningElement {
         this._layoutL2 = l2Nodes;
         this._colMap   = colMap;
         this._l2ByCol  = l2ByCol;
+
+        // Build L3 lookup: id → {name, anchorX, anchorY} for context menu positioning
+        const l3Map = new Map();
+        for (const l2 of l2Nodes) {
+            for (const bullet of l2.bulletLines) {
+                if (bullet.l3Id) {
+                    l3Map.set(bullet.l3Id, { name: bullet.l3Name, anchorX: l2.x + l2.width, anchorY: bullet.y });
+                }
+            }
+        }
+        this._layoutL3Map = l3Map;
     }
 
     _getTagFill(capId, tagsRelation) {
