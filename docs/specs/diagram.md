@@ -96,7 +96,7 @@ Given the diagram is at maximum zoom
 When the user continues scrolling upward  
 Then the zoom does not increase further  
 
-> Deferred: zoom clamp is a JS invariant (ZOOM_MIN/ZOOM_MAX constants); no Playwright test added as browser wheel simulation is unreliable in LWC sandbox
+> Tested by: BcmCapabilityMapTest.ZoomInClamped300, BcmCapabilityMapTest.ZoomOutClamped20
 
 **Scenario: Click-drag on the background pans the diagram**
 
@@ -419,7 +419,7 @@ Given the diagram is at maximum zoom (300%)
 When the user clicks the "+" button  
 Then the zoom level remains at 300% and does not increase further  
 
-> Deferred: ZOOM_MAX clamp is a JS invariant; verified manually
+> Tested by: BcmCapabilityMapTest.ZoomInClamped300
 
 **Scenario: Zoom Out button does not go below minimum zoom**
 
@@ -427,7 +427,7 @@ Given the diagram is at minimum zoom (20%)
 When the user clicks the "-" button  
 Then the zoom level remains at 20% and does not decrease further  
 
-> Deferred: ZOOM_MIN clamp is a JS invariant; verified manually
+> Tested by: BcmCapabilityMapTest.ZoomOutClamped20
 
 ---
 
@@ -462,7 +462,7 @@ When the user clicks the reset view button
 Then zoom returns to 100%  
 And pan offsets return to (0, 0)  
 
-> Deferred: reset sets zoom=ZOOM_DEFAULT, panX=0, panY=0; JS invariant; verified manually
+> Tested by: BcmCapabilityMapTest.ResetViewRestoresDefaults
 
 ---
 
@@ -474,4 +474,4 @@ Given the user has zoomed the diagram
 When the user selects a different map from the dropdown  
 Then zoom resets to 100% and pan resets to (0, 0) before rendering the new map  
 
-> Deferred: map switch reset is a JS invariant in _loadCapabilities; verified manually
+> Tested by: BcmCapabilityMapTest.MapSwitchResetsZoomAndPan

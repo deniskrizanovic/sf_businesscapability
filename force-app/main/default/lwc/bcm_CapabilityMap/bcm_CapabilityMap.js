@@ -1,4 +1,4 @@
-import { LightningElement, track, wire } from 'lwc';
+import { LightningElement, api, track, wire } from 'lwc';
 import hasPermission from '@salesforce/customPermission/bcm_CanEdit';
 import getMaps from '@salesforce/apex/bcm_MapController.getMaps';
 import getCapabilities from '@salesforce/apex/bcm_CapabilityController.getCapabilities';
@@ -77,9 +77,9 @@ export default class BcmCapabilityMap extends LightningElement {
     @track highlightedNodeIds    = new Set();
     @track isLoading             = false;
     @track errorMessage          = null;
-    @track zoom                  = ZOOM_DEFAULT;
-    @track panX                  = 0;
-    @track panY                  = 0;
+    @track _zoom                 = ZOOM_DEFAULT;
+    @track _panX                 = 0;
+    @track _panY                 = 0;
     @track contextMenuVisible    = false;
     @track contextMenuX          = 0;
     @track contextMenuY          = 0;
@@ -97,6 +97,15 @@ export default class BcmCapabilityMap extends LightningElement {
     _dragStartY     = 0;
     _panStartX      = 0;
     _panStartY      = 0;
+
+    @api get zoom() { return this._zoom; }
+    set zoom(v)      { this._zoom = v; }
+
+    @api get panX()  { return this._panX; }
+    set panX(v)      { this._panX = v; }
+
+    @api get panY()  { return this._panY; }
+    set panY(v)      { this._panY = v; }
 
     get canEdit() {
         return hasPermission;
@@ -363,8 +372,11 @@ export default class BcmCapabilityMap extends LightningElement {
 
     // ── Event handlers ────────────────────────────────────────────────────────
     handleMapChange(evt) {
-        this.selectedMapId     = evt.detail.value;
+        this.selectedMapId      = evt.detail.value;
         this.contextMenuVisible = false;
+        this.zoom = ZOOM_DEFAULT;
+        this.panX = 0;
+        this.panY = 0;
         this._loadCapabilities();
     }
 
