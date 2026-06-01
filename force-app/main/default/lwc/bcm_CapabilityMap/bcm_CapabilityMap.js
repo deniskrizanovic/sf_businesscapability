@@ -352,7 +352,7 @@ export default class BcmCapabilityMap extends LightningElement {
         for (const l2 of l2Nodes) {
             for (const bullet of l2.bulletLines) {
                 if (bullet.l3Id) {
-                    l3Map.set(bullet.l3Id, { name: bullet.l3Name, anchorX: l2.x + l2.width, anchorY: bullet.y });
+                    l3Map.set(bullet.l3Id, { name: bullet.l3Name, anchorX: l2.x + l2.width, anchorY: bullet.y, parentL2Id: l2.id });
                 }
             }
         }
@@ -590,9 +590,17 @@ export default class BcmCapabilityMap extends LightningElement {
         const l1 = this._layoutL1 || [];
         const l2Map = new Map((this._layoutL2 || []).map(n => [n.id, n]));
 
-        // Determine if focused node is L1 or L2
+        // Determine if focused node is L1, L2, or L3
         const focusedL1 = l1.find(n => n.id === this.focusedNodeId);
         const focusedL2 = l2Map.get(this.focusedNodeId);
+        const focusedL3 = (this._layoutL3Map || new Map()).get(this.focusedNodeId);
+
+        // L3 focus: arrow keys fall back to parent L2 so navigation isn't a dead end
+        if (!focusedL1 && !focusedL2 && focusedL3) {
+            this.focusedNodeId = focusedL3.parentL2Id || this.focusedNodeId;
+            this._buildLayout(this._capabilities);
+            return;
+        }
 
         if (focusedL1) {
             const colIdx = focusedL1.colIdx;

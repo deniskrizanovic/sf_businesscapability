@@ -338,7 +338,7 @@ Given an L3 bullet is focused and a sibling exists below it
 When the user presses ArrowDown  
 Then focus moves to the next L3 bullet in the same L2 box  
 
-> Tested by: BcmCapabilityMapTest.ArrowDownMovesL2Focus (L2 level; L3-to-L3 nav not implemented)
+> Deferred: L3-to-L3 ArrowDown nav not implemented; ArrowDownMovesL2Focus covers L2 level only
 
 **Scenario: ArrowUp moves focus to previous L3 bullet in same L2 box**
 
@@ -346,7 +346,7 @@ Given an L3 bullet is focused and a sibling exists above it
 When the user presses ArrowUp  
 Then focus moves to the previous L3 bullet in the same L2 box  
 
-> Tested by: BcmCapabilityMapTest.ArrowUpMovesL2Focus (L2 level; L3-to-L3 nav not implemented)
+> Deferred: L3-to-L3 ArrowUp nav not implemented; ArrowUpMovesL2Focus covers L2 level only
 
 **Scenario: ArrowUp from first L3 bullet moves focus to parent L2 node**
 
@@ -354,7 +354,7 @@ Given the first L3 bullet in an L2 box is focused
 When the user presses ArrowUp  
 Then focus moves to the parent L2 node  
 
-> Tested by: BcmCapabilityMapTest.ArrowUpFirstL2MovesToL1 (tested at L2→L1 level; L3→L2 path uses same _navigateFromKey branch)
+> Deferred: L3→L2 ArrowUp path not covered; ArrowUpFirstL2MovesToL1 tests L2→L1 only
 
 **Scenario: ArrowLeft and ArrowRight are ignored when an L3 bullet is focused**
 
@@ -362,7 +362,7 @@ Given an L3 bullet is focused
 When the user presses ArrowLeft or ArrowRight  
 Then focus does not change  
 
-> Tested by: BcmCapabilityMapTest.ArrowLeftRightNoMenu (tested at L2 level; same _navigateFromKey guard)
+> Deferred: L3-level ArrowLeft/Right guard not covered; ArrowLeftRightNoMenu tests L2 only
 
 ---
 
@@ -382,7 +382,7 @@ Given the context menu is open
 When the user has only the bcm_Viewer permission set  
 Then the "Hide" menu item is not rendered  
 
-> Tested by: BcmCapabilityMapTest.ContextMenuNodePropCorrect, BcmCapabilityMapTest.ContextMenuCloseHidesMenu
+> Deferred: no test asserts Hide button absent for Viewer; ContextMenuNodePropCorrect/CloseHidesMenu test menu presence/close only
 
 **Scenario: Hide persists the node as hidden and re-renders**
 

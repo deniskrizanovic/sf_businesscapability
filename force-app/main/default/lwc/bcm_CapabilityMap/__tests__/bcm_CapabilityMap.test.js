@@ -8,12 +8,12 @@ const mockGetTags = createTestWireAdapter();
 // Imperative Apex mock — returns a resolved promise with seeded data
 const CAPS_DATA = [
     { Id: 'L1-A', Name: 'Capability A', bcm_Parent__c: null, bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false },
-    { Id: 'L2-A1', Name: 'Sub-Cap A1', bcm_Parent__c: 'L1-A', bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false },
-    { Id: 'L2-A2', Name: 'Sub-Cap A2', bcm_Parent__c: 'L1-A', bcm_SortOrder__c: 2, bcm_HideFromDiagram__c: false },
+    { Id: 'L2-A1', Name: 'Sub-Cap A1', bcm_Parent__c: 'L1-A', bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false, Tags__r: [] },
+    { Id: 'L2-A2', Name: 'Sub-Cap A2', bcm_Parent__c: 'L1-A', bcm_SortOrder__c: 2, bcm_HideFromDiagram__c: false, Tags__r: [] },
     { Id: 'L3-A1a', Name: 'Detail A1a', bcm_Parent__c: 'L2-A1', bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false },
     { Id: 'L3-A1b', Name: 'Detail A1b', bcm_Parent__c: 'L2-A1', bcm_SortOrder__c: 2, bcm_HideFromDiagram__c: false },
     { Id: 'L1-B', Name: 'Capability B', bcm_Parent__c: null, bcm_SortOrder__c: 2, bcm_HideFromDiagram__c: false },
-    { Id: 'L2-B1', Name: 'Sub-Cap B1', bcm_Parent__c: 'L1-B', bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false },
+    { Id: 'L2-B1', Name: 'Sub-Cap B1', bcm_Parent__c: 'L1-B', bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false, Tags__r: [] },
 ];
 
 let mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
