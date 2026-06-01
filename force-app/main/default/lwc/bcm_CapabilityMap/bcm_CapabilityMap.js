@@ -487,10 +487,15 @@ export default class BcmCapabilityMap extends LightningElement {
         const nodeName  = targetName  || evt.currentTarget.dataset.nodeName;
         if (!nodeId) return;
 
-        // L3 bullet click — open menu directly, no focus state needed
+        // L3 bullet click — focus first, menu on second click (same as L1/L2)
         if (nodeLevel === '3' && targetId) {
             const l3 = (this._layoutL3Map || new Map()).get(targetId);
             if (!l3) return;
+            const alreadyFocused = this.focusedNodeId === targetId;
+            this.focusedNodeId = targetId;
+            this._keyNavMode   = true;
+            this._buildLayout(this._capabilities);
+            if (!alreadyFocused) return;
             if (this.contextMenuVisible && this.contextMenuNode?.id === targetId) {
                 this.contextMenuVisible = false;
                 return;
