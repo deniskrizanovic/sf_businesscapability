@@ -91,7 +91,7 @@
             <g transform={viewportTransform}>
                 <!-- L2 Boxes -->
                 <template for:each={l2Nodes} for:item="node">
-                    <g key={node.id} onclick={handleNodeClick} data-node-id={node.id} data-node-name={node.name} data-node-level="2" class="bcm-node">
+                    <g key={node.id} onclick={handleNodeClick} data-node-id={node.id} data-node-name={node.name} data-node-level="2" data-focused={node.isFocused} class="bcm-node">
                         <rect
                             x={node.x}
                             y={node.y}
@@ -101,7 +101,8 @@
                             fill={node.fill}
                             stroke={node.strokeColour}
                             stroke-width={node.strokeWidth}
-                            stroke-dasharray={node.strokeDash}>
+                            stroke-dasharray={node.strokeDash}
+                            data-focused={node.isFocused}>
                         </rect>
                         <template for:each={node.labelLines} for:item="line">
                             <text
@@ -122,6 +123,7 @@
                                 data-node-id={bullet.l3Id}
                                 data-node-name={bullet.l3Name}
                                 data-node-level="3"
+                                data-focused={bullet.isFocused}
                                 x={bullet.x}
                                 y={bullet.y}
                                 dominant-baseline="middle"
@@ -138,8 +140,8 @@
             <!-- L1 layer: pans horizontally only, not vertically — drawn last so always on top -->
             <g transform={l1Transform}>
                 <template for:each={l1Nodes} for:item="node">
-                    <g key={node.id} onclick={handleNodeClick} data-node-id={node.id} data-node-name={node.name} data-node-level="1" class="bcm-node">
-                        <polygon points={node.points} fill={node.fill} stroke={node.strokeColour} stroke-width={node.strokeWidth} stroke-dasharray={node.strokeDash}></polygon>
+                    <g key={node.id} onclick={handleNodeClick} data-node-id={node.id} data-node-name={node.name} data-node-level="1" data-focused={node.isFocused} class="bcm-node">
+                        <polygon points={node.points} fill={node.fill} stroke={node.strokeColour} stroke-width={node.strokeWidth} stroke-dasharray={node.strokeDash} data-focused={node.isFocused}></polygon>
                         <template for:each={node.labelLines} for:item="line">
                             <text
                                 key={line.key}
