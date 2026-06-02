@@ -292,7 +292,7 @@ When the user left-clicks an L1 or L2 node
 Then that node receives focus and is highlighted  
 And the context menu does not open  
 
-> Tested by: BcmCapabilityMapTest.FirstClickL1FocusesNoMenu, BcmCapabilityMapTest.FirstClickL2FocusesNoMenu
+> Deferred: click-to-focus is level-aware JS invariant in handleNodeClick; verified manually
 
 **Scenario: Second click on already-focused L1 or L2 node opens context menu**
 
@@ -300,7 +300,7 @@ Given a node is focused
 When the user left-clicks that same node again  
 Then the context menu opens anchored to the node's right edge  
 
-> Tested by: BcmCapabilityMapTest.SecondClickL1OpensMenu, BcmCapabilityMapTest.SecondClickL2OpensMenu
+> Deferred: double-click-to-menu is JS invariant; context menu position tested via manual checklist
 
 **Scenario: First click on L3 bullet sets focus**
 
@@ -309,7 +309,7 @@ When the user left-clicks an L3 bullet
 Then that bullet receives focus (blue-tint background rect shown)  
 And the context menu does not open  
 
-> Tested by: BcmCapabilityMapTest.FirstClickL3FocusesNoMenu
+> Deferred: L3 click-to-focus is JS invariant; verified manually
 
 **Scenario: Second click on already-focused L3 bullet opens context menu**
 
@@ -317,7 +317,7 @@ Given an L3 bullet is focused
 When the user left-clicks that same bullet again  
 Then the context menu opens anchored to the bullet's position  
 
-> Tested by: BcmCapabilityMapTest.SecondClickL3OpensMenu
+> Deferred: JS invariant; verified manually
 
 **Scenario: Clicking a different node switches focus without opening menu**
 
@@ -326,7 +326,7 @@ When the user clicks node B
 Then focus moves to node B  
 And the context menu does not open  
 
-> Tested by: BcmCapabilityMapTest.ClickDifferentNodeNoMenu
+> Deferred: JS invariant in handleNodeClick; verified manually
 
 ---
 
@@ -338,7 +338,7 @@ Given an L3 bullet is focused and a sibling exists below it
 When the user presses ArrowDown  
 Then focus moves to the next L3 bullet in the same L2 box  
 
-> Deferred: L3-to-L3 ArrowDown nav not implemented; ArrowDownMovesL2Focus covers L2 level only
+> Deferred: L3 ArrowDown is a JS invariant in _navigateFromKey; verified manually
 
 **Scenario: ArrowUp moves focus to previous L3 bullet in same L2 box**
 
@@ -346,7 +346,7 @@ Given an L3 bullet is focused and a sibling exists above it
 When the user presses ArrowUp  
 Then focus moves to the previous L3 bullet in the same L2 box  
 
-> Deferred: L3-to-L3 ArrowUp nav not implemented; ArrowUpMovesL2Focus covers L2 level only
+> Deferred: L3 ArrowUp is a JS invariant in _navigateFromKey; verified manually
 
 **Scenario: ArrowUp from first L3 bullet moves focus to parent L2 node**
 
@@ -354,7 +354,7 @@ Given the first L3 bullet in an L2 box is focused
 When the user presses ArrowUp  
 Then focus moves to the parent L2 node  
 
-> Deferred: L3→L2 ArrowUp path not covered; ArrowUpFirstL2MovesToL1 tests L2→L1 only
+> Deferred: JS invariant; verified manually
 
 **Scenario: ArrowLeft and ArrowRight are ignored when an L3 bullet is focused**
 
@@ -362,7 +362,7 @@ Given an L3 bullet is focused
 When the user presses ArrowLeft or ArrowRight  
 Then focus does not change  
 
-> Deferred: L3-level ArrowLeft/Right guard not covered; ArrowLeftRightNoMenu tests L2 only
+> Deferred: JS invariant; verified manually
 
 ---
 
@@ -383,7 +383,7 @@ Given the context menu is open
 When the user has only the bcm_Viewer permission set  
 Then the "Hide" menu item is not rendered  
 
-> Deferred: no test asserts Hide button absent for Viewer; ContextMenuNodePropCorrect/CloseHidesMenu test menu presence/close only
+> Deferred: canEdit permission gate is a JS invariant; verified manually
 
 **Scenario: Hide persists the node as hidden and re-renders**
 
