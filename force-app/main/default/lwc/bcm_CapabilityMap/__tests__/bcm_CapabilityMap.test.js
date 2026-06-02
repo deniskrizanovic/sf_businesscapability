@@ -1,10 +1,12 @@
 import { createElement } from 'lwc';
 import { createTestWireAdapter } from '@salesforce/wire-service-jest-util';
 
-import BcmCapabilityMap from 'c/bcm_CapabilityMap';
-
 const mockGetMaps = createTestWireAdapter();
 const mockGetTags = createTestWireAdapter();
+
+// require() (not import) ensures mockGetMaps/mockGetTags are constructed
+// before the component module's apex-scoped imports resolve to .default.
+const BcmCapabilityMap = require('c/bcm_CapabilityMap').default;
 
 let mockHideCapabilityImpl = jest.fn().mockResolvedValue(undefined);
 let mockGetCapabilityDetailImpl = jest.fn().mockResolvedValue(null);
@@ -24,8 +26,8 @@ const CAPS_DATA = [
 let mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
 
 jest.mock('@salesforce/customPermission/bcm_CanEdit', () => false, { virtual: true });
-jest.mock('@salesforce/apex/bcm_MapController.getMaps', () => mockGetMaps, { virtual: true });
-jest.mock('@salesforce/apex/bcm_TagController.getTags', () => mockGetTags, { virtual: true });
+jest.mock('@salesforce/apex/bcm_MapController.getMaps', () => ({ __esModule: true, default: mockGetMaps }), { virtual: true });
+jest.mock('@salesforce/apex/bcm_TagController.getTags', () => ({ __esModule: true, default: mockGetTags }), { virtual: true });
 jest.mock('@salesforce/apex/bcm_CapabilityController.getCapabilities',
     () => {
         const fn = function(...args) { return mockCapabilitiesImpl(...args); };
@@ -890,5 +892,18 @@ describe('BcmCapabilityMap session persistence', () => {
         combobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'MAP-2' } }));
         await flushPromises();
         expect(sessionStorage.getItem('bcm.visualisation.selectedMapId')).toBe('MAP-2');
+    });
+
+    it('Restores selectedMapId from sessionStorage on init when id is in mapOptions', async () => {
+        sessionStorage.setItem('bcm.visualisation.selectedMapId', 'MAP-2');
+        document.body.removeChild(element);
+        mockCapabilitiesImpl.mockClear();
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }, { Id: 'MAP-2', Name: 'Map 2' }], error: undefined });
+        await flushPromises();
+        const combobox = element.shadowRoot.querySelector('lightning-combobox');
+        expect(combobox.value).toBe('MAP-2');
+        expect(mockCapabilitiesImpl).toHaveBeenCalledWith({ mapId: 'MAP-2' });
     });
 });

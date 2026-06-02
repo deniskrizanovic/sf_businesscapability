@@ -72,9 +72,24 @@ export default class BcmCapabilityMap extends LightningElement {
     wiredMaps({ data, error }) {
         if (data) {
             this.mapOptions = data.map(m => ({ label: m.Name, value: m.Id }));
+            this._maybeRestoreSelectedMap();
         } else if (error) {
             this.errorMessage = error?.body?.message || 'Failed to load maps';
         }
+    }
+
+    _maybeRestoreSelectedMap() {
+        if (this._restoreAttempted) return;
+        this._restoreAttempted = true;
+        const persistedId = safeSessionGet(SESSION_KEY_SELECTED_MAP);
+        if (!persistedId) return;
+        const isValid = this.mapOptions.some(opt => opt.value === persistedId);
+        if (!isValid) {
+            safeSessionRemove(SESSION_KEY_SELECTED_MAP);
+            return;
+        }
+        this.selectedMapId = persistedId;
+        this._loadCapabilities();
     }
 
     @wire(getTags)
@@ -119,6 +134,7 @@ export default class BcmCapabilityMap extends LightningElement {
     _dragStartY     = 0;
     _panStartX      = 0;
     _panStartY      = 0;
+    _restoreAttempted = false;
 
     @api get zoom() { return this._zoom; }
     set zoom(v)      { this._zoom = v; }
