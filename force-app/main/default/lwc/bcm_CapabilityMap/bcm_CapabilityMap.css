@@ -18,6 +18,8 @@
     cursor: grabbing;
 }
 
+/* query anchor — .bcm-l3-focus-rect styled via SVG attrs; class used as test selector */
+
 .bcm-node {
     cursor: pointer;
 }

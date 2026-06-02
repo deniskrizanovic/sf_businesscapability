@@ -58,6 +58,10 @@ function getSvg(element) {
     return element.shadowRoot.querySelector('svg.bcm-canvas');
 }
 
+function getL3TextNode(element, l3Id) {
+    return element.shadowRoot.querySelector(`text[data-node-id="${l3Id}"][data-node-level="3"]`);
+}
+
 describe('BcmCapabilityMap zoom/pan state machine', () => {
     let element;
     let zoomInBtn, zoomOutBtn, resetBtn, mapCombobox;
@@ -213,10 +217,6 @@ describe('BcmCapabilityMap node click UX — L3 bullets', () => {
         }
     });
 
-    function getL3TextNode(element, l3Id) {
-        return element.shadowRoot.querySelector(`text[data-node-id="${l3Id}"][data-node-level="3"]`);
-    }
-
     it('First click on L3 bullet focuses it but does not open context menu', () => {
         const l3Text = getL3TextNode(element, 'L3-A1a');
         l3Text.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
@@ -330,10 +330,6 @@ describe('BcmCapabilityMap keyboard navigation — L3 level', () => {
     let element;
     let svg;
 
-    function getL3TextNode(el, l3Id) {
-        return el.shadowRoot.querySelector(`text[data-node-id="${l3Id}"][data-node-level="3"]`);
-    }
-
     function isFocused(el, selector) {
         const node = el.shadowRoot.querySelector(selector);
         return node && node.getAttribute('data-focused') === 'true';
@@ -431,10 +427,6 @@ describe('BcmCapabilityMap keyboard navigation — L3 level', () => {
 describe('BcmCapabilityMap L3 focus highlight rect', () => {
     let element;
     let svg;
-
-    function getL3TextNode(el, l3Id) {
-        return el.shadowRoot.querySelector(`text[data-node-id="${l3Id}"][data-node-level="3"]`);
-    }
 
     function getFocusRect(el) {
         return el.shadowRoot.querySelector('rect.bcm-l3-focus-rect');
