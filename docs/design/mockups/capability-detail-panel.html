@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Mockup — Capability Detail Panel</title>
+<style>
+  :root {
+    --bcm-bg:        #f3f3f3;
+    --bcm-canvas:    #fafafa;
+    --bcm-panel-bg:  #ffffff;
+    --bcm-border:    #d8dde6;
+    --bcm-text:      #16325c;
+    --bcm-muted:     #54698d;
+    --bcm-accent:    #0176d3;
+    --bcm-danger:    #ba0517;
+    --bcm-l1:        #5b6abf;
+    --bcm-l2:        #7686d6;
+    --bcm-l3:        #9aa6e1;
+    --bcm-shadow:    -4px 0 16px rgba(0,0,0,0.12);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--bcm-text);
+    background: var(--bcm-bg);
+  }
+
+  header.page {
+    padding: 16px 24px;
+    background: #fff;
+    border-bottom: 1px solid var(--bcm-border);
+  }
+  header.page h1 { margin: 0 0 4px; font-size: 20px; }
+  header.page p  { margin: 0; color: var(--bcm-muted); }
+  header.page .controls { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+  button.demo {
+    background: var(--bcm-accent);
+    color: white;
+    border: 0;
+    padding: 8px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font: inherit;
+  }
+  button.demo.secondary {
+    background: white;
+    color: var(--bcm-accent);
+    border: 1px solid var(--bcm-accent);
+  }
+
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+    gap: 24px;
+    padding: 24px;
+  }
+
+  .stage {
+    position: relative;
+    height: 600px;
+    background: var(--bcm-canvas);
+    border: 1px solid var(--bcm-border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .stage h2 {
+    position: absolute;
+    top: 12px; left: 16px;
+    margin: 0;
+    font-size: 13px;
+    color: var(--bcm-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    z-index: 1;
+  }
+
+  /* fake diagram canvas (background) */
+  .canvas-fake {
+    position: absolute; inset: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 60px repeat(3, 1fr);
+    gap: 8px;
+    padding: 56px 16px 16px;
+    pointer-events: none;
+    opacity: 0.6;
+  }
+  .canvas-fake .cap {
+    background: white;
+    border: 1px solid var(--bcm-border);
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 11px;
+    color: var(--bcm-muted);
+    overflow: hidden;
+  }
+  .canvas-fake .cap.l1 { grid-column: span 3; background: var(--bcm-l1); color: white; font-weight: 600; }
+
+  /* THE PANEL */
+  .bcm-detail-panel {
+    position: absolute;
+    top: 0; right: 0;
+    width: 400px;
+    height: 100%;
+    background: var(--bcm-panel-bg);
+    box-shadow: var(--bcm-shadow);
+    transform: translateX(100%);
+    transition: transform 250ms ease;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .bcm-detail-panel.open { transform: translateX(0); }
+
+  .bcm-detail-header {
+    flex: 0 0 auto;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--bcm-border);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .bcm-breadcrumb {
+    flex: 1;
+    font-size: 12px;
+    color: var(--bcm-muted);
+    line-height: 1.5;
+    word-break: break-word;
+  }
+  .bcm-breadcrumb a {
+    color: var(--bcm-accent);
+    text-decoration: none;
+  }
+  .bcm-breadcrumb .sep { margin: 0 4px; color: #aab7c4; }
+  .bcm-breadcrumb .current { color: var(--bcm-text); font-weight: 600; }
+
+  .bcm-close {
+    background: transparent;
+    border: 0;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--bcm-muted);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  .bcm-close:hover { background: #eef1f6; color: var(--bcm-text); }
+
+  .bcm-detail-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 16px;
+  }
+
+  .bcm-meta-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .bcm-level-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 3px;
+    color: white;
+    background: var(--bcm-l3);
+    letter-spacing: 0.04em;
+  }
+  .bcm-level-badge.l1 { background: var(--bcm-l1); }
+  .bcm-level-badge.l2 { background: var(--bcm-l2); }
+  .bcm-level-badge.l3 { background: var(--bcm-l3); }
+
+  .bcm-tag {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    color: #fff;
+    line-height: 1.2;
+  }
+  .bcm-tag.t-strat  { background: #2e844a; }
+  .bcm-tag.t-cust   { background: #ba450c; }
+  .bcm-tag.t-cap    { background: #4a4ec1; }
+
+  .bcm-hide-flag {
+    font-size: 11px;
+    color: var(--bcm-muted);
+    border: 1px dashed var(--bcm-border);
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+  .bcm-hide-flag.on {
+    color: #ba450c;
+    border-color: #ba450c;
+    border-style: solid;
+  }
+
+  .bcm-field {
+    margin-bottom: 16px;
+  }
+  .bcm-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--bcm-muted);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .bcm-field .value-readonly {
+    font-size: 14px;
+    color: var(--bcm-text);
+    padding: 6px 0;
+    min-height: 22px;
+    border-bottom: 1px solid transparent;
+  }
+  .bcm-field .value-readonly.rich p { margin: 0 0 6px; }
+
+  .bcm-field input[type="text"],
+  .bcm-field .rich-edit {
+    width: 100%;
+    border: 1px solid var(--bcm-border);
+    border-radius: 4px;
+    padding: 8px 10px;
+    font: inherit;
+    color: var(--bcm-text);
+    background: #fff;
+  }
+  .bcm-field input[type="text"]:focus,
+  .bcm-field .rich-edit:focus {
+    outline: none;
+    border-color: var(--bcm-accent);
+    box-shadow: 0 0 0 2px rgba(1,118,211,0.2);
+  }
+  .bcm-field .rich-edit {
+    min-height: 80px;
+  }
+  .bcm-field .rich-edit .toolbar {
+    margin: -8px -10px 6px;
+    padding: 4px 8px;
+    background: #f4f6f9;
+    border-bottom: 1px solid var(--bcm-border);
+    display: flex;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--bcm-muted);
+  }
+  .bcm-field .rich-edit .toolbar span {
+    padding: 1px 6px;
+    border-radius: 2px;
+    cursor: default;
+  }
+  .bcm-field .rich-edit .toolbar span.active { background: #e6effc; color: var(--bcm-accent); }
+
+  .bcm-detail-footer {
+    flex: 0 0 auto;
+    padding: 12px 16px;
+    border-top: 1px solid var(--bcm-border);
+    background: #fafbfd;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .bcm-detail-footer button {
+    font: inherit;
+    padding: 7px 14px;
+    border-radius: 4px;
+    border: 1px solid var(--bcm-border);
+    background: white;
+    cursor: pointer;
+  }
+  .bcm-detail-footer button.primary {
+    background: var(--bcm-accent);
+    border-color: var(--bcm-accent);
+    color: white;
+  }
+  .bcm-detail-footer button.primary:disabled {
+    background: #aac5e2;
+    border-color: #aac5e2;
+    cursor: not-allowed;
+  }
+
+  /* loading state */
+  .bcm-loading {
+    position: absolute; inset: 0;
+    background: rgba(255,255,255,0.85);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 12px;
+    color: var(--bcm-muted);
+  }
+  .bcm-spinner {
+    width: 28px; height: 28px;
+    border: 3px solid #d8dde6;
+    border-top-color: var(--bcm-accent);
+    border-radius: 50%;
+    animation: spin 800ms linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* error banner */
+  .bcm-error {
+    background: #fdeceb;
+    border: 1px solid var(--bcm-danger);
+    color: var(--bcm-danger);
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .bcm-error::before { content: "!"; font-weight: 700; }
+
+  .annotation {
+    position: absolute;
+    background: #fffbe6;
+    border: 1px solid #f0d96a;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 11px;
+    color: #6b5f0a;
+    z-index: 20;
+    box-shadow: 1px 1px 4px rgba(0,0,0,0.08);
+    pointer-events: none;
+  }
+  .annotation::before {
+    content: "";
+    position: absolute;
+    width: 0; height: 0;
+  }
+</style>
+</head>
+<body>
+
+<header class="page">
+  <h1>Capability Detail Panel — Design Review Mockup</h1>
+  <p>Issue <a href="https://github.com/deniskrizanovic/sf_businesscapability/issues/21">#21</a> · Plan: <code>docs/plans/2026-06-02-09:48-capability-detail-panel.md</code></p>
+  <div class="controls">
+    <button class="demo" onclick="document.querySelectorAll('.bcm-detail-panel').forEach(p=>p.classList.add('open'))">Slide all panels in</button>
+    <button class="demo secondary" onclick="document.querySelectorAll('.bcm-detail-panel').forEach(p=>p.classList.remove('open'))">Slide all out</button>
+    <button class="demo secondary" onclick="document.getElementById('p-editor').classList.toggle('open')">Toggle editor only (animation)</button>
+  </div>
+</header>
+
+<div class="gallery">
+
+  <!-- VIEWER (read-only) -->
+  <div class="stage">
+    <h2>State 1 — Viewer (read-only)</h2>
+    <div class="canvas-fake">
+      <div class="cap l1">Customer Service</div>
+      <div class="cap">Channel Mgmt</div>
+      <div class="cap">Case Mgmt</div>
+      <div class="cap">Knowledge</div>
+      <div class="cap">SMS Routing</div>
+      <div class="cap">Web Chat</div>
+      <div class="cap">IVR</div>
+    </div>
+
+    <aside class="bcm-detail-panel open" id="p-viewer">
+      <div class="bcm-detail-header">
+        <div class="bcm-breadcrumb">
+          <a href="#">Customer Service</a><span class="sep">›</span>
+          <a href="#">Channel Mgmt</a><span class="sep">›</span>
+          <span class="current">SMS Routing</span>
+        </div>
+        <button class="bcm-close" title="Close (Esc)">×</button>
+      </div>
+
+      <div class="bcm-detail-body">
+        <div class="bcm-meta-row">
+          <span class="bcm-level-badge l3">L3</span>
+          <span class="bcm-tag t-strat">Strategic</span>
+          <span class="bcm-tag t-cust">Customer-facing</span>
+          <span class="bcm-hide-flag">Hide from diagram: Off</span>
+        </div>
+
+        <div class="bcm-field">
+          <label>Name</label>
+          <div class="value-readonly">SMS Routing</div>
+        </div>
+
+        <div class="bcm-field">
+          <label>Definition</label>
+          <div class="value-readonly rich">
+            <p>Routes inbound SMS messages from clients to the correct service team based on keyword and tenancy ID matching.</p>
+          </div>
+        </div>
+
+        <div class="bcm-field">
+          <label>Strategy Support</label>
+          <div class="value-readonly rich">
+            <p>Supports <strong>Strategic Goal 3</strong> — reduce average response time on tenant enquiries by 40%.</p>
+          </div>
+        </div>
+
+        <div class="bcm-field">
+          <label>Architectural Nuance</label>
+          <div class="value-readonly rich">
+            <p>Twilio webhook → MuleSoft → Salesforce inbound message handler. Stateless; idempotent on conversation ID.</p>
+          </div>
+        </div>
+
+        <div class="bcm-field">
+          <label>Hide From Diagram</label>
+          <div class="value-readonly">No</div>
+        </div>
+      </div>
+      <!-- no footer for viewer -->
+    </aside>
+  </div>
+
+  <!-- EDITOR (edit affordances) -->
+  <div class="stage">
+    <h2>State 2 — Editor (bcm_CanEdit)</h2>
+    <div class="canvas-fake">
+      <div class="cap l1">Customer Service</div>
+      <div class="cap">Channel Mgmt</div>
+      <div class="cap">Case Mgmt</div>
+      <div class="cap">Knowledge</div>
+      <div class="cap">SMS Routing</div>
+      <div class="cap">Web Chat</div>
+      <div class="cap">IVR</div>
+    </div>
+
+    <aside class="bcm-detail-panel open" id="p-editor">
+      <div class="bcm-detail-header">
+        <div class="bcm-breadcrumb">
+          <a href="#">Customer Service</a><span class="sep">›</span>
+          <a href="#">Channel Mgmt</a><span class="sep">›</span>
+          <span class="current">SMS Routing</span>
+        </div>
+        <button class="bcm-close" title="Close (Esc)">×</button>
+      </div>
+
+      <div class="bcm-detail-body">
+        <div class="bcm-meta-row">
+          <span class="bcm-level-badge l3">L3</span>
+          <span class="bcm-tag t-strat">Strategic</span>
+          <span class="bcm-tag t-cust">Customer-facing</span>
+          <span class="bcm-hide-flag">Hide from diagram: Off</span>
+        </div>
+
+        <div class="bcm-field">
+          <label>Name</label>
+          <input type="text" value="SMS Routing" />
+        </div>
+
+        <div class="bcm-field">
+          <label>Definition</label>
+          <div class="rich-edit" contenteditable="true">
+            <div class="toolbar"><span class="active">B</span><span>I</span><span>U</span><span>•</span><span>1.</span><span>↩</span></div>
+            Routes inbound SMS messages from clients to the correct service team based on keyword and tenancy ID matching.
+          </div>
+        </div>
+
+        <div class="bcm-field">
+          <label>Strategy Support</label>
+          <div class="rich-edit" contenteditable="true">
+            <div class="toolbar"><span>B</span><span>I</span><span>U</span><span>•</span><span>1.</span><span>↩</span></div>
+            Supports <strong>Strategic Goal 3</strong> — reduce average response time on tenant enquiries by 40%.
+          </div>
+        </div>
+
+        <div class="bcm-field">
+          <label>Architectural Nuance</label>
+          <div class="rich-edit" contenteditable="true">
+            <div class="toolbar"><span>B</span><span>I</span><span>U</span><span>•</span><span>1.</span><span>↩</span></div>
+            Twilio webhook → MuleSoft → Salesforce inbound message handler. Stateless; idempotent on conversation ID.
+          </div>
+        </div>
+
+        <div class="bcm-field">
+          <label>Hide From Diagram</label>
+          <div class="value-readonly">No <em style="color:var(--bcm-muted); font-size: 11px;">(toggle deferred — slice 3)</em></div>
+        </div>
+      </div>
+
+      <div class="bcm-detail-footer">
+        <button>Cancel</button>
+        <button class="primary">Save</button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- LOADING -->
+  <div class="stage">
+    <h2>State 3 — Loading</h2>
+    <div class="canvas-fake">
+      <div class="cap l1">Customer Service</div>
+      <div class="cap">Channel Mgmt</div>
+      <div class="cap">Case Mgmt</div>
+      <div class="cap">Knowledge</div>
+      <div class="cap">SMS Routing</div>
+      <div class="cap">Web Chat</div>
+      <div class="cap">IVR</div>
+    </div>
+
+    <aside class="bcm-detail-panel open">
+      <div class="bcm-detail-header">
+        <div class="bcm-breadcrumb"><span class="current">Loading…</span></div>
+        <button class="bcm-close" title="Close (Esc)">×</button>
+      </div>
+      <div class="bcm-detail-body" style="position:relative; min-height: 200px;">
+        <div class="bcm-loading">
+          <div class="bcm-spinner"></div>
+          <span>Loading capability detail…</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ERROR -->
+  <div class="stage">
+    <h2>State 4 — Save error</h2>
+    <div class="canvas-fake">
+      <div class="cap l1">Customer Service</div>
+      <div class="cap">Channel Mgmt</div>
+      <div class="cap">Case Mgmt</div>
+      <div class="cap">Knowledge</div>
+      <div class="cap">SMS Routing</div>
+      <div class="cap">Web Chat</div>
+      <div class="cap">IVR</div>
+    </div>
+
+    <aside class="bcm-detail-panel open">
+      <div class="bcm-detail-header">
+        <div class="bcm-breadcrumb">
+          <a href="#">Customer Service</a><span class="sep">›</span>
+          <a href="#">Channel Mgmt</a><span class="sep">›</span>
+          <span class="current">SMS Routing</span>
+        </div>
+        <button class="bcm-close" title="Close (Esc)">×</button>
+      </div>
+
+      <div class="bcm-detail-body">
+        <div class="bcm-error">
+          <span>Save failed: insufficient access on <code>bcm_Capability__c.bcm_Definition__c</code>.</span>
+        </div>
+
+        <div class="bcm-meta-row">
+          <span class="bcm-level-badge l3">L3</span>
+          <span class="bcm-tag t-strat">Strategic</span>
+          <span class="bcm-tag t-cust">Customer-facing</span>
+          <span class="bcm-hide-flag">Hide from diagram: Off</span>
+        </div>
+
+        <div class="bcm-field">
+          <label>Name</label>
+          <input type="text" value="SMS Routing (edited)" />
+        </div>
+
+        <div class="bcm-field">
+          <label>Definition</label>
+          <div class="rich-edit" contenteditable="true">
+            <div class="toolbar"><span>B</span><span>I</span><span>U</span><span>•</span><span>1.</span><span>↩</span></div>
+            Edited definition that failed to save…
+          </div>
+        </div>
+      </div>
+
+      <div class="bcm-detail-footer">
+        <button>Cancel</button>
+        <button class="primary">Save</button>
+      </div>
+    </aside>
+  </div>
+
+</div>
+
+<section style="padding: 0 24px 32px;">
+  <h2 style="font-size:16px;">Annotations</h2>
+  <ol>
+    <li><strong>Width / position:</strong> 400px fixed, anchored to right edge of <code>.bcm-canvas-container</code>; full canvas height (<code>top:0; bottom:0</code>). Overlay — does not push diagram.</li>
+    <li><strong>Slide-in animation:</strong> <code>transform: translateX(100%) → translateX(0); transition: transform 250ms ease;</code>. CSS class <code>.bcm-detail-panel.open</code> toggled by <code>detailIsOpen</code> getter on container.</li>
+    <li><strong>Header:</strong> breadcrumb (root → current, current bolded) on the left, <code>×</code> close button (also bound to <kbd>Esc</kbd>) on the right.</li>
+    <li><strong>Level badge:</strong> coloured pill at top of body, matches L1/L2/L3 colour palette used by the diagram so the user has continuity of context.</li>
+    <li><strong>Tag swatches:</strong> read-only pills with the existing tag colour. Editing tags is out of scope for this slice.</li>
+    <li><strong>Field list:</strong> Name (text), Definition / Strategy Support / Architectural Nuance (rich text via <code>lightning-input-rich-text</code>), Hide From Diagram (read-only display in this slice — the toggle is deferred per plan §28).</li>
+    <li><strong>Edit affordances:</strong> only rendered when <code>canEdit</code> is true. Footer Save/Cancel pinned to bottom; <code>Save</code> is disabled until <code>isDirty</code>.</li>
+    <li><strong>Loading state:</strong> spinner overlay covers the body, header still visible so user can close. Used while initial fetch <em>or</em> save in flight.</li>
+    <li><strong>Error state:</strong> red banner above fields; edit values preserved so user can retry. Same pattern for fetch error and save error.</li>
+    <li><strong>Switching nodes (not pictured):</strong> panel does not close — header breadcrumb + body re-render in place; spinner shown while new fetch is in flight.</li>
+  </ol>
+</section>
+
+</body>
+</html>
