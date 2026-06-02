@@ -116,14 +116,14 @@
                             </text>
                         </template>
                         <!-- L3 bullets -->
-                        <template for:each={node.bulletLines} for:item="bullet">
-                            <g key={bullet.key}>
-                                <template if:true={bullet.focusRect}>
+                        <template for:each={node.bulletGroups} for:item="group">
+                            <g key={group.key} data-l3-group={group.l3Id} style="cursor:pointer">
+                                <template if:true={group.focusRect}>
                                     <rect
-                                        x={bullet.focusRect.x}
-                                        y={bullet.focusRect.y}
-                                        width={bullet.focusRect.width}
-                                        height={bullet.focusRect.height}
+                                        x={group.focusRect.x}
+                                        y={group.focusRect.y}
+                                        width={group.focusRect.width}
+                                        height={group.focusRect.height}
                                         rx="3"
                                         fill="#E8F4FF"
                                         stroke="#0070D2"
@@ -131,20 +131,22 @@
                                         class="bcm-l3-focus-rect">
                                     </rect>
                                 </template>
-                                <text
-                                    data-node-id={bullet.l3Id}
-                                    data-node-name={bullet.l3Name}
-                                    data-node-level="3"
-                                    data-focused={bullet.isFocused}
-                                    x={bullet.x}
-                                    y={bullet.y}
-                                    dominant-baseline="middle"
-                                    fill="#444444"
-                                    font-size="11"
-                                    font-weight={bullet.fontWeight}
-                                    style={bullet.cursorStyle}>
-                                    {bullet.text}
-                                </text>
+                                <template for:each={group.lines} for:item="line" for:index="lineIdx">
+                                    <text
+                                        key={line.key}
+                                        data-node-id={group.l3Id}
+                                        data-node-name={group.l3Name}
+                                        data-node-level="3"
+                                        data-focused={group.isFocused}
+                                        x={line.x}
+                                        y={line.y}
+                                        dominant-baseline="middle"
+                                        fill="#444444"
+                                        font-size="11"
+                                        font-weight={line.fontWeight}>
+                                        {line.text}
+                                    </text>
+                                </template>
                             </g>
                         </template>
                     </g>

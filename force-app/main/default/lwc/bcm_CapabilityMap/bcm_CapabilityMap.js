@@ -276,47 +276,37 @@ export default class BcmCapabilityMap extends LightningElement {
                 const bulletContX    = bulletBaseX + BULLET_INDENT;
                 const maxBulletFirst = COLUMN_WIDTH - BOX_PADDING * 2 - 8;
                 const maxBulletCont  = maxBulletFirst - BULLET_INDENT;
-                const bulletLines = [];
+                const bulletGroups = [];
                 let   bulletY   = boxY + headerHeight;
                 for (const l3 of (l2.children || [])) {
                     const allLines = wrapText(l3.Name, maxBulletFirst, FONT_SIZE_L3, 5);
                     const l3Focused = l3.Id === this.focusedNodeId;
                     const fontWeight = l3Focused ? 'bold' : 'normal';
                     const focusRectStartY = bulletY;
-                    allLines.forEach((text, wIdx) => {
-                        if (wIdx === 0) {
-                            bulletLines.push({
-                                key         : l3.Id + '-bullet-0',
-                                l3Id        : l3.Id,
-                                l3Name      : l3.Name,
-                                isFocused   : l3Focused,
-                                fontWeight,
-                                cursorStyle : 'cursor:pointer',
-                                text        : '• ' + text,
-                                x           : bulletBaseX,
-                                y           : bulletY + LINE_HEIGHT / 2,
-                                focusRect   : l3Focused ? {
-                                    x     : bulletBaseX - 4,
-                                    y     : focusRectStartY,
-                                    width : COLUMN_WIDTH - BOX_PADDING * 2 - 8,
-                                    height: allLines.length * LINE_HEIGHT - 2,
-                                } : null,
-                            });
-                        } else {
-                            bulletLines.push({
-                                key         : l3.Id + '-bullet-' + wIdx,
-                                l3Id        : null,
-                                l3Name      : null,
-                                isFocused   : l3Focused,
-                                fontWeight,
-                                cursorStyle : '',
-                                text,
-                                x           : bulletContX,
-                                y           : bulletY + LINE_HEIGHT / 2,
-                                focusRect   : null,
-                            });
-                        }
+                    const lines = allLines.map((text, wIdx) => {
+                        const line = {
+                            key         : l3.Id + '-bullet-' + wIdx,
+                            isFocused   : l3Focused,
+                            fontWeight,
+                            text        : wIdx === 0 ? '• ' + text : text,
+                            x           : wIdx === 0 ? bulletBaseX : bulletContX,
+                            y           : bulletY + LINE_HEIGHT / 2,
+                        };
                         bulletY += LINE_HEIGHT;
+                        return line;
+                    });
+                    bulletGroups.push({
+                        key       : l3.Id + '-group',
+                        l3Id      : l3.Id,
+                        l3Name    : l3.Name,
+                        isFocused : l3Focused,
+                        lines,
+                        focusRect : l3Focused ? {
+                            x     : bulletBaseX - 4,
+                            y     : focusRectStartY,
+                            width : COLUMN_WIDTH - BOX_PADDING * 2 - 8,
+                            height: allLines.length * LINE_HEIGHT - 2,
+                        } : null,
                     });
                 }
 
@@ -347,7 +337,7 @@ export default class BcmCapabilityMap extends LightningElement {
                         x    : colX + BOX_PADDING,
                         y    : l2StartY + i * (FONT_SIZE_L2 + 4),
                     })),
-                    bulletLines,
+                    bulletGroups,
                 });
 
                 boxY += boxHeight + BOX_GAP;
@@ -369,17 +359,15 @@ export default class BcmCapabilityMap extends LightningElement {
         const l3ByL2 = new Map();
         for (const l2 of l2Nodes) {
             const siblings = [];
-            for (const bullet of l2.bulletLines) {
-                if (bullet.l3Id) {
-                    l3Map.set(bullet.l3Id, {
-                        name      : bullet.l3Name,
-                        anchorX   : l2.x + l2.width,
-                        anchorY   : bullet.y,
-                        parentL2Id: l2.id,
-                        siblingIdx: siblings.length,
-                    });
-                    siblings.push(bullet.l3Id);
-                }
+            for (const group of l2.bulletGroups) {
+                l3Map.set(group.l3Id, {
+                    name      : group.l3Name,
+                    anchorX   : l2.x + l2.width,
+                    anchorY   : group.lines[0].y,
+                    parentL2Id: l2.id,
+                    siblingIdx: siblings.length,
+                });
+                siblings.push(group.l3Id);
             }
             l3ByL2.set(l2.id, siblings);
         }

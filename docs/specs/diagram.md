@@ -281,6 +281,16 @@ Then a blue-tint background rectangle is drawn behind the focused L3 bullet text
 
 > Tested by: bcm_CapabilityMap.test.js — "Renders highlight rect when L3 bullet focused", "Rect moves to next sibling on ArrowDown", "Escape clears the L3 focus rect", "ArrowUp from first L3 sibling clears the rect (focus moves to parent L2)", "Clicking a different node clears the previous L3 focus rect", "Focused L3 bullet text is bold; siblings remain normal"
 
+**Scenario: Hovering an L3 bullet text shifts its colour to signal interactivity**
+
+Given a map is displayed with at least one L3 capability  
+When the user moves the pointer over any line of an L3 bullet (including wrapped continuation lines)  
+Then all text lines of that bullet change colour to #0070D2  
+And when the pointer leaves, all lines revert to #444444  
+And if the L3 bullet is focused, its highlight rect and bold weight are unaffected by hover  
+
+> Deferred: CSS-only hover (SVG fill via `g[data-l3-group]:hover text`); browser pseudo-state not assertable in Jest or Playwright — verified manually in org
+
 ---
 
 ## Feature: Node click UX — focus then menu
