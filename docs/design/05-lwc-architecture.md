@@ -6,9 +6,11 @@
 |---|---|---|
 | `bcm_CapabilityMap` | Lightning App Page LWC | Container — owns data, layout, SVG viewport, zoom/pan, toolbar, all Apex interaction |
 | `bcm_CapabilityNode` | Child LWC | Renders a single capability node (chevron, box, or bullet) |
-| `bcm_ContextMenu` | Child LWC (presentational) | Left-click context menu; fires `viewdetail` (no payload) for all levels (L1/L2/L3) |
-| `bcm_CapabilityDetail` | Child LWC (presentational) | Slide-out detail/edit panel; receives `capability`, `breadcrumb`, `canEdit`, `isLoading` as `@api` props; fires `close` and `saved` events |
-| `bcm_ImportUtility` | Lightning App Page LWC | Admin JSON import tool, standalone page |
+| `bcm_ContextMenu` | Child LWC (presentational) | Left-click context menu; fires `viewdetail` and `hide` events for all levels (L1/L2/L3) |
+| `bcm_CapabilityDetail` | Child LWC (presentational) — *aspirational, not yet implemented* | Slide-out detail/edit panel; will replace `View detail` navigation in a future issue |
+| `bcm_ColourSwatch` | Child LWC (presentational) | Renders a single tag colour swatch on Tag record page |
+| `bcm_ImportButton` | Quick-action / utility LWC | Launches the JSON import flow from a Map record context |
+| `bcm_VisualisationButton` | Quick-action / utility LWC | Navigates the user to the Visualisation tab |
 
 ---
 
@@ -220,6 +222,8 @@ The menu renders as an HTML `<div>` overlaid on the SVG using absolute positioni
 
 ## bcm_CapabilityDetail
 
+> **Status: Aspirational / not yet implemented.** Current `View detail` action navigates to the standard `bcm_Capability__c` record page via `NavigationMixin`. This slide-out panel will replace that navigation in a future issue.
+
 ### Responsibilities
 - Render 400px slide-in panel over the right edge of the canvas
 - Display breadcrumb, level badge, tag swatches, and all capability fields
@@ -274,62 +278,15 @@ this.dispatchEvent(new CustomEvent('saved', {
 
 ---
 
-## bcm_ImportUtility
-
-### Responsibilities
-- Provide a textarea for JSON paste
-- Validate that input is not empty before submitting
-- Call `bcm_ImportController.importCapabilities` imperatively
-- Display spinner during import
-- Display success summary or error message
-
-### Template Structure
-```html
-<template>
-  <lightning-card title="Capability Map Import" icon-name="utility:upload">
-    <div class="slds-p-around_medium">
-      <lightning-textarea
-        label="Paste JSON"
-        value={jsonInput}
-        onchange={handleJsonChange}
-        rows="20"
-        placeholder='{ "mapName": "...", "capabilities": [...] }'>
-      </lightning-textarea>
-
-      <div class="slds-m-top_medium">
-        <lightning-button
-          label="Import"
-          variant="brand"
-          onclick={handleImport}
-          disabled={isLoading}>
-        </lightning-button>
-      </div>
-
-      <template if:true={isLoading}>
-        <lightning-spinner alternative-text="Importing..." />
-      </template>
-
-      <template if:true={result}>
-        <div class={resultClass}>
-          <p>{resultMessage}</p>
-        </div>
-      </template>
-    </div>
-  </lightning-card>
-</template>
-```
-
----
-
 ## Apex Controllers
 
 | Class | Methods | Called By |
 |---|---|---|
 | `bcm_MapController` | `getMaps()` | `bcm_CapabilityMap` |
-| `bcm_CapabilityController` | `getCapabilities(Id mapId)`, `getCapabilityDetail(Id capabilityId)`, `updateCapability(bcm_Capability__c capability)` | `bcm_CapabilityMap` |
+| `bcm_CapabilityController` | `getCapabilities(Id mapId)`, `getCapabilityDetail(Id capabilityId)`, `updateCapability(bcm_Capability__c capability)`, `hideCapability(Id capabilityId)` | `bcm_CapabilityMap` |
 | `bcm_TagController` | `getTags()` | `bcm_CapabilityMap` |
 | `bcm_DragDropController` | `reorderCapabilities(List<Id>)`, `reparentCapability(Id, Id, List<Id>, List<Id>)` | `bcm_CapabilityMap` |
-| `bcm_ImportController` | `importCapabilities(String json)` | `bcm_ImportUtility` |
+| `bcm_ImportController` | `importCapabilities(String json)` | `bcm_ImportButton` (Import flow) |
 
 All controllers are `with sharing` — respects Salesforce record-level sharing rules.
 

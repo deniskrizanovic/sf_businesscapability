@@ -57,6 +57,13 @@ export default class BcmContextMenu extends LightningElement {
     }
 
     handleHide() {
+        this.dispatchEvent(new CustomEvent('hide', {
+            detail: {
+                id   : this.node?.id,
+                level: this.node?.level,
+                name : this.node?.name,
+            },
+        }));
         this._close();
     }
 

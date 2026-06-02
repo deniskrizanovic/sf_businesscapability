@@ -1,9 +1,26 @@
 import { createElement } from 'lwc';
 import { createTestWireAdapter } from '@salesforce/wire-service-jest-util';
+
+// Capture NavigationMixin.Navigate calls — must be installed before component imports it
+const mockNavigate = jest.fn();
+jest.mock('lightning/navigation', () => {
+    const Navigate = Symbol('Navigate');
+    const GenerateUrl = Symbol('GenerateUrl');
+    const NavigationMixin = (Base) => class extends Base {
+        [Navigate](...args) { return mockNavigate(...args); }
+        [GenerateUrl]() { return Promise.resolve('https://example.com'); }
+    };
+    NavigationMixin.Navigate = Navigate;
+    NavigationMixin.GenerateUrl = GenerateUrl;
+    return { NavigationMixin };
+}, { virtual: true });
+
 import BcmCapabilityMap from 'c/bcm_CapabilityMap';
 
 const mockGetMaps = createTestWireAdapter();
 const mockGetTags = createTestWireAdapter();
+
+let mockHideCapabilityImpl = jest.fn().mockResolvedValue(undefined);
 
 // Imperative Apex mock — returns a resolved promise with seeded data
 const CAPS_DATA = [
@@ -24,6 +41,15 @@ jest.mock('@salesforce/apex/bcm_TagController.getTags', () => mockGetTags, { vir
 jest.mock('@salesforce/apex/bcm_CapabilityController.getCapabilities',
     () => {
         const fn = function(...args) { return mockCapabilitiesImpl(...args); };
+        fn.__esModule = true;
+        fn.default = fn;
+        return fn;
+    },
+    { virtual: true }
+);
+jest.mock('@salesforce/apex/bcm_CapabilityController.hideCapability',
+    () => {
+        const fn = function(...args) { return mockHideCapabilityImpl(...args); };
         fn.__esModule = true;
         fn.default = fn;
         return fn;
@@ -653,5 +679,76 @@ describe('BcmCapabilityMap context menu actions', () => {
         expect(menu).not.toBeNull();
         // node prop passed correctly so child can gate Hide button
         expect(menu.node).toBeDefined();
+    });
+
+    it('View detail click calls NavigationMixin.Navigate with record page', async () => {
+        const menu = await openMenuOnNode('L2-A1');
+        expect(menu).not.toBeNull();
+
+        mockNavigate.mockClear();
+
+        menu.dispatchEvent(new CustomEvent('viewdetail', {
+            detail: { id: 'L2-A1', level: 2, name: 'Sub-Cap A1' },
+        }));
+        await flushPromises();
+
+        expect(mockNavigate).toHaveBeenCalledTimes(1);
+        expect(mockNavigate).toHaveBeenCalledWith({
+            type: 'standard__recordPage',
+            attributes: {
+                recordId: 'L2-A1',
+                objectApiName: 'bcm_Capability__c',
+                actionName: 'view',
+            },
+        });
+    });
+});
+
+describe('BcmCapabilityMap context menu — Hide capability', () => {
+    let element;
+
+    beforeEach(async () => {
+        mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
+        mockHideCapabilityImpl = jest.fn().mockResolvedValue(undefined);
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [], error: undefined });
+        await flushPromises();
+        await seedLayout(element);
+    });
+
+    afterEach(() => {
+        while (document.body.firstChild) {
+            document.body.removeChild(document.body.firstChild);
+        }
+    });
+
+    async function openMenuOnNode(nodeId) {
+        const node = getNode(element, nodeId);
+        clickNode(node);
+        await flushPromises();
+        clickNode(node);
+        await flushPromises();
+        return element.shadowRoot.querySelector('c-bcm_-context-menu');
+    }
+
+    it('Hide click calls hideCapability Apex and rebuilds layout without target node', async () => {
+        // Precondition: L2-A1 visible in layout
+        expect(getNode(element, 'L2-A1')).not.toBeNull();
+
+        const menu = await openMenuOnNode('L2-A1');
+        expect(menu).not.toBeNull();
+
+        menu.dispatchEvent(new CustomEvent('hide', {
+            detail: { id: 'L2-A1', level: 2, name: 'Sub-Cap A1' },
+        }));
+        await flushPromises();
+
+        expect(mockHideCapabilityImpl).toHaveBeenCalledTimes(1);
+        expect(mockHideCapabilityImpl).toHaveBeenCalledWith({ capabilityId: 'L2-A1' });
+
+        // Layout rebuilt — hidden L2 no longer rendered (showHidden defaults to false)
+        expect(getNode(element, 'L2-A1')).toBeNull();
     });
 });

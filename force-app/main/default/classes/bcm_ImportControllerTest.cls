@@ -48,7 +48,7 @@ private class bcm_ImportControllerTest {
 
     // ─── Happy path ───────────────────────────────────────────────────────────
 
-    // @spec import.md · "Feature: Successful import from valid JSON" · "Scenario: Valid JSON creates a Map, Capabilities, and Tags"
+    // @spec import.md · "Successful import from valid JSON" · "Valid JSON creates a Map, Capabilities, and Tags"
     @IsTest
     static void happyPath_validJson_importsMapAndCapabilities() {
         // When
@@ -100,7 +100,7 @@ private class bcm_ImportControllerTest {
                 'L3 capability should be parented to L2');
     }
 
-    // @spec import.md · "Feature: Successful import from valid JSON" · "Scenario: Rich text fields are stored as formatted content"
+    // @spec import.md · "Successful import from valid JSON" · "Rich text fields are stored as formatted content"
     @IsTest
     static void happyPath_richTextFields_storedAsIs() {
         // Given
@@ -142,7 +142,7 @@ private class bcm_ImportControllerTest {
                 'ArchitecturalNuance should be stored verbatim as supplied HTML');
     }
 
-    // @spec import.md · "Feature: Import is idempotent" · "Scenario: Re-importing the same JSON does not create duplicates"
+    // @spec import.md · "Import is idempotent" · "Re-importing the same JSON does not create duplicates"
     @IsTest
     static void happyPath_reimport_isIdempotent() {
         // Given — first import
@@ -175,7 +175,7 @@ private class bcm_ImportControllerTest {
 
     // ─── Error handling ───────────────────────────────────────────────────────
 
-    // @spec import.md · "Feature: Import errors are handled gracefully" · "Scenario: Malformed JSON displays an error message"
+    // @spec import.md · "Import errors are handled gracefully" · "Malformed JSON displays an error message"
     @IsTest
     static void error_malformedJson_returnsError() {
         // Given
@@ -196,7 +196,7 @@ private class bcm_ImportControllerTest {
         Assert.areEqual(0, mapCount, 'No Map records should be created for malformed JSON');
     }
 
-    // @spec import.md · "Feature: Import errors are handled gracefully" · "Scenario: Empty text area is rejected before submission"
+    // @spec import.md · "Import errors are handled gracefully" · "Empty text area is rejected before submission"
     @IsTest
     static void error_emptyPayload_returnsError() {
         // When — empty string
@@ -233,7 +233,7 @@ private class bcm_ImportControllerTest {
 
     // ─── Permission boundary ──────────────────────────────────────────────────
 
-    // @spec import.md · "Feature: Import UI is accessible from a Map record" · "Scenario: Import panel is not accessible to Viewers"
+    // @spec import.md · "Import UI is accessible from a Map record" · "Import panel is not accessible to Viewers"
     @IsTest
     static void permission_viewer_cannotCallImport() {
         // Given — create Viewer user before startTest to avoid mixed-DML issue
@@ -260,7 +260,7 @@ private class bcm_ImportControllerTest {
 
     // ─── Invocable (Flow) entry point ─────────────────────────────────────────
 
-    // @spec import.md · "Feature: Successful import from valid JSON" · "Scenario: Valid JSON creates a Map, Capabilities, and Tags"
+    // @spec import.md · "Successful import from valid JSON" · "Valid JSON creates a Map, Capabilities, and Tags"
     @IsTest
     static void invocable_execute_delegatesAndReturnsResult() {
         // Given
@@ -282,7 +282,7 @@ private class bcm_ImportControllerTest {
         Assert.isNull(result.errorMessage, 'errorMessage should be null on success');
     }
 
-    // @spec import.md · "Feature: Import UI is accessible from a Map record" · "Scenario: Import panel is not accessible to Viewers"
+    // @spec import.md · "Import UI is accessible from a Map record" · "Import panel is not accessible to Viewers"
     @IsTest
     static void invocable_viewer_returnsAccessDenied() {
         // Given — create Viewer user before startTest to avoid mixed-DML issue

@@ -1,8 +1,10 @@
 import { LightningElement, api, track, wire } from 'lwc';
+import { NavigationMixin } from 'lightning/navigation';
 import hasPermission from '@salesforce/customPermission/bcm_CanEdit';
 import getMaps from '@salesforce/apex/bcm_MapController.getMaps';
 import getCapabilities from '@salesforce/apex/bcm_CapabilityController.getCapabilities';
 import getTags from '@salesforce/apex/bcm_TagController.getTags';
+import hideCapability from '@salesforce/apex/bcm_CapabilityController.hideCapability';
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 const COLUMN_WIDTH      = 220;
@@ -45,7 +47,7 @@ function wrapText(text, maxWidth, fontSize, maxLines) {
 }
 
 
-export default class BcmCapabilityMap extends LightningElement {
+export default class BcmCapabilityMap extends NavigationMixin(LightningElement) {
 
     // ── Wired data ────────────────────────────────────────────────────────────
     @track mapOptions   = [];
@@ -583,9 +585,34 @@ export default class BcmCapabilityMap extends LightningElement {
         this.contextMenuVisible = false;
     }
 
-    handleViewDetail(/* evt */) {
-        // Detail panel wired in follow-up issue
+    handleViewDetail(evt) {
+        const recordId = evt?.detail?.id;
         this.contextMenuVisible = false;
+        if (!recordId) return;
+        this[NavigationMixin.Navigate]({
+            type: 'standard__recordPage',
+            attributes: {
+                recordId,
+                objectApiName: 'bcm_Capability__c',
+                actionName: 'view',
+            },
+        });
+    }
+
+    handleHide(evt) {
+        const id = evt?.detail?.id;
+        this.contextMenuVisible = false;
+        if (!id) return;
+        hideCapability({ capabilityId: id })
+            .then(() => {
+                this._capabilities = (this._capabilities || []).map(c =>
+                    c.Id === id ? { ...c, bcm_HideFromDiagram__c: true } : c
+                );
+                this._buildLayout(this._capabilities);
+            })
+            .catch(err => {
+                this.errorMessage = err?.body?.message || 'Failed to hide capability';
+            });
     }
 
     handleKeyDown(evt) {

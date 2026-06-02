@@ -35,4 +35,25 @@ public with sharing class bcm_CapabilityController {
             throw new AuraHandledException(ex.getMessage());
         }
     }
+
+    /**
+     * Sets bcm_HideFromDiagram__c = true on the given Capability.
+     *
+     * @param capabilityId  Id of the bcm_Capability__c record to hide.
+     */
+    @AuraEnabled
+    public static void hideCapability(Id capabilityId) {
+        if (capabilityId == null) {
+            throw new AuraHandledException('capabilityId is required');
+        }
+        try {
+            bcm_Capability__c cap = new bcm_Capability__c(
+                Id = capabilityId,
+                bcm_HideFromDiagram__c = true
+            );
+            update as user cap;
+        } catch (Exception ex) {
+            throw new AuraHandledException(ex.getMessage());
+        }
+    }
 }
