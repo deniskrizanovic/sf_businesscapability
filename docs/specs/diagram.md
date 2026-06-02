@@ -438,7 +438,7 @@ When the user clicks "Hide"
 Then bcm_HideFromDiagram__c is set to true on the record via Apex  
 And the diagram re-renders with that capability absent (Show Hidden toggle off)  
 
-> Tested by: bcm_CapabilityMap.test.js — "Hide click calls hideCapability Apex and rebuilds layout without target node"; bcm_CapabilityControllerTest.shouldHideCapability
+> Tested by: bcm_CapabilityMap.test.js — "Hide click calls hideCapability Apex and rebuilds layout without target node"; bcm_CapabilityControllerTest.shouldHideCapability; diagram.spec.ts:231 — "Hide menu action removes node and Show Hidden restores it"
 
 ---
 
