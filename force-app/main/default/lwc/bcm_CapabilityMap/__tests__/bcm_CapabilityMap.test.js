@@ -540,6 +540,64 @@ describe('BcmCapabilityMap L3 focus highlight rect', () => {
     });
 });
 
+describe('BcmCapabilityMap canvas click clears focus', () => {
+    let element;
+    let svg;
+
+    beforeEach(async () => {
+        mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [], error: undefined });
+        await flushPromises();
+        await seedLayout(element);
+        svg = getSvg(element);
+    });
+
+    afterEach(() => {
+        while (document.body.firstChild) {
+            document.body.removeChild(document.body.firstChild);
+        }
+    });
+
+    it('Canvas mousedown clears L2 highlight', async () => {
+        const l2A1 = getNode(element, 'L2-A1');
+        clickNode(l2A1);
+        await flushPromises();
+        expect(getNode(element, 'L2-A1').getAttribute('data-focused')).toBe('true');
+
+        // Mousedown on bare SVG (no .bcm-node ancestor)
+        const evt = new MouseEvent('mousedown', { bubbles: true, composed: true, clientX: 10, clientY: 10 });
+        svg.dispatchEvent(evt);
+        await flushPromises();
+
+        expect(getNode(element, 'L2-A1').getAttribute('data-focused')).not.toBe('true');
+        // Stroke reverts to default
+        const rect = getNode(element, 'L2-A1').querySelector('rect');
+        expect(rect.getAttribute('stroke')).toBe('#CCCCCC');
+        expect(rect.getAttribute('stroke-width')).toBe('1');
+    });
+
+    it('Canvas mousedown with no focus is a no-op (no throw)', async () => {
+        expect(() => {
+            const evt = new MouseEvent('mousedown', { bubbles: true, composed: true, clientX: 10, clientY: 10 });
+            svg.dispatchEvent(evt);
+        }).not.toThrow();
+        await flushPromises();
+    });
+
+    it('Pan still works after canvas mousedown', async () => {
+        const before = element.panX;
+        const down = new MouseEvent('mousedown', { bubbles: true, composed: true, clientX: 100, clientY: 100 });
+        svg.dispatchEvent(down);
+        const move = new MouseEvent('mousemove', { bubbles: true, composed: true, clientX: 150, clientY: 100 });
+        svg.dispatchEvent(move);
+        await flushPromises();
+        expect(element.panX).toBe(before + 50);
+    });
+});
+
 describe('BcmCapabilityMap context menu actions', () => {
     let element;
 

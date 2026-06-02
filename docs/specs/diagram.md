@@ -339,6 +339,16 @@ And the context menu does not open
 
 > Tested by: `bcm_CapabilityMap.test.js — "Clicking a different node after first focus does not open context menu"`
 
+**Scenario: Clicking empty canvas background clears node focus**
+
+Given a node is focused  
+When the user clicks on empty SVG canvas (not on any node)  
+Then focus is cleared and the node returns to its unfocused visual state  
+And `data-focused` on the previously-focused `<g>` is no longer `"true"`  
+And subsequent pan/drag still works  
+
+> Tested by: bcm_CapabilityMap.test.js — "Canvas mousedown clears L2 highlight", "Canvas mousedown with no focus is a no-op (no throw)", "Pan still works after canvas mousedown"
+
 ---
 
 ## Feature: Keyboard navigation — L3 level
