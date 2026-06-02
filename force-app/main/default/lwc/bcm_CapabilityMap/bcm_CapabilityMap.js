@@ -581,6 +581,11 @@ export default class BcmCapabilityMap extends LightningElement {
         this.contextMenuVisible = false;
     }
 
+    handleViewDetail(/* evt */) {
+        // Detail panel wired in follow-up issue
+        this.contextMenuVisible = false;
+    }
+
     handleKeyDown(evt) {
         const ARROW_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
         if (ARROW_KEYS.includes(evt.key)) evt.preventDefault();

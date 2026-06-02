@@ -7,12 +7,10 @@
                 <button class="bcm-menu-close" onclick={handleClose} title="Close">✕</button>
             </div>
             <ul class="bcm-menu-list" role="menu">
-                <template if:true={isL3}>
-                    <li class="bcm-menu-item" role="menuitem" onclick={handleViewDetail}>
-                        <lightning-icon icon-name="utility:open" size="x-small" class="bcm-menu-icon"></lightning-icon>
-                        <span>View detail</span>
-                    </li>
-                </template>
+                <li class="bcm-menu-item" role="menuitem" onclick={handleViewDetail}>
+                    <lightning-icon icon-name="utility:open" size="x-small" class="bcm-menu-icon"></lightning-icon>
+                    <span>View detail</span>
+                </li>
                 <li class="bcm-menu-item" role="menuitem" onclick={handleHide}>
                     <lightning-icon icon-name="utility:hide" size="x-small" class="bcm-menu-icon"></lightning-icon>
                     <span>Hide</span>

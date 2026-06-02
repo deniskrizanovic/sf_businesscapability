@@ -379,6 +379,22 @@ Then focus does not change
 
 ## Feature: Context menu actions
 
+**Scenario: View detail menu item is rendered for L1, L2, and L3 nodes**
+
+Given the context menu is open for any capability node  
+Then the menu shows a "View detail" item  
+
+> Tested by: bcm_ContextMenu.test.js — "Renders View detail for L1", "Renders View detail for L2", "Renders View detail for L3"
+
+**Scenario: Clicking View detail fires viewdetail event with node payload**
+
+Given the context menu is open for an L1, L2, or L3 capability  
+When the user clicks "View detail"  
+Then the menu dispatches a `viewdetail` CustomEvent with `{ id, level, name }` from the node prop  
+And the menu closes  
+
+> Tested by: bcm_ContextMenu.test.js — "Click View detail at level 1/2/3 fires viewdetail with correct payload", "Click View detail also fires close event"
+
 **Scenario: View detail opens the Detail Panel**
 
 Given the context menu is open for any capability node (L1, L2, or L3)  
