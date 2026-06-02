@@ -867,3 +867,28 @@ describe('BcmCapabilityMap detail panel — saved flow', () => {
         expect(refreshed.errorMessage).toBe('Validation rule blocked the save');
     });
 });
+
+describe('BcmCapabilityMap session persistence', () => {
+    let element;
+
+    beforeEach(() => {
+        sessionStorage.clear();
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+    });
+
+    afterEach(() => {
+        document.body.removeChild(element);
+        sessionStorage.clear();
+        jest.clearAllMocks();
+    });
+
+    it('Writes selectedMapId to sessionStorage on map change', async () => {
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }, { Id: 'MAP-2', Name: 'Map 2' }], error: undefined });
+        await flushPromises();
+        const combobox = element.shadowRoot.querySelector('lightning-combobox');
+        combobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'MAP-2' } }));
+        await flushPromises();
+        expect(sessionStorage.getItem('bcm.visualisation.selectedMapId')).toBe('MAP-2');
+    });
+});

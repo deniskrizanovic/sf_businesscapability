@@ -26,6 +26,20 @@ const ZOOM_MAX   = 3.0;
 const ZOOM_STEP  = 0.1;
 const ZOOM_DEFAULT = 1.0;
 
+const SESSION_KEY_SELECTED_MAP = 'bcm.visualisation.selectedMapId';
+
+function safeSessionGet(key) {
+    try { return sessionStorage.getItem(key); } catch (_) { return null; }
+}
+
+function safeSessionSet(key, value) {
+    try { sessionStorage.setItem(key, value); } catch (_) { /* silent */ }
+}
+
+function safeSessionRemove(key) {
+    try { sessionStorage.removeItem(key); } catch (_) { /* silent */ }
+}
+
 // ── Text wrap helper ──────────────────────────────────────────────────────────
 function wrapText(text, maxWidth, fontSize, maxLines) {
     const charWidth  = fontSize * 0.6;
@@ -407,6 +421,11 @@ export default class BcmCapabilityMap extends LightningElement {
         this.zoom = ZOOM_DEFAULT;
         this.panX = 0;
         this.panY = 0;
+        if (this.selectedMapId) {
+            safeSessionSet(SESSION_KEY_SELECTED_MAP, this.selectedMapId);
+        } else {
+            safeSessionRemove(SESSION_KEY_SELECTED_MAP);
+        }
         this._loadCapabilities();
     }
 
