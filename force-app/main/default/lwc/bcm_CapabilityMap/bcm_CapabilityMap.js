@@ -355,7 +355,7 @@ export default class BcmCapabilityMap extends LightningElement {
         // Build L3 lookup: id → {name, anchorX, anchorY, parentL2Id, siblingIdx}
         // Also build l3ByL2: l2Id → ordered [l3Id, ...] for sibling navigation
         const l3Map  = new Map();
-        const l3ByL2 = {};
+        const l3ByL2 = new Map();
         for (const l2 of l2Nodes) {
             const siblings = [];
             for (const bullet of l2.bulletLines) {
@@ -370,7 +370,7 @@ export default class BcmCapabilityMap extends LightningElement {
                     siblings.push(bullet.l3Id);
                 }
             }
-            l3ByL2[l2.id] = siblings;
+            l3ByL2.set(l2.id, siblings);
         }
         this._layoutL3Map = l3Map;
         this._l3ByL2      = l3ByL2;
@@ -614,8 +614,9 @@ export default class BcmCapabilityMap extends LightningElement {
 
         // L3 focus: ArrowUp/Down move between siblings, ArrowUp from first goes to parent L2,
         // ArrowLeft/Right are ignored (focus + pan unchanged).
+        // Note: ArrowDown on the last sibling is a no-op — focus unchanged, no rebuild needed.
         if (!focusedL1 && !focusedL2 && focusedL3) {
-            const siblings = (this._l3ByL2 || {})[focusedL3.parentL2Id] || [];
+            const siblings = (this._l3ByL2 || new Map()).get(focusedL3.parentL2Id) || [];
             const idx      = focusedL3.siblingIdx;
             if (key === 'ArrowDown') {
                 if (idx < siblings.length - 1) {
