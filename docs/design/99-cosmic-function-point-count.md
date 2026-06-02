@@ -520,6 +520,40 @@ Object Tab defined in `06-app-structure.md`. List view default columns: Name, Co
 
 ---
 
+### FP29 — View Capability Detail via Panel
+
+**Trigger:** Editor/Viewer clicks "View detail" in the context menu  
+**FUR source:** `docs/plans/2026-06-02-09:48-capability-detail-panel.md` — `getCapabilityDetail(capabilityId)`  
+Distinct from FP14 (standard Capability record page) — different triggering surface (`bcm_ContextMenu` LWC event vs Object Tab click) and different UI Exit (`bcm_CapabilityDetail` panel vs platform record page).
+
+| # | Movement | Type | Data Group | Notes |
+|---|---|---|---|---|
+| 1 | Receive capability Id (viewdetail event) | E | Capability | Triggering entry — Id crosses software boundary from human user |
+| 2 | Read Capability record | R | Capability | All fields incl. rich text |
+| 3 | Read CapabilityTags (sub-query) | R | CapabilityTag | Tags__r subquery — different object of interest per Rule 14 |
+| 4 | Read Tags (via CapabilityTag) | R | Tag | Name + Colour for swatches — different object of interest |
+| 5 | Send Capability detail to panel UI | X | Capability | Rendered in bcm_CapabilityDetail |
+
+**FP29 size = 5 CFP**
+
+---
+
+### FP30 — Edit Capability via Panel — Save
+
+**Trigger:** Editor clicks Save in the detail panel  
+**FUR source:** `docs/plans/2026-06-02-09:48-capability-detail-panel.md` — `updateCapability(capability)`  
+Distinct from FP18 (standard record edit form save) — different triggering surface (LWC panel Save button vs platform form Save button) and different functional user interaction context.
+
+| # | Movement | Type | Data Group | Notes |
+|---|---|---|---|---|
+| 1 | Receive updated Capability data | E | Capability | Triggering entry — field values from human Editor cross boundary |
+| 2 | Write updated Capability record | W | Capability | UPDATE via bcm_CapabilityService |
+| 3 | Send confirmation to UI | X | Capability | Panel shows saved values; diagram re-load triggered (FP2 re-trigger is a separate functional process, not counted here) |
+
+**FP30 size = 3 CFP**
+
+---
+
 ## 5. Summary Table
 
 | FP | Functional Process | E | X | R | W | CFP |
@@ -552,9 +586,11 @@ Object Tab defined in `06-app-structure.md`. List view default columns: Name, Co
 | FP26 | Edit Tag — load form | 1 | 1 | 1 | 0 | 3 |
 | FP27 | Edit Tag — save | 1 | 1 | 0 | 1 | 3 |
 | FP28 | Delete Tag | 1 | 1 | 1 | 1 | 4 |
-| **Total** | | **28** | **28** | **33** | **22** | **111** |
+| FP29 | View Capability Detail via Panel | 1 | 1 | 3 | 0 | 5 |
+| FP30 | Edit Capability via Panel — Save | 1 | 1 | 0 | 1 | 3 |
+| **Total** | | **30** | **30** | **36** | **23** | **119** |
 
-**Total COSMIC Functional Size: 111 CFP**
+**Total COSMIC Functional Size: 119 CFP**
 
 ---
 
@@ -565,7 +601,7 @@ Object Tab defined in `06-app-structure.md`. List view default columns: Name, Co
 | SVG layout calculation (column positions, box heights) | Pure in-memory computation; no data movement crosses the software boundary and no persistent storage is accessed. Not a functional process per Rule 10(b)(c). |
 | Zoom / pan state | In-memory JS tracked properties only; no Entry from a functional user carrying data about an object of interest, no Exit, no Read/Write of persistent storage. |
 | Tag colour-highlight rendering | Client-side filter on already-loaded data (no new Apex call). Data was moved in FP2; re-colouring is internal data manipulation, not a new data movement. |
-| Context menu display (v1) | Placeholder only — no data about any object of interest is moved per §3.3.3 Part 2 Guidance. Zero data movements. |
+| Context menu display | The rendering of the menu UI itself carries no data about an object of interest per §3.3.3 Part 2 Guidance. Zero data movements. The "View detail" action click is a measurable triggering event counted in FP29. |
 
 ---
 

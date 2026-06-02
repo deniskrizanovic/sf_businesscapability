@@ -31,8 +31,21 @@ The SVG-based Lightning Web Component (`bcm_CapabilityMap`) that renders the ful
 Diagram interactions:
 - **Drag-and-drop:** Reorders siblings or reparents a Capability to a different parent at the same level. Cross-level moves (changing a node's level via drag) are not supported — use data editing instead.
 - **Zoom and scroll:** Supported within the component.
-- **Left-click context menu:** Available on every node; actions to be defined.
+- **Left-click context menu:** Available on every node at all levels (L1, L2, L3).
 - **Colorise by tag:** Highlights all Capabilities carrying a selected Tag.
+- **View detail:** Opens the Detail Panel for any node at any level.
+
+## Detail Panel
+A 400px-wide overlay panel that slides in from the right edge of the diagram canvas when the user selects "View detail" from the context menu. The panel displays all fields of the selected Capability and allows inline editing by users with the `bcm_CanEdit` custom permission. Editors see Save and Cancel buttons; Viewers see read-only field values.
+
+The panel remains open across node switches — selecting "View detail" on a different node updates the panel content in place without closing and reopening.
+
+Fields displayed: Name, Level (read-only badge), Tags (read-only colour swatches), Definition, Strategy Support, Architectural Nuance, Hide From Diagram.
+
+After a successful save, the diagram refreshes to reflect any Name or Hide From Diagram changes.
+
+## Breadcrumb
+An ordered list of ancestor Capability names from root (Level 1) to the currently selected node, displayed at the top of the Detail Panel. Built client-side from the already-loaded capability tree — no additional server call. Format: `L1 Name > L2 Name > L3 Name`.
 
 ## Map
 A named container for a set of Business Capabilities. All `bcm_Capability__c` records belong to exactly one Map. Multiple Maps can exist in the same org — each represents an independent capability model (e.g. different business units, different versions, different clients).
@@ -57,7 +70,8 @@ Two Permission Sets control access to the application:
 A standalone Lightning App Page (full-width) hosting the `bcm_CapabilityMap` LWC. A map selector combobox at the top of the page allows the user to switch between Maps without leaving the page. This is the primary interface for the application.
 
 ## LWC Components
-- `bcm_CapabilityMap` — parent component; owns map selector, data loading, SVG viewport, zoom/pan via `<g transform>`, and layout calculation
+- `bcm_CapabilityMap` — container component; owns map selector, data loading, SVG viewport, zoom/pan via `<g transform>`, layout calculation, and all Apex interaction per ADR 0002
 - `bcm_CapabilityNode` — child component; renders a single Capability as chevron, box, or bullet depending on Level; owns drag handle and emits `nodedrop` and `nodeclick` events
-- `bcm_ContextMenu` — shell component; renders on left-click of any node; no actions in v1, structured for future extension
+- `bcm_ContextMenu` — presentational component; renders on left-click of any node; fires `viewdetail` event (no payload) when "View detail" is selected
+- `bcm_CapabilityDetail` — presentational component; receives `capability`, `breadcrumb`, `canEdit`, and `isLoading` as `@api` props; renders Detail Panel; fires `close` and `saved` events to parent
 - `bcm_ImportUtility` — admin component; textarea for JSON paste, Import button, calls Apex upsert controller

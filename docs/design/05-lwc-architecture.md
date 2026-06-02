@@ -1,12 +1,13 @@
-# Plan 05: LWC Architecture
+# LWC Architecture
 
 ## Component Overview
 
 | Component | Type | Purpose |
 |---|---|---|
-| `bcm_CapabilityMap` | Lightning App Page LWC | Parent — owns data, layout, SVG viewport, zoom/pan, toolbar |
+| `bcm_CapabilityMap` | Lightning App Page LWC | Container — owns data, layout, SVG viewport, zoom/pan, toolbar, all Apex interaction |
 | `bcm_CapabilityNode` | Child LWC | Renders a single capability node (chevron, box, or bullet) |
-| `bcm_ContextMenu` | Child LWC | Left-click context menu shell, no actions in v1 |
+| `bcm_ContextMenu` | Child LWC (presentational) | Left-click context menu; fires `viewdetail` (no payload) for all levels (L1/L2/L3) |
+| `bcm_CapabilityDetail` | Child LWC (presentational) | Slide-out detail/edit panel; receives `capability`, `breadcrumb`, `canEdit`, `isLoading` as `@api` props; fires `close` and `saved` events |
 | `bcm_ImportUtility` | Lightning App Page LWC | Admin JSON import tool, standalone page |
 
 ---
@@ -40,6 +41,12 @@ import reorderCapabilities from '@salesforce/apex/bcm_DragDropController.reorder
 
 // Reparent node
 import reparentCapability from '@salesforce/apex/bcm_DragDropController.reparentCapability';
+
+// Fetch full capability record for detail panel (imperative, called on viewdetail event)
+import getCapabilityDetail from '@salesforce/apex/bcm_CapabilityController.getCapabilityDetail';
+
+// Save capability edits from detail panel
+import updateCapability from '@salesforce/apex/bcm_CapabilityController.updateCapability';
 ```
 
 ### Tracked State
@@ -60,6 +67,10 @@ highlightedNodeIds  // Set<Id> — capabilities with selected tag
 isLoading           // boolean — spinner state
 errorMessage        // string or null
 canEdit             // boolean from custom permission
+detailCapabilityId  // Id | null — null = panel closed
+detailCapability    // full record object | null
+detailBreadcrumb    // [{ id, label }] array, root-first
+detailIsLoading     // boolean — spinner while getCapabilityDetail in flight
 ```
 
 ### Template Structure
@@ -119,8 +130,19 @@ canEdit             // boolean from custom permission
     x={contextMenuX}
     y={contextMenuY}
     node={contextMenuNode}
-    onclose={handleContextMenuClose}>
+    onclose={handleContextMenuClose}
+    onviewdetail={handleViewDetail}>
   </c-bcm_-context-menu>
+
+  <!-- Detail panel -->
+  <c-bcm_-capability-detail
+    capability={detailCapability}
+    breadcrumb={detailBreadcrumb}
+    can-edit={detailCanEdit}
+    is-loading={detailIsLoading}
+    onclose={handleDetailClose}
+    onsaved={handleDetailSaved}>
+  </c-bcm_-capability-detail>
 </template>
 ```
 
@@ -172,28 +194,83 @@ The component renders SVG fragments using `<template>` conditionals on `node.lev
 
 ### Responsibilities
 - Render a floating menu panel at a given (x, y) position relative to the SVG canvas
-- In v1: display a "No actions available" placeholder item
+- Show "View detail" action for all node levels (L1, L2, L3)
+- Show editor-only actions (e.g. "Hide") when `canEdit` is true
+- Emit `viewdetail` event (no payload) when "View detail" is clicked — parent uses `contextMenuNode.id`
 - Emit `close` event when dismissed (click outside, Escape key)
 
 ### Properties (Public `@api`)
 ```js
-@api x;     // number, position
-@api y;     // number, position
-@api node;  // the capability node that was clicked
+@api x;       // number, position
+@api y;       // number, position
+@api node;    // the capability node that was clicked { id, name, level }
+@api canEdit; // boolean — gates editor-only actions
 ```
 
-### Template Structure
-```html
-<div class="bcm-context-menu" style={menuPositionStyle}>
-  <ul>
-    <li class="bcm-menu-placeholder">No actions available</li>
-    <!-- Future actions added here -->
-  </ul>
-</div>
+### Events Emitted
+```js
+this.dispatchEvent(new CustomEvent('viewdetail'));  // no payload
+this.dispatchEvent(new CustomEvent('close'));
 ```
 
 ### Positioning
 The menu renders as an HTML `<div>` overlaid on the SVG using absolute positioning. Position is calculated from the SVG click coordinates transformed to page coordinates.
+
+---
+
+## bcm_CapabilityDetail
+
+### Responsibilities
+- Render 400px slide-in panel over the right edge of the canvas
+- Display breadcrumb, level badge, tag swatches, and all capability fields
+- For `canEdit` users: render editable fields with Save / Cancel buttons
+- Manage local edit state; reset on `capability` prop change
+- Fire `close` on X button click or Escape key
+- Fire `saved` with updated field values on Save click
+
+### Properties (Public `@api`)
+```js
+@api capability;   // bcm_Capability__c record object | null
+@api breadcrumb;   // [{ id, label }] array, root-first
+@api canEdit;      // boolean
+@api isLoading;    // boolean — shows spinner while parent fetches
+```
+
+### Events Emitted
+```js
+this.dispatchEvent(new CustomEvent('close'));
+
+this.dispatchEvent(new CustomEvent('saved', {
+  detail: {
+    Id: this.capability.Id,
+    Name: this.editName,
+    bcm_Definition__c: this.editDefinition,
+    bcm_StrategySupport__c: this.editStrategySupport,
+    bcm_ArchitecturalNuance__c: this.editArchitecturalNuance,
+    bcm_HideFromDiagram__c: this.editHideFromDiagram
+  }
+}));
+```
+
+### CSS
+```css
+.bcm-detail-panel {
+    position: absolute;
+    top: 0; right: 0;
+    width: 400px; height: 100%;
+    transform: translateX(100%);
+    transition: transform 250ms ease;
+    z-index: 100;
+    background: #fff;
+    box-shadow: -4px 0 16px rgba(0,0,0,0.12);
+    overflow-y: auto;
+}
+.bcm-detail-panel--open {
+    transform: translateX(0);
+}
+```
+
+`.bcm-canvas-container` requires `position: relative` for the absolute-positioned panel to anchor correctly.
 
 ---
 
@@ -249,7 +326,7 @@ The menu renders as an HTML `<div>` overlaid on the SVG using absolute positioni
 | Class | Methods | Called By |
 |---|---|---|
 | `bcm_MapController` | `getMaps()` | `bcm_CapabilityMap` |
-| `bcm_CapabilityController` | `getCapabilities(Id mapId)` | `bcm_CapabilityMap` |
+| `bcm_CapabilityController` | `getCapabilities(Id mapId)`, `getCapabilityDetail(Id capabilityId)`, `updateCapability(bcm_Capability__c capability)` | `bcm_CapabilityMap` |
 | `bcm_TagController` | `getTags()` | `bcm_CapabilityMap` |
 | `bcm_DragDropController` | `reorderCapabilities(List<Id>)`, `reparentCapability(Id, Id, List<Id>, List<Id>)` | `bcm_CapabilityMap` |
 | `bcm_ImportController` | `importCapabilities(String json)` | `bcm_ImportUtility` |

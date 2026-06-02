@@ -368,13 +368,14 @@ Then focus does not change
 
 ## Feature: Context menu actions
 
-**Scenario: View detail navigates to Capability record page**
+**Scenario: View detail opens the Detail Panel**
 
-Given the context menu is open for an L3 capability  
+Given the context menu is open for any capability node (L1, L2, or L3)  
 When the user clicks "View detail"  
-Then the browser navigates to that Capability's Salesforce record page  
+Then the Detail Panel slides in from the right edge of the diagram canvas  
+And the panel displays the breadcrumb, all fields, and (for Editors) Save/Cancel buttons for the selected capability  
 
-> Deferred: NavigationMixin.Navigate call is a JS invariant; verified manually
+> Tested by: capability-detail.spec.ts — "View detail opens panel with capability name in header"
 
 **Scenario: Hide action is visible only to Editors**
 
@@ -475,3 +476,143 @@ When the user selects a different map from the dropdown
 Then zoom resets to 100% and pan resets to (0, 0) before rendering the new map  
 
 > Tested by: BcmCapabilityMapTest.MapSwitchResetsZoomAndPan
+
+---
+
+## Feature: Detail Panel — open and close
+
+**Scenario: Clicking "View detail" opens the panel**
+
+Given a map is loaded and the diagram is rendered  
+When the user opens the context menu on any node and clicks "View detail"  
+Then the Detail Panel slides in from the right edge of the canvas  
+And the panel header shows the breadcrumb for that capability  
+
+> Tested by: capability-detail.spec.ts — "View detail opens panel with capability name in header"
+
+**Scenario: Clicking X closes the panel**
+
+Given the Detail Panel is open  
+When the user clicks the X button  
+Then the panel slides out and is no longer visible  
+
+> Tested by: capability-detail.spec.ts — "Close button dismisses the detail panel"
+
+**Scenario: Pressing Escape closes the panel**
+
+Given the Detail Panel is open  
+When the user presses the Escape key  
+Then the panel closes  
+
+> Tested by: capability-detail.spec.ts — "Escape key closes the detail panel"
+
+**Scenario: Opening detail for a second node updates panel in place**
+
+Given the Detail Panel is open for capability A  
+When the user opens "View detail" for capability B  
+Then the panel content updates to show capability B  
+And the panel does not close and reopen  
+
+> Tested by: capability-detail.spec.ts — "Switching nodes updates panel content without closing"
+
+---
+
+## Feature: Detail Panel — field display
+
+**Scenario: Panel displays all expected fields**
+
+Given the Detail Panel is open for any capability  
+Then the panel shows Name, Level, Tags, Definition, Strategy Support, Architectural Nuance, and Hide From Diagram  
+
+> Tested by: capability-detail.spec.ts — "Panel displays all expected fields"
+
+**Scenario: Breadcrumb shows full ancestry path for L3**
+
+Given the Detail Panel is open for an L3 capability  
+Then the panel header shows `L1 Name > L2 Name > L3 Name`  
+
+> Tested by: capability-detail.spec.ts — "Panel breadcrumb reflects full ancestor path"
+
+**Scenario: Breadcrumb shows single segment for L1**
+
+Given the Detail Panel is open for an L1 capability  
+Then the panel header shows only the L1 name with no separators  
+
+> Tested by: capability-detail.spec.ts — "Panel breadcrumb shows one segment for L1"
+
+**Scenario: Breadcrumb shows two segments for L2**
+
+Given the Detail Panel is open for an L2 capability  
+Then the panel header shows `L1 Name > L2 Name`  
+
+> Tested by: capability-detail.spec.ts — "Panel breadcrumb shows two segments for L2"
+
+**Scenario: Level badge shows correct level**
+
+Given the Detail Panel is open  
+Then a badge displays the level of the selected capability (1, 2, or 3)  
+
+> Tested by: capability-detail.spec.ts — "Panel shows correct level badge"
+
+**Scenario: Tags render as colour swatches**
+
+Given the Detail Panel is open for a capability with at least one Tag  
+Then each Tag is shown as a labelled colour swatch matching the Tag's hex colour  
+
+> Deferred: requires CapabilityTag junction seed in Playwright; verified manually
+
+**Scenario: Rich text fields render formatted HTML**
+
+Given the Detail Panel is open and Definition contains rich text  
+Then the field renders HTML formatting (bold, lists, etc.) not raw markup  
+
+> Deferred: lightning-input-rich-text display mode renders HTML; verified manually
+
+---
+
+## Feature: Detail Panel — inline edit (Editors only)
+
+**Scenario: Editor sees editable fields**
+
+Given the user has the `bcm_CanEdit` custom permission  
+When the Detail Panel is open  
+Then Name, Definition, Strategy Support, Architectural Nuance, and Hide From Diagram are editable  
+And Save and Cancel buttons are visible  
+
+> Tested by: capability-detail.spec.ts — "Editor sees Save and Cancel buttons in detail panel"
+
+**Scenario: Viewer sees read-only fields**
+
+Given the user does not have the `bcm_CanEdit` custom permission  
+When the Detail Panel is open  
+Then all fields are read-only  
+And no Save or Cancel button is visible  
+
+> Tested by: capability-detail.spec.ts — "Viewer sees no Save button in detail panel"
+
+**Scenario: Save persists field changes**
+
+Given an Editor has edited one or more fields in the Detail Panel  
+When the user clicks Save  
+Then the changes are written to the Salesforce record via Apex  
+And the panel shows the saved values  
+And the diagram refreshes to reflect any Name or Hide From Diagram changes  
+
+> Tested by: capability-detail.spec.ts — "Saving a name change reflects in the diagram"
+
+**Scenario: Cancel discards unsaved changes**
+
+Given an Editor has edited fields without saving  
+When the user clicks Cancel  
+Then the field values revert to their last-saved state  
+
+> Tested by: capability-detail.spec.ts — "Cancel reverts unsaved edits"
+
+**Scenario: Save error shows inline message**
+
+Given an Editor submits a save that fails (e.g. validation rule)  
+When the Apex call returns an error  
+Then an error message is shown inside the panel  
+And the panel remains open  
+
+> Deferred: Apex error path requires a seeded validation rule trigger; verified manually
