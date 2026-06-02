@@ -46,7 +46,13 @@ export default class BcmContextMenu extends LightningElement {
     }
 
     handleViewDetail() {
-        // stub — navigation wired later
+        this.dispatchEvent(new CustomEvent('viewdetail', {
+            detail: {
+                id   : this.node?.id,
+                level: this.node?.level,
+                name : this.node?.name,
+            },
+        }));
         this._close();
     }
 
