@@ -471,9 +471,11 @@ export default class BcmCapabilityMap extends LightningElement {
 
     handleSvgMouseDown(evt) {
         if (evt.target.closest('.bcm-node')) return;
+        const hadFocus = this.focusedNodeId !== null;
         this.focusedNodeId      = null;
         this.contextMenuVisible = false;
         this._keyNavMode = false;
+        if (hadFocus) this._buildLayout(this._capabilities);
         this._isDragging = true;
         this._dragStartX = evt.clientX;
         this._dragStartY = evt.clientY;
