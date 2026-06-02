@@ -413,6 +413,19 @@ describe('BcmCapabilityMap keyboard navigation — L3 level', () => {
         expect(element.panX).toBe(panXBefore);
         expect(element.panY).toBe(panYBefore);
     });
+
+    it('ArrowDown on last L3 sibling leaves focus unchanged', async () => {
+        // Move to last sibling L3-A1b
+        svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        await flushPromises();
+        expect(isFocused(element, 'text[data-node-id="L3-A1b"][data-node-level="3"]')).toBe(true);
+
+        // ArrowDown again: no next sibling -> focus unchanged
+        svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        await flushPromises();
+
+        expect(isFocused(element, 'text[data-node-id="L3-A1b"][data-node-level="3"]')).toBe(true);
+    });
 });
 
 describe('BcmCapabilityMap context menu actions', () => {
