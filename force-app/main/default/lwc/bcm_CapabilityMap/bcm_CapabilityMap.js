@@ -240,6 +240,7 @@ export default class BcmCapabilityMap extends LightningElement {
                 id          : l1.Id,
                 name        : l1.Name,
                 colIdx,
+                isFocused   : l1Focused,
                 fill        : l1Focused ? '#2A2A2A' : '#4A4A4A',
                 strokeColour: l1Focused ? '#0070D2' : '#333333',
                 strokeWidth : l1Focused ? '3' : '1',
@@ -279,12 +280,14 @@ export default class BcmCapabilityMap extends LightningElement {
                 let   bulletY   = boxY + headerHeight;
                 for (const l3 of (l2.children || [])) {
                     const allLines = wrapText(l3.Name, maxBulletFirst, FONT_SIZE_L3, 5);
+                    const l3Focused = l3.Id === this.focusedNodeId;
                     allLines.forEach((text, wIdx) => {
                         if (wIdx === 0) {
                             bulletLines.push({
                                 key         : l3.Id + '-bullet-0',
                                 l3Id        : l3.Id,
                                 l3Name      : l3.Name,
+                                isFocused   : l3Focused,
                                 cursorStyle : 'cursor:pointer',
                                 text        : '• ' + text,
                                 x           : bulletBaseX,
@@ -295,6 +298,7 @@ export default class BcmCapabilityMap extends LightningElement {
                                 key         : l3.Id + '-bullet-' + wIdx,
                                 l3Id        : null,
                                 l3Name      : null,
+                                isFocused   : false,
                                 cursorStyle : '',
                                 text,
                                 x           : bulletContX,
@@ -317,6 +321,7 @@ export default class BcmCapabilityMap extends LightningElement {
                     name        : l2.Name,
                     colIdx,
                     rowIdx,
+                    isFocused   : l2Focused,
                     x           : colX,
                     y           : boxY,
                     width       : COLUMN_WIDTH,
@@ -347,16 +352,28 @@ export default class BcmCapabilityMap extends LightningElement {
         this._colMap   = colMap;
         this._l2ByCol  = l2ByCol;
 
-        // Build L3 lookup: id → {name, anchorX, anchorY} for context menu positioning
-        const l3Map = new Map();
+        // Build L3 lookup: id → {name, anchorX, anchorY, parentL2Id, siblingIdx}
+        // Also build l3ByL2: l2Id → ordered [l3Id, ...] for sibling navigation
+        const l3Map  = new Map();
+        const l3ByL2 = new Map();
         for (const l2 of l2Nodes) {
+            const siblings = [];
             for (const bullet of l2.bulletLines) {
                 if (bullet.l3Id) {
-                    l3Map.set(bullet.l3Id, { name: bullet.l3Name, anchorX: l2.x + l2.width, anchorY: bullet.y, parentL2Id: l2.id });
+                    l3Map.set(bullet.l3Id, {
+                        name      : bullet.l3Name,
+                        anchorX   : l2.x + l2.width,
+                        anchorY   : bullet.y,
+                        parentL2Id: l2.id,
+                        siblingIdx: siblings.length,
+                    });
+                    siblings.push(bullet.l3Id);
                 }
             }
+            l3ByL2.set(l2.id, siblings);
         }
         this._layoutL3Map = l3Map;
+        this._l3ByL2      = l3ByL2;
     }
 
     _getTagFill(capId, tagsRelation) {
@@ -595,10 +612,26 @@ export default class BcmCapabilityMap extends LightningElement {
         const focusedL2 = l2Map.get(this.focusedNodeId);
         const focusedL3 = (this._layoutL3Map || new Map()).get(this.focusedNodeId);
 
-        // L3 focus: arrow keys fall back to parent L2 so navigation isn't a dead end
+        // L3 focus: ArrowUp/Down move between siblings, ArrowUp from first goes to parent L2,
+        // ArrowLeft/Right are ignored (focus + pan unchanged).
+        // Note: ArrowDown on the last sibling is a no-op — focus unchanged, no rebuild needed.
         if (!focusedL1 && !focusedL2 && focusedL3) {
-            this.focusedNodeId = focusedL3.parentL2Id || this.focusedNodeId;
-            this._buildLayout(this._capabilities);
+            const siblings = (this._l3ByL2 || new Map()).get(focusedL3.parentL2Id) || [];
+            const idx      = focusedL3.siblingIdx;
+            if (key === 'ArrowDown') {
+                if (idx < siblings.length - 1) {
+                    this.focusedNodeId = siblings[idx + 1];
+                    this._buildLayout(this._capabilities);
+                }
+            } else if (key === 'ArrowUp') {
+                if (idx > 0) {
+                    this.focusedNodeId = siblings[idx - 1];
+                } else {
+                    this.focusedNodeId = focusedL3.parentL2Id;
+                }
+                this._buildLayout(this._capabilities);
+            }
+            // ArrowLeft / ArrowRight: ignored
             return;
         }
 

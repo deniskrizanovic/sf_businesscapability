@@ -326,6 +326,108 @@ describe('BcmCapabilityMap keyboard navigation — L2 level', () => {
     });
 });
 
+describe('BcmCapabilityMap keyboard navigation — L3 level', () => {
+    let element;
+    let svg;
+
+    function getL3TextNode(el, l3Id) {
+        return el.shadowRoot.querySelector(`text[data-node-id="${l3Id}"][data-node-level="3"]`);
+    }
+
+    function isFocused(el, selector) {
+        const node = el.shadowRoot.querySelector(selector);
+        return node && node.getAttribute('data-focused') === 'true';
+    }
+
+    beforeEach(async () => {
+        mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [], error: undefined });
+        await flushPromises();
+        await seedLayout(element);
+        svg = getSvg(element);
+
+        // Focus L3-A1a via click (first click sets focus)
+        const l3a = getL3TextNode(element, 'L3-A1a');
+        l3a.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+    });
+
+    afterEach(() => {
+        while (document.body.firstChild) {
+            document.body.removeChild(document.body.firstChild);
+        }
+    });
+
+    it('ArrowDown on focused L3 moves focus to next sibling L3', async () => {
+        expect(isFocused(element, 'text[data-node-id="L3-A1a"][data-node-level="3"]')).toBe(true);
+
+        svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        await flushPromises();
+
+        expect(isFocused(element, 'text[data-node-id="L3-A1b"][data-node-level="3"]')).toBe(true);
+        expect(isFocused(element, 'text[data-node-id="L3-A1a"][data-node-level="3"]')).toBe(false);
+    });
+
+    it('ArrowUp on focused L3 moves focus to previous sibling L3', async () => {
+        // First move down to L3-A1b
+        svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        await flushPromises();
+        expect(isFocused(element, 'text[data-node-id="L3-A1b"][data-node-level="3"]')).toBe(true);
+
+        // Then ArrowUp returns to L3-A1a
+        svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+        await flushPromises();
+
+        expect(isFocused(element, 'text[data-node-id="L3-A1a"][data-node-level="3"]')).toBe(true);
+        expect(isFocused(element, 'text[data-node-id="L3-A1b"][data-node-level="3"]')).toBe(false);
+    });
+
+    it('ArrowUp from first L3 under L2 moves focus to parent L2', async () => {
+        // L3-A1a is the first sibling under L2-A1
+        expect(isFocused(element, 'text[data-node-id="L3-A1a"][data-node-level="3"]')).toBe(true);
+
+        svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+        await flushPromises();
+
+        // Parent L2-A1 now focused
+        expect(isFocused(element, '[data-node-id="L2-A1"][data-node-level="2"]')).toBe(true);
+        expect(isFocused(element, 'text[data-node-id="L3-A1a"][data-node-level="3"]')).toBe(false);
+    });
+
+    it('ArrowLeft/Right on focused L3 leaves focus and pan unchanged', async () => {
+        expect(isFocused(element, 'text[data-node-id="L3-A1a"][data-node-level="3"]')).toBe(true);
+        const panXBefore = element.panX;
+        const panYBefore = element.panY;
+
+        svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+        await flushPromises();
+        svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        await flushPromises();
+
+        // Focus unchanged
+        expect(isFocused(element, 'text[data-node-id="L3-A1a"][data-node-level="3"]')).toBe(true);
+        // Pan unchanged
+        expect(element.panX).toBe(panXBefore);
+        expect(element.panY).toBe(panYBefore);
+    });
+
+    it('ArrowDown on last L3 sibling leaves focus unchanged', async () => {
+        // Move to last sibling L3-A1b
+        svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        await flushPromises();
+        expect(isFocused(element, 'text[data-node-id="L3-A1b"][data-node-level="3"]')).toBe(true);
+
+        // ArrowDown again: no next sibling -> focus unchanged
+        svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        await flushPromises();
+
+        expect(isFocused(element, 'text[data-node-id="L3-A1b"][data-node-level="3"]')).toBe(true);
+    });
+});
+
 describe('BcmCapabilityMap context menu actions', () => {
     let element;
 

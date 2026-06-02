@@ -338,7 +338,7 @@ Given an L3 bullet is focused and a sibling exists below it
 When the user presses ArrowDown  
 Then focus moves to the next L3 bullet in the same L2 box  
 
-> Deferred: L3 ArrowDown is a JS invariant in _navigateFromKey; verified manually
+> Tested by: bcm_CapabilityMap.test.js — "ArrowDown on focused L3 moves focus to next sibling L3"
 
 **Scenario: ArrowUp moves focus to previous L3 bullet in same L2 box**
 
@@ -346,7 +346,7 @@ Given an L3 bullet is focused and a sibling exists above it
 When the user presses ArrowUp  
 Then focus moves to the previous L3 bullet in the same L2 box  
 
-> Deferred: L3 ArrowUp is a JS invariant in _navigateFromKey; verified manually
+> Tested by: bcm_CapabilityMap.test.js — "ArrowUp on focused L3 moves focus to previous sibling L3"
 
 **Scenario: ArrowUp from first L3 bullet moves focus to parent L2 node**
 
@@ -354,7 +354,7 @@ Given the first L3 bullet in an L2 box is focused
 When the user presses ArrowUp  
 Then focus moves to the parent L2 node  
 
-> Deferred: JS invariant; verified manually
+> Tested by: bcm_CapabilityMap.test.js — "ArrowUp from first L3 under L2 moves focus to parent L2"
 
 **Scenario: ArrowLeft and ArrowRight are ignored when an L3 bullet is focused**
 
@@ -362,7 +362,7 @@ Given an L3 bullet is focused
 When the user presses ArrowLeft or ArrowRight  
 Then focus does not change  
 
-> Deferred: JS invariant; verified manually
+> Tested by: bcm_CapabilityMap.test.js — "ArrowLeft/Right on focused L3 leaves focus and pan unchanged"
 
 ---
 
