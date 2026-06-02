@@ -143,6 +143,50 @@ private class bcm_CapabilityControllerTest {
     }
 
     @IsTest
+    static void getCapabilityDetail_returnsRecord() {
+        // Given — populate detail fields on the L2 capability
+        bcm_Map__c mapA = [SELECT Id FROM bcm_Map__c WHERE Name = 'Test Map A' LIMIT 1];
+        bcm_Capability__c l2 = [
+            SELECT Id FROM bcm_Capability__c
+            WHERE bcm_Map__c = :mapA.Id AND bcm_Level__c = 2 LIMIT 1
+        ];
+        l2.bcm_Definition__c          = '<p>Definition body</p>';
+        l2.bcm_StrategySupport__c     = '<p>Strategy body</p>';
+        l2.bcm_ArchitecturalNuance__c = '<p>Nuance body</p>';
+        update l2;
+
+        // Seed own tag junction so assertion is independent of @TestSetup
+        bcm_Tag__c localTag = TestDataFactory.createTag('Detail Test Tag', '#1D3557', true);
+        TestDataFactory.createCapabilityTag(l2.Id, localTag.Id, true);
+
+        // When
+        Test.startTest();
+        bcm_Capability__c result = bcm_CapabilityController.getCapabilityDetail(l2.Id);
+        Test.stopTest();
+
+        // Then — all fields populated; tag subquery returned
+        Assert.isNotNull(result, 'Should return capability record');
+        Assert.areEqual(l2.Id, result.Id, 'Should return requested record');
+        Assert.areEqual('<p>Definition body</p>', result.bcm_Definition__c);
+        Assert.areEqual('<p>Strategy body</p>',   result.bcm_StrategySupport__c);
+        Assert.areEqual('<p>Nuance body</p>',     result.bcm_ArchitecturalNuance__c);
+        Assert.areEqual(2, (Integer) result.bcm_Level__c);
+        Assert.isTrue(result.Tags__r.size() >= 1, 'Tags subquery should return at least 1 junction');
+    }
+
+    @IsTest
+    static void getCapabilityDetail_nullId_throws() {
+        Test.startTest();
+        try {
+            bcm_CapabilityController.getCapabilityDetail(null);
+            Assert.fail('Expected AuraHandledException for null capabilityId');
+        } catch (AuraHandledException ex) {
+            Assert.isNotNull(ex, 'AuraHandledException expected for null capabilityId');
+        }
+        Test.stopTest();
+    }
+
+    @IsTest
     static void shouldWrapException_WhenUserLacksAccess() {
         // Given — user with no object permissions; USER_MODE -> QueryException -> AuraHandledException
         User restrictedUser = TestDataFactory.createUserWithPermSet('bcm_ReadOnly');
