@@ -48,7 +48,7 @@ Vertical end-to-end slice: "View detail" context-menu action on any L1/L2/L3 nod
 
 | FP | Process | CFP | Status this slice |
 |---|---|---|---|
-| FP29 | View Capability Detail via Panel | 5 | **Delivered in #22** |
+| FP29 | View Capability Detail via Panel | 5 | **Delivered in #22 (2026-06-02)** |
 | FP30 | Edit Capability via Panel — Save | 3 | Deferred (#3) |
 
 `docs/design/99-cosmic-function-point-count.md` already enumerates FP29 + FP30 + FP31 with running total **122 CFP** — no arithmetic change in this slice.
@@ -357,18 +357,18 @@ Scenarios (mirroring `docs/specs/diagram.md` §"Detail Panel — open and close"
 
 ## Acceptance checklist (matches issue #22)
 
-- [ ] "View detail" context-menu item visible on L1, L2, and L3 nodes
-- [ ] Click opens panel; slides in from right ~250ms
-- [ ] Header shows breadcrumb (root-first ancestor path) + close (X) button
-- [ ] Level badge shows 1, 2, or 3
-- [ ] Tag swatches render (read-only)
-- [ ] All fields displayed read-only: Name, Definition, Strategy Support, Architectural Nuance, Hide From Diagram
-- [ ] Loading spinner while Apex call in flight
-- [ ] X button closes panel
-- [ ] Escape key closes panel
-- [ ] Selecting another node updates panel content in place (no close + reopen)
-- [ ] No Save / Cancel buttons rendered for any user (FP30 deferred to #3)
-- [ ] Apex unit tests for `getCapabilityDetail` pass (valid id; null id throws)
-- [ ] Playwright e2e covers: open, close-X, close-Escape, switch nodes, breadcrumb (L1/L2/L3), level badge, fields, viewer-no-save
-- [ ] `docs/specs/diagram.md` coverage markers conform to project rules (Tested-by or Deferred only)
-- [ ] FP29 row in `docs/design/99-cosmic-function-point-count.md` annotated **delivered in #22** (or completion-date column added when merged)
+- [x] "View detail" context-menu item visible on L1, L2, and L3 nodes
+- [x] Click opens panel; slides in from right ~250ms
+- [x] Header shows breadcrumb (root-first ancestor path) + close (X) button
+- [x] Level badge shows 1, 2, or 3
+- [x] Tag swatches render (read-only) — render code present in `bcm_CapabilityDetail`; e2e seeded coverage deferred per spec
+- [x] All fields displayed read-only: Name, Definition, Strategy Support, Architectural Nuance, Hide From Diagram
+- [x] Loading spinner while Apex call in flight
+- [x] X button closes panel
+- [x] Escape key closes panel
+- [x] Selecting another node updates panel content in place (no close + reopen)
+- [x] No Save / Cancel buttons rendered for any user (FP30 deferred to #3)
+- [x] Apex unit tests for `getCapabilityDetail` pass (valid id; null id throws)
+- [x] Playwright e2e covers: open, close-X, close-Escape, switch nodes, breadcrumb (L1/L2/L3), level badge, fields, viewer-no-save
+- [x] `docs/specs/diagram.md` coverage markers conform to project rules (Tested-by or Deferred only)
+- [x] FP29 row in `docs/design/99-cosmic-function-point-count.md` annotated **delivered in #22** (or completion-date column added when merged)

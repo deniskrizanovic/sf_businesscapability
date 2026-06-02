@@ -188,5 +188,14 @@
                 onhide={handleHide}>
             </c-bcm_-context-menu>
         </template>
+
+        <!-- Detail panel overlay -->
+        <c-bcm_-capability-detail
+            capability={detailCapability}
+            breadcrumb={detailBreadcrumb}
+            is-loading={detailIsLoading}
+            error-message={detailErrorMessage}
+            onclose={handleDetailClose}>
+        </c-bcm_-capability-detail>
     </div>
 </template>

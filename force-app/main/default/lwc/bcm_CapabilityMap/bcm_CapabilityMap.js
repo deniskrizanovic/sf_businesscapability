@@ -1,8 +1,8 @@
 import { LightningElement, api, track, wire } from 'lwc';
-import { NavigationMixin } from 'lightning/navigation';
 import hasPermission from '@salesforce/customPermission/bcm_CanEdit';
 import getMaps from '@salesforce/apex/bcm_MapController.getMaps';
 import getCapabilities from '@salesforce/apex/bcm_CapabilityController.getCapabilities';
+import getCapabilityDetail from '@salesforce/apex/bcm_CapabilityController.getCapabilityDetail';
 import getTags from '@salesforce/apex/bcm_TagController.getTags';
 import hideCapability from '@salesforce/apex/bcm_CapabilityController.hideCapability';
 
@@ -47,7 +47,7 @@ function wrapText(text, maxWidth, fontSize, maxLines) {
 }
 
 
-export default class BcmCapabilityMap extends NavigationMixin(LightningElement) {
+export default class BcmCapabilityMap extends LightningElement {
 
     // ── Wired data ────────────────────────────────────────────────────────────
     @track mapOptions   = [];
@@ -90,6 +90,11 @@ export default class BcmCapabilityMap extends NavigationMixin(LightningElement) 
     @track focusedNodeId         = null;
     @track _layoutL1             = [];
     @track _layoutL2             = [];
+    @track detailCapability      = null;
+    @track detailBreadcrumb      = [];
+    @track detailIsLoading       = false;
+    @track detailErrorMessage    = null;
+    _detailRequestSeq            = 0;
 
     _capabilities   = [];
     _tagColourMap   = new Map();
@@ -586,17 +591,48 @@ export default class BcmCapabilityMap extends NavigationMixin(LightningElement) 
     }
 
     handleViewDetail(evt) {
-        const recordId = evt?.detail?.id;
+        const id = evt?.detail?.id;
         this.contextMenuVisible = false;
-        if (!recordId) return;
-        this[NavigationMixin.Navigate]({
-            type: 'standard__recordPage',
-            attributes: {
-                recordId,
-                objectApiName: 'bcm_Capability__c',
-                actionName: 'view',
-            },
-        });
+        if (!id) return;
+        const reqId = ++this._detailRequestSeq;
+        this.detailIsLoading    = true;
+        this.detailCapability   = null;
+        this.detailBreadcrumb   = this._buildBreadcrumb(id);
+        this.detailErrorMessage = null;
+        getCapabilityDetail({ capabilityId: id })
+            .then(rec => {
+                if (reqId !== this._detailRequestSeq) return;
+                this.detailCapability = rec;
+            })
+            .catch(err => {
+                if (reqId !== this._detailRequestSeq) return;
+                this.detailErrorMessage =
+                    err?.body?.message || 'Failed to load capability detail';
+            })
+            .finally(() => {
+                if (reqId !== this._detailRequestSeq) return;
+                this.detailIsLoading = false;
+            });
+    }
+
+    handleDetailClose() {
+        this._detailRequestSeq++;
+        this.detailCapability   = null;
+        this.detailBreadcrumb   = [];
+        this.detailIsLoading    = false;
+        this.detailErrorMessage = null;
+    }
+
+    _buildBreadcrumb(id) {
+        const byId = new Map();
+        (this._capabilities || []).forEach(c => byId.set(c.Id, c));
+        const chain = [];
+        let cur = byId.get(id);
+        while (cur) {
+            chain.unshift({ id: cur.Id, label: cur.Name });
+            cur = cur.bcm_Parent__c ? byId.get(cur.bcm_Parent__c) : null;
+        }
+        return chain;
     }
 
     handleHide(evt) {

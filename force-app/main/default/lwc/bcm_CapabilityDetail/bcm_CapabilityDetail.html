@@ -1,0 +1,74 @@
+<template>
+    <section class="bcm-detail-panel" data-open={openAttr} aria-hidden={isClosed}>
+        <header class="bcm-detail-header slds-p-around_small slds-border_bottom">
+            <div class="bcm-detail-breadcrumb-row slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                <nav class="bcm-detail-breadcrumb" aria-label="Capability breadcrumb">
+                    <template for:each={breadcrumbItems} for:item="seg">
+                        <span key={seg.id} class="bcm-detail-breadcrumb-segment">
+                            <span class="bcm-detail-breadcrumb-label">{seg.label}</span>
+                            <template if:false={seg.isLast}>
+                                <span class="bcm-detail-breadcrumb-sep" aria-hidden="true"> / </span>
+                            </template>
+                        </span>
+                    </template>
+                </nav>
+                <lightning-button-icon
+                    class="bcm-detail-close"
+                    icon-name="utility:close"
+                    alternative-text="Close"
+                    title="Close"
+                    variant="bare"
+                    onclick={handleClose}>
+                </lightning-button-icon>
+            </div>
+            <template if:true={hasContent}>
+                <div class="bcm-detail-title-row slds-m-top_x-small slds-grid slds-grid_vertical-align-center">
+                    <span class="bcm-detail-level-badge slds-m-right_x-small">{levelBadge}</span>
+                    <h2 class="bcm-detail-name slds-text-heading_small">{name}</h2>
+                </div>
+                <template if:true={hasTags}>
+                    <div class="bcm-detail-tags slds-m-top_x-small">
+                        <template for:each={tags} for:item="tag">
+                            <span key={tag.id} class="bcm-detail-tag-swatch" style={tag.style} title={tag.name}>
+                                {tag.name}
+                            </span>
+                        </template>
+                    </div>
+                </template>
+            </template>
+        </header>
+
+        <template if:true={isLoading}>
+            <div class="bcm-detail-loading slds-p-around_medium">
+                <lightning-spinner alternative-text="Loading…" size="small"></lightning-spinner>
+            </div>
+        </template>
+
+        <template if:true={hasError}>
+            <div class="bcm-detail-error slds-p-around_medium slds-text-color_error" role="alert">
+                {errorMessage}
+            </div>
+        </template>
+
+        <template if:true={hasContent}>
+            <div class="bcm-detail-body slds-p-around_small">
+                <div class="bcm-detail-field slds-m-bottom_small">
+                    <div class="bcm-detail-field-label slds-text-title">Definition</div>
+                    <lightning-formatted-rich-text value={definition}></lightning-formatted-rich-text>
+                </div>
+                <div class="bcm-detail-field slds-m-bottom_small">
+                    <div class="bcm-detail-field-label slds-text-title">Strategy Support</div>
+                    <lightning-formatted-rich-text value={strategySupport}></lightning-formatted-rich-text>
+                </div>
+                <div class="bcm-detail-field slds-m-bottom_small">
+                    <div class="bcm-detail-field-label slds-text-title">Architectural Nuance</div>
+                    <lightning-formatted-rich-text value={architecturalNuance}></lightning-formatted-rich-text>
+                </div>
+                <div class="bcm-detail-field slds-m-bottom_small">
+                    <div class="bcm-detail-field-label slds-text-title">Hide From Diagram</div>
+                    <div class="bcm-detail-field-value">{hideFromDiagramText}</div>
+                </div>
+            </div>
+        </template>
+    </section>
+</template>

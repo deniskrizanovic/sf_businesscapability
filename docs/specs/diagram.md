@@ -405,23 +405,14 @@ And the menu closes
 
 > Tested by: bcm_ContextMenu.test.js — "Click View detail at level 1/2/3 fires viewdetail with correct payload", "Click View detail also fires close event"
 
-**Scenario: View detail navigates to the Capability record page**
-
-Given the context menu is open for any capability node  
-When the user clicks "View detail"  
-Then `NavigationMixin.Navigate` is invoked with `{ type: 'standard__recordPage', attributes: { recordId, objectApiName: 'bcm_Capability__c', actionName: 'view' } }`  
-And the context menu closes  
-
-> Tested by: bcm_CapabilityMap.test.js — "View detail click calls NavigationMixin.Navigate with record page"
-
 **Scenario: View detail opens the Detail Panel**
 
 Given the context menu is open for any capability node (L1, L2, or L3)  
 When the user clicks "View detail"  
 Then the Detail Panel slides in from the right edge of the diagram canvas  
-And the panel displays the breadcrumb, all fields, and (for Editors) Save/Cancel buttons for the selected capability  
+And the panel displays the breadcrumb and read-only fields for the selected capability  
 
-> Tested by: capability-detail.spec.ts — "View detail opens panel with capability name in header"
+> Tested by: capability-detail.spec.ts — "View detail opens panel with capability name in header"; bcm_CapabilityMap.test.js — "View detail loads capability via Apex and opens panel"
 
 **Scenario: Hide action is visible only to Editors**
 
@@ -577,7 +568,7 @@ Then the panel shows Name, Level, Tags, Definition, Strategy Support, Architectu
 Given the Detail Panel is open for an L3 capability  
 Then the panel header shows `L1 Name > L2 Name > L3 Name`  
 
-> Tested by: capability-detail.spec.ts — "Panel breadcrumb reflects full ancestor path"
+> Tested by: capability-detail.spec.ts — "Panel breadcrumb reflects full ancestor path for L3"
 
 **Scenario: Breadcrumb shows single segment for L1**
 
@@ -625,7 +616,7 @@ When the Detail Panel is open
 Then Name, Definition, Strategy Support, Architectural Nuance, and Hide From Diagram are editable  
 And Save and Cancel buttons are visible  
 
-> Tested by: capability-detail.spec.ts — "Editor sees Save and Cancel buttons in detail panel"
+> Deferred: edit affordances out of scope for #22; FP30 in #3
 
 **Scenario: Viewer sees read-only fields**
 
@@ -634,7 +625,7 @@ When the Detail Panel is open
 Then all fields are read-only  
 And no Save or Cancel button is visible  
 
-> Tested by: capability-detail.spec.ts — "Viewer sees no Save button in detail panel"
+> Tested by: bcm_CapabilityDetail.test.js — "No Save / Cancel buttons rendered (read-only scope)"
 
 **Scenario: Save persists field changes**
 
@@ -644,7 +635,7 @@ Then the changes are written to the Salesforce record via Apex
 And the panel shows the saved values  
 And the diagram refreshes to reflect any Name or Hide From Diagram changes  
 
-> Tested by: capability-detail.spec.ts — "Saving a name change reflects in the diagram"
+> Deferred: edit affordances out of scope for #22; FP30 in #3
 
 **Scenario: Cancel discards unsaved changes**
 
@@ -652,7 +643,7 @@ Given an Editor has edited fields without saving
 When the user clicks Cancel  
 Then the field values revert to their last-saved state  
 
-> Tested by: capability-detail.spec.ts — "Cancel reverts unsaved edits"
+> Deferred: edit affordances out of scope for #22; FP30 in #3
 
 **Scenario: Save error shows inline message**
 

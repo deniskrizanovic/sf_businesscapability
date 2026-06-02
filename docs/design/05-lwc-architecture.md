@@ -7,7 +7,7 @@
 | `bcm_CapabilityMap` | Lightning App Page LWC | Container — owns data, layout, SVG viewport, zoom/pan, toolbar, all Apex interaction |
 | `bcm_CapabilityNode` | Child LWC | Renders a single capability node (chevron, box, or bullet) |
 | `bcm_ContextMenu` | Child LWC (presentational) | Left-click context menu; fires `viewdetail` and `hide` events for all levels (L1/L2/L3) |
-| `bcm_CapabilityDetail` | Child LWC (presentational) — *aspirational, not yet implemented* | Slide-out detail/edit panel; will replace `View detail` navigation in a future issue |
+| `bcm_CapabilityDetail` | Child LWC (presentational) | Slide-out read-only detail panel for the selected capability; opened by `viewdetail` event from `bcm_ContextMenu` |
 | `bcm_ColourSwatch` | Child LWC (presentational) | Renders a single tag colour swatch on Tag record page |
 | `bcm_ImportButton` | Quick-action / utility LWC | Launches the JSON import flow from a Map record context |
 | `bcm_VisualisationButton` | Quick-action / utility LWC | Navigates the user to the Visualisation tab |
@@ -136,14 +136,12 @@ detailIsLoading     // boolean — spinner while getCapabilityDetail in flight
     onviewdetail={handleViewDetail}>
   </c-bcm_-context-menu>
 
-  <!-- Detail panel -->
+  <!-- Detail panel (read-only) -->
   <c-bcm_-capability-detail
     capability={detailCapability}
     breadcrumb={detailBreadcrumb}
-    can-edit={detailCanEdit}
     is-loading={detailIsLoading}
-    onclose={handleDetailClose}
-    onsaved={handleDetailSaved}>
+    onclose={handleDetailClose}>
   </c-bcm_-capability-detail>
 </template>
 ```
@@ -196,9 +194,9 @@ The component renders SVG fragments using `<template>` conditionals on `node.lev
 
 ### Responsibilities
 - Render a floating menu panel at a given (x, y) position relative to the SVG canvas
-- Show "View detail" action for all node levels (L1, L2, L3)
+- Show "View detail" action for all node levels (L1, L2, L3) — parent opens `bcm_CapabilityDetail` panel
 - Show editor-only actions (e.g. "Hide") when `canEdit` is true
-- Emit `viewdetail` event (no payload) when "View detail" is clicked — parent uses `contextMenuNode.id`
+- Emit `viewdetail` event with `{ id, level, name }` payload when "View detail" is clicked
 - Emit `close` event when dismissed (click outside, Escape key)
 
 ### Properties (Public `@api`)
@@ -222,38 +220,22 @@ The menu renders as an HTML `<div>` overlaid on the SVG using absolute positioni
 
 ## bcm_CapabilityDetail
 
-> **Status: Aspirational / not yet implemented.** Current `View detail` action navigates to the standard `bcm_Capability__c` record page via `NavigationMixin`. This slide-out panel will replace that navigation in a future issue.
-
 ### Responsibilities
 - Render 400px slide-in panel over the right edge of the canvas
-- Display breadcrumb, level badge, tag swatches, and all capability fields
-- For `canEdit` users: render editable fields with Save / Cancel buttons
-- Manage local edit state; reset on `capability` prop change
+- Display breadcrumb, level badge, tag swatches, and all capability fields read-only
 - Fire `close` on X button click or Escape key
-- Fire `saved` with updated field values on Save click
+- Edit affordances (Save / Cancel, editable inputs) deferred to FP30 / GH issue #3
 
 ### Properties (Public `@api`)
 ```js
 @api capability;   // bcm_Capability__c record object | null
 @api breadcrumb;   // [{ id, label }] array, root-first
-@api canEdit;      // boolean
 @api isLoading;    // boolean — shows spinner while parent fetches
 ```
 
 ### Events Emitted
 ```js
 this.dispatchEvent(new CustomEvent('close'));
-
-this.dispatchEvent(new CustomEvent('saved', {
-  detail: {
-    Id: this.capability.Id,
-    Name: this.editName,
-    bcm_Definition__c: this.editDefinition,
-    bcm_StrategySupport__c: this.editStrategySupport,
-    bcm_ArchitecturalNuance__c: this.editArchitecturalNuance,
-    bcm_HideFromDiagram__c: this.editHideFromDiagram
-  }
-}));
 ```
 
 ### CSS

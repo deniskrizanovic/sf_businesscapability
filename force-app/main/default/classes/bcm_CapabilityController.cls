@@ -37,6 +37,35 @@ public with sharing class bcm_CapabilityController {
     }
 
     /**
+     * Returns a single Capability with full detail fields + tag junction subquery.
+     * Not cacheable — panel always shows freshly-fetched record.
+     *
+     * @param capabilityId  Id of the bcm_Capability__c record.
+     * @return The Capability record with detail fields.
+     */
+    @AuraEnabled
+    public static bcm_Capability__c getCapabilityDetail(Id capabilityId) {
+        if (capabilityId == null) {
+            throw new AuraHandledException('capabilityId is required');
+        }
+        try {
+            return [
+                SELECT Id, Name, bcm_Parent__c, bcm_Level__c,
+                       bcm_Definition__c, bcm_StrategySupport__c,
+                       bcm_ArchitecturalNuance__c, bcm_HideFromDiagram__c,
+                       (SELECT bcm_Tag__c, bcm_Tag__r.Name, bcm_Tag__r.bcm_Colour__c
+                          FROM Tags__r)
+                FROM bcm_Capability__c
+                WHERE Id = :capabilityId
+                WITH USER_MODE
+                LIMIT 1
+            ];
+        } catch (Exception ex) {
+            throw new AuraHandledException(ex.getMessage());
+        }
+    }
+
+    /**
      * Sets bcm_HideFromDiagram__c = true on the given Capability.
      *
      * @param capabilityId  Id of the bcm_Capability__c record to hide.

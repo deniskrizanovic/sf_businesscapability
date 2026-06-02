@@ -1,26 +1,13 @@
 import { createElement } from 'lwc';
 import { createTestWireAdapter } from '@salesforce/wire-service-jest-util';
 
-// Capture NavigationMixin.Navigate calls — must be installed before component imports it
-const mockNavigate = jest.fn();
-jest.mock('lightning/navigation', () => {
-    const Navigate = Symbol('Navigate');
-    const GenerateUrl = Symbol('GenerateUrl');
-    const NavigationMixin = (Base) => class extends Base {
-        [Navigate](...args) { return mockNavigate(...args); }
-        [GenerateUrl]() { return Promise.resolve('https://example.com'); }
-    };
-    NavigationMixin.Navigate = Navigate;
-    NavigationMixin.GenerateUrl = GenerateUrl;
-    return { NavigationMixin };
-}, { virtual: true });
-
 import BcmCapabilityMap from 'c/bcm_CapabilityMap';
 
 const mockGetMaps = createTestWireAdapter();
 const mockGetTags = createTestWireAdapter();
 
 let mockHideCapabilityImpl = jest.fn().mockResolvedValue(undefined);
+let mockGetCapabilityDetailImpl = jest.fn().mockResolvedValue(null);
 
 // Imperative Apex mock — returns a resolved promise with seeded data
 const CAPS_DATA = [
@@ -50,6 +37,15 @@ jest.mock('@salesforce/apex/bcm_CapabilityController.getCapabilities',
 jest.mock('@salesforce/apex/bcm_CapabilityController.hideCapability',
     () => {
         const fn = function(...args) { return mockHideCapabilityImpl(...args); };
+        fn.__esModule = true;
+        fn.default = fn;
+        return fn;
+    },
+    { virtual: true }
+);
+jest.mock('@salesforce/apex/bcm_CapabilityController.getCapabilityDetail',
+    () => {
+        const fn = function(...args) { return mockGetCapabilityDetailImpl(...args); };
         fn.__esModule = true;
         fn.default = fn;
         return fn;
@@ -681,26 +677,37 @@ describe('BcmCapabilityMap context menu actions', () => {
         expect(menu.node).toBeDefined();
     });
 
-    it('View detail click calls NavigationMixin.Navigate with record page', async () => {
+    it('View detail loads capability via Apex and opens panel', async () => {
+        const detailRecord = {
+            Id: 'L2-A1',
+            Name: 'Sub-Cap A1',
+            bcm_Level__c: 2,
+            bcm_Definition__c: '<p>Def</p>',
+            bcm_StrategySupport__c: null,
+            bcm_ArchitecturalNuance__c: null,
+            bcm_HideFromDiagram__c: false,
+            Tags__r: [],
+        };
+        mockGetCapabilityDetailImpl = jest.fn().mockResolvedValue(detailRecord);
+
         const menu = await openMenuOnNode('L2-A1');
         expect(menu).not.toBeNull();
-
-        mockNavigate.mockClear();
 
         menu.dispatchEvent(new CustomEvent('viewdetail', {
             detail: { id: 'L2-A1', level: 2, name: 'Sub-Cap A1' },
         }));
         await flushPromises();
 
-        expect(mockNavigate).toHaveBeenCalledTimes(1);
-        expect(mockNavigate).toHaveBeenCalledWith({
-            type: 'standard__recordPage',
-            attributes: {
-                recordId: 'L2-A1',
-                objectApiName: 'bcm_Capability__c',
-                actionName: 'view',
-            },
-        });
+        expect(mockGetCapabilityDetailImpl).toHaveBeenCalledWith({ capabilityId: 'L2-A1' });
+
+        const panel = element.shadowRoot.querySelector('c-bcm_-capability-detail');
+        expect(panel).not.toBeNull();
+        expect(panel.capability).toMatchObject({ Id: 'L2-A1', Name: 'Sub-Cap A1' });
+        // Breadcrumb walks parent chain root-first: L1-A -> L2-A1
+        expect(panel.breadcrumb).toEqual([
+            { id: 'L1-A', label: 'Capability A' },
+            { id: 'L2-A1', label: 'Sub-Cap A1' },
+        ]);
     });
 });
 
