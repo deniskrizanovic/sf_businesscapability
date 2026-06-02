@@ -155,6 +155,10 @@ private class bcm_CapabilityControllerTest {
         l2.bcm_ArchitecturalNuance__c = '<p>Nuance body</p>';
         update l2;
 
+        // Seed own tag junction so assertion is independent of @TestSetup
+        bcm_Tag__c localTag = TestDataFactory.createTag('Detail Test Tag', '#1D3557', true);
+        TestDataFactory.createCapabilityTag(l2.Id, localTag.Id, true);
+
         // When
         Test.startTest();
         bcm_Capability__c result = bcm_CapabilityController.getCapabilityDetail(l2.Id);
@@ -167,7 +171,7 @@ private class bcm_CapabilityControllerTest {
         Assert.areEqual('<p>Strategy body</p>',   result.bcm_StrategySupport__c);
         Assert.areEqual('<p>Nuance body</p>',     result.bcm_ArchitecturalNuance__c);
         Assert.areEqual(2, (Integer) result.bcm_Level__c);
-        Assert.areEqual(1, result.Tags__r.size(), 'Tags subquery should return 1 junction');
+        Assert.isTrue(result.Tags__r.size() >= 1, 'Tags subquery should return at least 1 junction');
     }
 
     @IsTest

@@ -19,7 +19,7 @@ export default class BcmCapabilityDetail extends LightningElement {
     }
 
     get hasError() {
-        return this.errorMessage != null && this.errorMessage !== '';
+        return this.errorMessage != null;
     }
 
     get level() {
