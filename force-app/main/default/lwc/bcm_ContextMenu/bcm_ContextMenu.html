@@ -11,10 +11,12 @@
                     <lightning-icon icon-name="utility:open" size="x-small" class="bcm-menu-icon"></lightning-icon>
                     <span>View detail</span>
                 </li>
-                <li class="bcm-menu-item" role="menuitem" onclick={handleHide}>
-                    <lightning-icon icon-name="utility:hide" size="x-small" class="bcm-menu-icon"></lightning-icon>
-                    <span>Hide</span>
-                </li>
+                <template if:true={canEdit}>
+                    <li class="bcm-menu-item" role="menuitem" onclick={handleHide}>
+                        <lightning-icon icon-name="utility:hide" size="x-small" class="bcm-menu-icon"></lightning-icon>
+                        <span>Hide</span>
+                    </li>
+                </template>
             </ul>
         </div>
     </div>

@@ -61,12 +61,17 @@ describe('bcm_ContextMenu — View detail item visibility', () => {
         expect(getViewDetailItem(element)).not.toBeNull();
     });
 
-    it('Renders Hide item for all levels', () => {
-        for (const lvl of [1, 2, 3]) {
-            const element = mount({ id: `lvl${lvl}`, name: 'X', level: lvl });
+    it('Renders Hide item when canEdit is true', () => {
+        const element = mount({ id: 'L1-A', name: 'Capability A', level: 1 });
+        element.canEdit = true;
+        return Promise.resolve().then(() => {
             expect(getHideItem(element)).not.toBeNull();
-            document.body.removeChild(element);
-        }
+        });
+    });
+
+    it('Hides Hide item when canEdit is false', () => {
+        const element = mount({ id: 'L1-A', name: 'Capability A', level: 1 });
+        expect(getHideItem(element)).toBeNull();
     });
 });
 
@@ -120,6 +125,8 @@ describe('bcm_ContextMenu — Hide regression', () => {
 
     it.each([1, 2, 3])('Click Hide at level %i still fires close', async (level) => {
         const element = mount({ id: 'X', name: 'X', level });
+        element.canEdit = true;
+        await flushPromises();
         const closeHandler = jest.fn();
         element.addEventListener('close', closeHandler);
 

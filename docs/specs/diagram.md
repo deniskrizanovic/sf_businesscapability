@@ -429,7 +429,7 @@ Given the context menu is open
 When the user has only the bcm_Viewer permission set  
 Then the "Hide" menu item is not rendered  
 
-> Deferred: canEdit permission gate is a JS invariant; verified manually
+> Tested by: diagram.spec.ts:284 — "Viewer cannot see Hide button in context menu"
 
 **Scenario: Hide persists the node as hidden and re-renders**
 
