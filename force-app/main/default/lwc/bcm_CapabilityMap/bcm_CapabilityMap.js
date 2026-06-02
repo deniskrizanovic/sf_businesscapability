@@ -605,8 +605,9 @@ export default class BcmCapabilityMap extends NavigationMixin(LightningElement) 
         if (!id) return;
         hideCapability({ capabilityId: id })
             .then(() => {
-                const cap = (this._capabilities || []).find(c => c.Id === id);
-                if (cap) cap.bcm_HideFromDiagram__c = true;
+                this._capabilities = (this._capabilities || []).map(c =>
+                    c.Id === id ? { ...c, bcm_HideFromDiagram__c: true } : c
+                );
                 this._buildLayout(this._capabilities);
             })
             .catch(err => {

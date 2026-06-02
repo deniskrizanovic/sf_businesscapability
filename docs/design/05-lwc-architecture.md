@@ -7,6 +7,7 @@
 | `bcm_CapabilityMap` | Lightning App Page LWC | Container — owns data, layout, SVG viewport, zoom/pan, toolbar, all Apex interaction |
 | `bcm_CapabilityNode` | Child LWC | Renders a single capability node (chevron, box, or bullet) |
 | `bcm_ContextMenu` | Child LWC (presentational) | Left-click context menu; fires `viewdetail` and `hide` events for all levels (L1/L2/L3) |
+| `bcm_CapabilityDetail` | Child LWC (presentational) — *aspirational, not yet implemented* | Slide-out detail/edit panel; will replace `View detail` navigation in a future issue |
 | `bcm_ColourSwatch` | Child LWC (presentational) | Renders a single tag colour swatch on Tag record page |
 | `bcm_ImportButton` | Quick-action / utility LWC | Launches the JSON import flow from a Map record context |
 | `bcm_VisualisationButton` | Quick-action / utility LWC | Navigates the user to the Visualisation tab |
@@ -216,6 +217,64 @@ this.dispatchEvent(new CustomEvent('close'));
 
 ### Positioning
 The menu renders as an HTML `<div>` overlaid on the SVG using absolute positioning. Position is calculated from the SVG click coordinates transformed to page coordinates.
+
+---
+
+## bcm_CapabilityDetail
+
+> **Status: Aspirational / not yet implemented.** Current `View detail` action navigates to the standard `bcm_Capability__c` record page via `NavigationMixin`. This slide-out panel will replace that navigation in a future issue.
+
+### Responsibilities
+- Render 400px slide-in panel over the right edge of the canvas
+- Display breadcrumb, level badge, tag swatches, and all capability fields
+- For `canEdit` users: render editable fields with Save / Cancel buttons
+- Manage local edit state; reset on `capability` prop change
+- Fire `close` on X button click or Escape key
+- Fire `saved` with updated field values on Save click
+
+### Properties (Public `@api`)
+```js
+@api capability;   // bcm_Capability__c record object | null
+@api breadcrumb;   // [{ id, label }] array, root-first
+@api canEdit;      // boolean
+@api isLoading;    // boolean — shows spinner while parent fetches
+```
+
+### Events Emitted
+```js
+this.dispatchEvent(new CustomEvent('close'));
+
+this.dispatchEvent(new CustomEvent('saved', {
+  detail: {
+    Id: this.capability.Id,
+    Name: this.editName,
+    bcm_Definition__c: this.editDefinition,
+    bcm_StrategySupport__c: this.editStrategySupport,
+    bcm_ArchitecturalNuance__c: this.editArchitecturalNuance,
+    bcm_HideFromDiagram__c: this.editHideFromDiagram
+  }
+}));
+```
+
+### CSS
+```css
+.bcm-detail-panel {
+    position: absolute;
+    top: 0; right: 0;
+    width: 400px; height: 100%;
+    transform: translateX(100%);
+    transition: transform 250ms ease;
+    z-index: 100;
+    background: #fff;
+    box-shadow: -4px 0 16px rgba(0,0,0,0.12);
+    overflow-y: auto;
+}
+.bcm-detail-panel--open {
+    transform: translateX(0);
+}
+```
+
+`.bcm-canvas-container` requires `position: relative` for the absolute-positioned panel to anchor correctly.
 
 ---
 
