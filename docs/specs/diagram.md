@@ -288,6 +288,7 @@ When the user moves the pointer over any line of an L3 bullet (including wrapped
 Then all text lines of that bullet change colour to #0070D2  
 And when the pointer leaves, all lines revert to #444444  
 And if the L3 bullet is focused, its highlight rect and bold weight are unaffected by hover  
+And if the L3 bullet is focused, its text colour changes to #0070D2 on hover (hover CSS wins; focused text colour is intentionally unoverridden)  
 
 > Deferred: CSS-only hover (SVG fill via `g[data-l3-group]:hover text`); browser pseudo-state not assertable in Jest or Playwright — verified manually in org
 
@@ -302,7 +303,7 @@ When the user left-clicks an L1 or L2 node
 Then that node receives focus and is highlighted  
 And the context menu does not open  
 
-> Deferred: click-to-focus is level-aware JS invariant in handleNodeClick; verified manually
+> Tested by: `bcm_CapabilityMap.test.js — "First click L1 node focuses it but does not open context menu"`, `bcm_CapabilityMap.test.js — "First click L2 node focuses it but does not open context menu"`
 
 **Scenario: Second click on already-focused L1 or L2 node opens context menu**
 
@@ -310,7 +311,7 @@ Given a node is focused
 When the user left-clicks that same node again  
 Then the context menu opens anchored to the node's right edge  
 
-> Deferred: double-click-to-menu is JS invariant; context menu position tested via manual checklist
+> Tested by: `bcm_CapabilityMap.test.js — "Second click on same L1 node opens context menu"`, `bcm_CapabilityMap.test.js — "Second click on same L2 node opens context menu"`
 
 **Scenario: First click on L3 bullet sets focus**
 
@@ -319,7 +320,7 @@ When the user left-clicks an L3 bullet
 Then that bullet receives focus (blue-tint background rect shown)  
 And the context menu does not open  
 
-> Deferred: L3 click-to-focus is JS invariant; verified manually
+> Tested by: `bcm_CapabilityMap.test.js — "First click on L3 bullet focuses it but does not open context menu"`
 
 **Scenario: Second click on already-focused L3 bullet opens context menu**
 
@@ -327,7 +328,7 @@ Given an L3 bullet is focused
 When the user left-clicks that same bullet again  
 Then the context menu opens anchored to the bullet's position  
 
-> Deferred: JS invariant; verified manually
+> Tested by: `bcm_CapabilityMap.test.js — "Second click on same L3 bullet opens context menu"`
 
 **Scenario: Clicking a different node switches focus without opening menu**
 
@@ -336,7 +337,7 @@ When the user clicks node B
 Then focus moves to node B  
 And the context menu does not open  
 
-> Deferred: JS invariant in handleNodeClick; verified manually
+> Tested by: `bcm_CapabilityMap.test.js — "Clicking a different node after first focus does not open context menu"`
 
 ---
 
