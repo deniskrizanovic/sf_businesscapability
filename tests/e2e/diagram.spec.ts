@@ -280,6 +280,18 @@ test.describe('Permission — viewer project', () => {
         const handles = await page.locator('.bcm-drag-handle').count();
         expect(handles).toBe(0);
     });
+
+    test('Viewer cannot see Hide button in context menu', async ({ page }) => {
+        await openDiagram(page);
+        await selectMapFromCombobox(page);
+        const node = page.locator('.bcm-canvas .bcm-node').first();
+        await node.click();
+        await node.click();
+        const menu = page.locator('.bcm-menu-card');
+        await expect(menu).toBeVisible();
+        await expect(menu.getByText('View detail', { exact: true })).toBeVisible();
+        await expect(menu.getByText('Hide', { exact: true })).toHaveCount(0);
+    });
 });
 
 // ── Teardown — editor project ─────────────────────────────────────────────────

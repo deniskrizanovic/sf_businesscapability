@@ -1,9 +1,10 @@
 import { LightningElement, api } from 'lwc';
 
 export default class BcmContextMenu extends LightningElement {
-    @api anchorX = 0;
-    @api anchorY = 0;
-    @api node    = null;  // { id, name, level }
+    @api anchorX  = 0;
+    @api anchorY  = 0;
+    @api node     = null;  // { id, name, level }
+    @api canEdit  = false;
 
     get menuTitle() {
         return this.node?.name || 'Actions';
