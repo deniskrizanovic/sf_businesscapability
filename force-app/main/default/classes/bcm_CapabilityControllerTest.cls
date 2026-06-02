@@ -105,6 +105,44 @@ private class bcm_CapabilityControllerTest {
     }
 
     @IsTest
+    static void shouldHideCapability() {
+        // Given
+        bcm_Map__c mapA = [SELECT Id FROM bcm_Map__c WHERE Name = 'Test Map A' LIMIT 1];
+        bcm_Capability__c l1 = [
+            SELECT Id, bcm_HideFromDiagram__c
+            FROM bcm_Capability__c
+            WHERE bcm_Map__c = :mapA.Id AND bcm_Level__c = 1
+            LIMIT 1
+        ];
+        Assert.isFalse(l1.bcm_HideFromDiagram__c, 'Precondition: capability not hidden');
+
+        // When
+        Test.startTest();
+        bcm_CapabilityController.hideCapability(l1.Id);
+        Test.stopTest();
+
+        // Then
+        bcm_Capability__c after = [
+            SELECT bcm_HideFromDiagram__c
+            FROM bcm_Capability__c
+            WHERE Id = :l1.Id
+        ];
+        Assert.isTrue(after.bcm_HideFromDiagram__c, 'Capability should be hidden after call');
+    }
+
+    @IsTest
+    static void shouldThrowException_WhenHideCapabilityIdIsNull() {
+        Test.startTest();
+        try {
+            bcm_CapabilityController.hideCapability(null);
+            Assert.fail('Expected AuraHandledException for null capabilityId');
+        } catch (AuraHandledException ex) {
+            Assert.isNotNull(ex, 'AuraHandledException expected for null capabilityId');
+        }
+        Test.stopTest();
+    }
+
+    @IsTest
     static void shouldWrapException_WhenUserLacksAccess() {
         // Given — user with no object permissions; USER_MODE -> QueryException -> AuraHandledException
         User restrictedUser = TestDataFactory.createUserWithPermSet('bcm_ReadOnly');

@@ -554,6 +554,22 @@ Distinct from FP18 (standard record edit form save) — different triggering sur
 
 ---
 
+### FP31 — Hide Capability via Context Menu
+
+**Trigger:** Editor clicks "Hide" in the diagram context menu  
+**FUR source:** `docs/plans/2026-06-02-16:07-issue-4-context-menu-actions.md` — `hideCapability(capabilityId)`  
+Distinct from FP19 (delete Capability via standard form): no record removal, only `bcm_HideFromDiagram__c = true` flip; triggered from LWC overlay rather than platform delete action.
+
+| # | Movement | Type | Data Group | Notes |
+|---|---|---|---|---|
+| 1 | Receive Capability Id to hide | E | Capability | Triggering entry — Id crosses boundary from human Editor |
+| 2 | Write hidden flag on Capability record | W | Capability | UPDATE bcm_Capability__c.bcm_HideFromDiagram__c = true |
+| 3 | Send confirmation to UI | X | Capability | Diagram re-renders w/ node absent; no separate confirmation toast |
+
+**FP31 size = 3 CFP**
+
+---
+
 ## 5. Summary Table
 
 | FP | Functional Process | E | X | R | W | CFP |
@@ -588,9 +604,10 @@ Distinct from FP18 (standard record edit form save) — different triggering sur
 | FP28 | Delete Tag | 1 | 1 | 1 | 1 | 4 |
 | FP29 | View Capability Detail via Panel | 1 | 1 | 3 | 0 | 5 |
 | FP30 | Edit Capability via Panel — Save | 1 | 1 | 0 | 1 | 3 |
-| **Total** | | **30** | **30** | **36** | **23** | **119** |
+| FP31 | Hide Capability via Context Menu | 1 | 1 | 0 | 1 | 3 |
+| **Total** | | **31** | **31** | **36** | **24** | **122** |
 
-**Total COSMIC Functional Size: 119 CFP**
+**Total COSMIC Functional Size: 122 CFP**
 
 ---
 

@@ -405,6 +405,15 @@ And the menu closes
 
 > Tested by: bcm_ContextMenu.test.js — "Click View detail at level 1/2/3 fires viewdetail with correct payload", "Click View detail also fires close event"
 
+**Scenario: View detail navigates to the Capability record page**
+
+Given the context menu is open for any capability node  
+When the user clicks "View detail"  
+Then `NavigationMixin.Navigate` is invoked with `{ type: 'standard__recordPage', attributes: { recordId, objectApiName: 'bcm_Capability__c', actionName: 'view' } }`  
+And the context menu closes  
+
+> Tested by: bcm_CapabilityMap.test.js — "View detail click calls NavigationMixin.Navigate with record page"
+
 **Scenario: View detail opens the Detail Panel**
 
 Given the context menu is open for any capability node (L1, L2, or L3)  
@@ -429,7 +438,7 @@ When the user clicks "Hide"
 Then bcm_HideFromDiagram__c is set to true on the record via Apex  
 And the diagram re-renders with that capability absent (Show Hidden toggle off)  
 
-> Deferred: Apex DML + re-render is a JS invariant; integration tested manually
+> Tested by: bcm_CapabilityMap.test.js — "Hide click calls hideCapability Apex and rebuilds layout without target node"; bcm_CapabilityControllerTest.shouldHideCapability
 
 ---
 
