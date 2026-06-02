@@ -281,6 +281,8 @@ export default class BcmCapabilityMap extends LightningElement {
                 for (const l3 of (l2.children || [])) {
                     const allLines = wrapText(l3.Name, maxBulletFirst, FONT_SIZE_L3, 5);
                     const l3Focused = l3.Id === this.focusedNodeId;
+                    const fontWeight = l3Focused ? 'bold' : 'normal';
+                    const focusRectStartY = bulletY;
                     allLines.forEach((text, wIdx) => {
                         if (wIdx === 0) {
                             bulletLines.push({
@@ -288,21 +290,30 @@ export default class BcmCapabilityMap extends LightningElement {
                                 l3Id        : l3.Id,
                                 l3Name      : l3.Name,
                                 isFocused   : l3Focused,
+                                fontWeight,
                                 cursorStyle : 'cursor:pointer',
                                 text        : '• ' + text,
                                 x           : bulletBaseX,
                                 y           : bulletY + LINE_HEIGHT / 2,
+                                focusRect   : l3Focused ? {
+                                    x     : bulletBaseX - 4,
+                                    y     : focusRectStartY,
+                                    width : COLUMN_WIDTH - BOX_PADDING * 2 - 8,
+                                    height: allLines.length * LINE_HEIGHT - 2,
+                                } : null,
                             });
                         } else {
                             bulletLines.push({
                                 key         : l3.Id + '-bullet-' + wIdx,
                                 l3Id        : null,
                                 l3Name      : null,
-                                isFocused   : false,
+                                isFocused   : l3Focused,
+                                fontWeight,
                                 cursorStyle : '',
                                 text,
                                 x           : bulletContX,
                                 y           : bulletY + LINE_HEIGHT / 2,
+                                focusRect   : null,
                             });
                         }
                         bulletY += LINE_HEIGHT;

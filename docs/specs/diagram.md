@@ -279,7 +279,7 @@ Given a Level 3 capability is focused
 When the diagram re-renders  
 Then a blue-tint background rectangle is drawn behind the focused L3 bullet text  
 
-> Deferred: L3 focus rect is a JS invariant (isFocused flag → background rect in L3 layout); verified manually
+> Tested by: bcm_CapabilityMap.test.js — "Renders highlight rect when L3 bullet focused", "Rect moves to next sibling on ArrowDown", "Escape clears the L3 focus rect", "ArrowUp from first L3 sibling clears the rect (focus moves to parent L2)", "Clicking a different node clears the previous L3 focus rect", "Focused L3 bullet text is bold; siblings remain normal"
 
 ---
 

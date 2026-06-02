@@ -428,6 +428,126 @@ describe('BcmCapabilityMap keyboard navigation — L3 level', () => {
     });
 });
 
+describe('BcmCapabilityMap L3 focus highlight rect', () => {
+    let element;
+    let svg;
+
+    function getL3TextNode(el, l3Id) {
+        return el.shadowRoot.querySelector(`text[data-node-id="${l3Id}"][data-node-level="3"]`);
+    }
+
+    function getFocusRect(el) {
+        return el.shadowRoot.querySelector('rect.bcm-l3-focus-rect');
+    }
+
+    function getFocusRects(el) {
+        return el.shadowRoot.querySelectorAll('rect.bcm-l3-focus-rect');
+    }
+
+    beforeEach(async () => {
+        mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [], error: undefined });
+        await flushPromises();
+        await seedLayout(element);
+        svg = getSvg(element);
+    });
+
+    afterEach(() => {
+        while (document.body.firstChild) {
+            document.body.removeChild(document.body.firstChild);
+        }
+    });
+
+    it('Renders highlight rect when L3 bullet focused', async () => {
+        expect(getFocusRect(element)).toBeNull();
+
+        const l3a = getL3TextNode(element, 'L3-A1a');
+        l3a.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+
+        const rect = getFocusRect(element);
+        expect(rect).not.toBeNull();
+        expect(rect.getAttribute('fill')).toBe('#E8F4FF');
+        expect(rect.getAttribute('stroke')).toBe('#0070D2');
+        // Only one rect total
+        expect(getFocusRects(element).length).toBe(1);
+    });
+
+    it('Focused L3 bullet text is bold; siblings remain normal', async () => {
+        const l3a = getL3TextNode(element, 'L3-A1a');
+        l3a.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+
+        const focusedText = getL3TextNode(element, 'L3-A1a');
+        const siblingText = getL3TextNode(element, 'L3-A1b');
+        expect(focusedText.getAttribute('font-weight')).toBe('bold');
+        expect(siblingText.getAttribute('font-weight')).toBe('normal');
+    });
+
+    it('Rect moves to next sibling on ArrowDown', async () => {
+        const l3a = getL3TextNode(element, 'L3-A1a');
+        l3a.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+
+        const yBefore = parseFloat(getFocusRect(element).getAttribute('y'));
+
+        svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        await flushPromises();
+
+        const rectsAfter = getFocusRects(element);
+        expect(rectsAfter.length).toBe(1);
+        const yAfter = parseFloat(rectsAfter[0].getAttribute('y'));
+        expect(yAfter).not.toBe(yBefore);
+
+        // Bold has migrated
+        const newFocused = getL3TextNode(element, 'L3-A1b');
+        const oldFocused = getL3TextNode(element, 'L3-A1a');
+        expect(newFocused.getAttribute('font-weight')).toBe('bold');
+        expect(oldFocused.getAttribute('font-weight')).toBe('normal');
+    });
+
+    it('Escape clears the L3 focus rect', async () => {
+        const l3a = getL3TextNode(element, 'L3-A1a');
+        l3a.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+        expect(getFocusRect(element)).not.toBeNull();
+
+        svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        await flushPromises();
+
+        expect(getFocusRect(element)).toBeNull();
+    });
+
+    it('ArrowUp from first L3 sibling clears the rect (focus moves to parent L2)', async () => {
+        const l3a = getL3TextNode(element, 'L3-A1a');
+        l3a.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+        expect(getFocusRect(element)).not.toBeNull();
+
+        svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+        await flushPromises();
+
+        // Parent L2-A1 now focused; no L3 rect
+        expect(getFocusRect(element)).toBeNull();
+    });
+
+    it('Clicking a different node clears the previous L3 focus rect', async () => {
+        const l3a = getL3TextNode(element, 'L3-A1a');
+        l3a.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+        expect(getFocusRect(element)).not.toBeNull();
+
+        const l2A2 = getNode(element, 'L2-A2');
+        clickNode(l2A2);
+        await flushPromises();
+
+        expect(getFocusRect(element)).toBeNull();
+    });
+});
+
 describe('BcmCapabilityMap context menu actions', () => {
     let element;
 
