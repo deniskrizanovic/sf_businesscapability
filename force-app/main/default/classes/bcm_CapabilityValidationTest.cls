@@ -433,11 +433,8 @@ private class bcm_CapabilityValidationTest {
     static void isCrossCutting_onLevel1_succeeds() {
         // Given
         bcm_Map__c m = [SELECT Id FROM bcm_Map__c LIMIT 1];
-        bcm_Capability__c l1 = new bcm_Capability__c(
-            Name = 'L1 cross', bcm_Map__c = m.Id,
-            bcm_Level__c = 1, bcm_SortOrder__c = 1,
-            bcm_IsCrossCutting__c = true
-        );
+        bcm_Capability__c l1 = TestDataFactory.createCapability(m.Id, null, 1, 1, false);
+        l1.bcm_IsCrossCutting__c = true;
 
         // When
         Test.startTest();
@@ -492,6 +489,66 @@ private class bcm_CapabilityValidationTest {
         try {
             insert l3;
             Assert.fail('Expected DmlException for IsCrossCutting=true on Level 3');
+        } catch (DmlException e) {
+            Assert.isTrue(
+                e.getMessage().contains('Level 1'),
+                'Error should reference Level 1 restriction: ' + e.getMessage()
+            );
+        }
+        Test.stopTest();
+    }
+
+    // ─── Cross-cutting flag: update-path coverage ─────────────────────────────
+
+    // @spec capability-object.md · "Cross-cutting flag on Capability" · "Cross-cutting flag can be cleared when reparenting an L1 to L2"
+    @IsTest
+    static void isCrossCutting_clearedOnReparentToL2_succeeds() {
+        // Given — two L1s, one with flag=true
+        bcm_Map__c m = [SELECT Id FROM bcm_Map__c LIMIT 1];
+        bcm_Capability__c newParent = TestDataFactory.createCapability(m.Id, null, 1, 1, true);
+        bcm_Capability__c cap = TestDataFactory.createCapability(m.Id, null, 1, 2, false);
+        cap.bcm_IsCrossCutting__c = true;
+        insert cap;
+
+        // When — reparent under newParent, become L2, clear flag in same update
+        cap.bcm_Parent__c = newParent.Id;
+        cap.bcm_Level__c = 2;
+        cap.bcm_SortOrder__c = 1;
+        cap.bcm_IsCrossCutting__c = false;
+
+        Test.startTest();
+        update cap;
+        Test.stopTest();
+
+        // Then
+        bcm_Capability__c saved = [
+            SELECT bcm_Level__c, bcm_IsCrossCutting__c, bcm_Parent__c
+            FROM bcm_Capability__c WHERE Id = :cap.Id
+        ];
+        Assert.areEqual(2, (Integer) saved.bcm_Level__c, 'Level should now be 2');
+        Assert.isFalse(saved.bcm_IsCrossCutting__c, 'IsCrossCutting should be cleared');
+        Assert.areEqual(newParent.Id, saved.bcm_Parent__c, 'Parent should be reassigned');
+    }
+
+    // @spec capability-object.md · "Cross-cutting flag on Capability" · "Reparenting an L1 with the cross-cutting flag still set is rejected"
+    @IsTest
+    static void isCrossCutting_remainsTrue_whenReparentedToL2_isRejected() {
+        // Given — two L1s, one with flag=true
+        bcm_Map__c m = [SELECT Id FROM bcm_Map__c LIMIT 1];
+        bcm_Capability__c newParent = TestDataFactory.createCapability(m.Id, null, 1, 1, true);
+        bcm_Capability__c cap = TestDataFactory.createCapability(m.Id, null, 1, 2, false);
+        cap.bcm_IsCrossCutting__c = true;
+        insert cap;
+
+        // When / Then — attempt to demote to L2 while keeping flag=true
+        cap.bcm_Parent__c = newParent.Id;
+        cap.bcm_Level__c = 2;
+        cap.bcm_SortOrder__c = 1;
+
+        Test.startTest();
+        try {
+            update cap;
+            Assert.fail('Expected DmlException for IsCrossCutting=true on reparent to Level 2');
         } catch (DmlException e) {
             Assert.isTrue(
                 e.getMessage().contains('Level 1'),

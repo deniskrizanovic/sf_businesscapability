@@ -289,3 +289,19 @@ When I tick Is Cross-Cutting on a new Capability with Level 1 and no parent
 Then the record saves successfully  
 
 > Tested by: `bcm_CapabilityValidationTest.isCrossCutting_onLevel1_succeeds`
+
+**Scenario: Cross-cutting flag can be cleared when reparenting an L1 to L2**
+
+Given a Level 1 Capability with Is Cross-Cutting set to true  
+When I reparent it under another Level 1 (making it Level 2) and clear Is Cross-Cutting in the same save  
+Then the record saves successfully  
+
+> Tested by: `bcm_CapabilityValidationTest.isCrossCutting_clearedOnReparentToL2_succeeds`
+
+**Scenario: Reparenting an L1 with the cross-cutting flag still set is rejected**
+
+Given a Level 1 Capability with Is Cross-Cutting set to true  
+When I reparent it under another Level 1 (making it Level 2) without clearing Is Cross-Cutting  
+Then I see the error: "The Cross-Cutting flag may only be set on Level 1 capabilities."  
+
+> Tested by: `bcm_CapabilityValidationTest.isCrossCutting_remainsTrue_whenReparentedToL2_isRejected`
