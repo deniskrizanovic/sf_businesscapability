@@ -15,7 +15,7 @@ private class bcm_CapabilityServiceTest {
     }
 
     @IsTest
-    static void updateCapability_persists_whitelistedFields() {
+    static void updateCapability_persists_allowlistedFields() {
         // Given
         bcm_Capability__c cap = [
             SELECT Id, Name, bcm_Definition__c, bcm_StrategySupport__c, bcm_ArchitecturalNuance__c
@@ -48,8 +48,8 @@ private class bcm_CapabilityServiceTest {
     }
 
     @IsTest
-    static void updateCapability_ignoresFieldsOutsideWhitelist() {
-        // Given — caller attempts to mutate SortOrder (not in whitelist)
+    static void updateCapability_ignoresFieldsOutsideAllowlist() {
+        // Given — caller attempts to mutate SortOrder (not in allowlist)
         bcm_Capability__c cap = [
             SELECT Id, bcm_SortOrder__c
             FROM bcm_Capability__c
@@ -58,7 +58,7 @@ private class bcm_CapabilityServiceTest {
         Decimal originalSort = cap.bcm_SortOrder__c;
         bcm_Capability__c input = new bcm_Capability__c(
             Id                = cap.Id,
-            Name              = 'Whitelist Check',
+            Name              = 'Allowlist Check',
             bcm_SortOrder__c  = 9999
         );
 
@@ -72,7 +72,7 @@ private class bcm_CapabilityServiceTest {
             SELECT Name, bcm_SortOrder__c
             FROM bcm_Capability__c WHERE Id = :cap.Id
         ];
-        Assert.areEqual('Whitelist Check', after.Name);
+        Assert.areEqual('Allowlist Check', after.Name);
         Assert.areEqual(originalSort, after.bcm_SortOrder__c,
             'SortOrder must not be touched by service.updateCapability');
     }

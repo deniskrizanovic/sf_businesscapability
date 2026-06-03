@@ -635,7 +635,7 @@ Then the changes are written to the Salesforce record via Apex
 And the panel shows the saved values  
 And the diagram refreshes to reflect any Name change  
 
-> Tested by: capability-detail.spec.ts — "Save persists name change and refreshes diagram"; bcm_CapabilityServiceTest.updateCapability_persists_whitelistedFields; bcm_CapabilityServiceTest.updateCapability_persists_hideFromDiagram; bcm_CapabilityControllerTest.updateCapability_persists; bcm_CapabilityMap.test.js — "saved event calls updateCapability and rebuilds diagram with new name"
+> Tested by: capability-detail.spec.ts — "Save persists name change and refreshes diagram"; bcm_CapabilityServiceTest.updateCapability_persists_allowlistedFields; bcm_CapabilityServiceTest.updateCapability_persists_hideFromDiagram; bcm_CapabilityControllerTest.updateCapability_persists; bcm_CapabilityMap.test.js — "saved event calls updateCapability and rebuilds diagram with new name"
 
 **Scenario: Cancel discards unsaved changes**
 

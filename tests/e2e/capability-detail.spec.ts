@@ -155,13 +155,9 @@ test.describe('Detail panel — open and close — editor project', () => {
         await openDiagram(page);
         await selectMap(page);
         await openDetailPanelOnL2(page);
-        // Open detail on L1 while panel still open
+        // Panel open -> single click on another node refreshes panel directly (no menu).
         const l1 = page.locator(`svg.bcm-canvas g.bcm-node[data-node-level="1"][data-node-name="${L1_NAME}"]`);
         await l1.click();
-        await l1.click();
-        const menu = page.locator('.bcm-menu-card');
-        await expect(menu).toBeVisible();
-        await menu.getByText('View detail', { exact: true }).click();
         const panel = page.locator('.bcm-detail-panel[data-open="true"]');
         await expect(panel).toBeVisible();
         await expect(panel.locator('.bcm-detail-name')).toHaveText(L1_NAME, { timeout: 5000 });

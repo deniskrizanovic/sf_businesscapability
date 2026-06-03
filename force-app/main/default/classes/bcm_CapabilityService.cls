@@ -5,7 +5,7 @@
 public with sharing class bcm_CapabilityService {
 
     /**
-     * Persists a whitelisted set of editable fields on a Capability:
+     * Persists an allowlisted set of editable fields on a Capability:
      * Name, Definition, Strategy Support, Architectural Nuance, Hide From Diagram.
      *
      * Only fields that are explicitly populated on the input record are written.
