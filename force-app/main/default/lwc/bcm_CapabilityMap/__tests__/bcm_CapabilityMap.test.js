@@ -920,4 +920,21 @@ describe('BcmCapabilityMap session persistence', () => {
         expect(sessionStorage.getItem('bcm.visualisation.selectedMapId')).toBeNull();
         expect(mockCapabilitiesImpl).not.toHaveBeenCalled();
     });
+
+    it('Silent fallback when sessionStorage.setItem throws (no crash, no abort)', async () => {
+        const setItemSpy = jest.spyOn(Storage.prototype, 'setItem')
+            .mockImplementation(() => { throw new Error('QuotaExceeded'); });
+        try {
+            mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+            await flushPromises();
+            const combobox = element.shadowRoot.querySelector('lightning-combobox');
+            expect(() => {
+                combobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'MAP-1' } }));
+            }).not.toThrow();
+            await flushPromises();
+            expect(mockCapabilitiesImpl).toHaveBeenCalledWith({ mapId: 'MAP-1' });
+        } finally {
+            setItemSpy.mockRestore();
+        }
+    });
 });
