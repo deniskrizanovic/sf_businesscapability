@@ -201,6 +201,7 @@ test.describe('Diagram structure — editor project', () => {
     test('Cross-cutting L1 renders as band chevron at bottom; non-cross-cutting still in column', async ({ page }) => {
         await openDiagram(page);
         await selectMapFromCombobox(page);
+        await page.getByTitle('Cross-cutting').click();
 
         const ccName = `Cross-cutting Foo ${RUN_ID}`;
         const ccBand = page.locator(`g.bcm-band-node[data-node-name="${ccName}"]`);
@@ -223,6 +224,7 @@ test.describe('Diagram structure — editor project', () => {
     test('Cross-cutting band layered stack: lowest sortOrder paints last (DOM-last) and chevrons span full width', async ({ page }) => {
         await openDiagram(page);
         await selectMapFromCombobox(page);
+        await page.getByTitle('Cross-cutting').click();
 
         const bandNodes = page.locator('g.bcm-band-node');
         await expect(bandNodes).toHaveCount(2);
@@ -240,10 +242,28 @@ test.describe('Diagram structure — editor project', () => {
     test('Clicking a cross-cutting band chevron opens the Detail Panel', async ({ page }) => {
         await openDiagram(page);
         await selectMapFromCombobox(page);
+        await page.getByTitle('Cross-cutting').click();
 
         const ccName = `Cross-cutting Foo ${RUN_ID}`;
         await page.locator(`g.bcm-band-node[data-node-name="${ccName}"]`).click();
         await expect(page.locator('.bcm-detail-panel[data-open="true"]')).toBeVisible({ timeout: 10000 });
+    });
+
+    test('Cross-cutting toggle: hidden by default, shows on click, hides on second click', async ({ page }) => {
+        await openDiagram(page);
+        await selectMapFromCombobox(page);
+
+        const ccName = `Cross-cutting Foo ${RUN_ID}`;
+        const ccBand = page.locator(`g.bcm-band-node[data-node-name="${ccName}"]`);
+        const toggle = page.getByTitle('Cross-cutting');
+
+        await expect(ccBand).toHaveCount(0);
+
+        await toggle.click();
+        await expect(ccBand).toHaveCount(1);
+
+        await toggle.click();
+        await expect(ccBand).toHaveCount(0);
     });
 });
 

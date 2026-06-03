@@ -317,6 +317,37 @@ Then the band layer's translateY remains 0 (mirrors the L1 top-row pinning)
 
 > Deferred: visual invariant — band layer transform shares the L1-pin pattern (`translate(panX, 0)`); covered by the existing L1-pin test ("L1 chevron band stays at translateY=0 even when L2 panY is non-zero") which exercises the same mechanism
 
+**Scenario: Band is hidden by default on initial map load**
+
+Given the user selects a map containing at least one cross-cutting L1
+When the diagram first renders
+Then the cross-cutting band is not drawn
+And the toolbar button "Cross-cutting" shows the neutral (border) variant
+And the main column area uses the full canvas height
+
+> Tested by: bcm_CapabilityMap.test.js — "Band is not rendered on initial load (default hidden)", "Toggle button starts with neutral (border) variant"; diagram.spec.ts — "Cross-cutting toggle: hidden by default, shows on click, hides on second click"
+
+**Scenario: Clicking the Cross-cutting toolbar button toggles band visibility**
+
+Given the diagram is rendered with the band hidden
+When the user clicks the "Cross-cutting" toolbar button
+Then the band appears at the bottom of the canvas
+And the button switches to the brand variant
+When the user clicks the button again
+Then the band disappears
+And the button returns to the neutral variant
+
+> Tested by: bcm_CapabilityMap.test.js — "Clicking toggle renders band and flips variant to brand", "Clicking toggle twice hides band and resets variant to border"; diagram.spec.ts — "Cross-cutting toggle: hidden by default, shows on click, hides on second click"
+
+**Scenario: Switching maps resets the toggle to hidden**
+
+Given the band is currently visible on Map A
+When the user switches the Map combobox to Map B
+Then the band is hidden
+And the toolbar button is in the neutral variant
+
+> Deferred: covered indirectly — `handleMapChange` sets `showCrossCutting = false` alongside the existing zoom/pan reset; same code path as the toggle off
+
 ---
 
 ## Feature: Hide From Diagram flag suppresses nodes

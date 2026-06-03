@@ -1014,6 +1014,12 @@ describe('BcmCapabilityMap cross-cutting band', () => {
         mockGetTags.emit({ data: [], error: undefined });
         await flushPromises();
         await seedLayout(element);
+        // Band hidden by default (issue #31). Toggle on for these tests.
+        const toggle = element.shadowRoot.querySelector(
+            'lightning-button-icon[title="Cross-cutting"]'
+        );
+        toggle.dispatchEvent(new CustomEvent('click'));
+        await flushPromises();
     });
 
     afterEach(() => {
@@ -1096,6 +1102,12 @@ describe('BcmCapabilityMap cross-cutting band — cc-only map', () => {
         mockGetTags.emit({ data: [], error: undefined });
         await flushPromises();
         await seedLayout(element);
+        // Band hidden by default (issue #31). Toggle on for these tests.
+        const toggle = element.shadowRoot.querySelector(
+            'lightning-button-icon[title="Cross-cutting"]'
+        );
+        toggle.dispatchEvent(new CustomEvent('click'));
+        await flushPromises();
     });
 
     afterEach(() => {
@@ -1120,5 +1132,62 @@ describe('BcmCapabilityMap cross-cutting band — cc-only map', () => {
         // BOX_GAP = 16; DIAGRAM_PADDING = 24 -> 40. If header strip leaked in, this would jump
         // by CHEVRON_HEIGHT (~60) + BOX_GAP (16) = ~76 to ~116.
         expect(firstY).toBeLessThan(60);
+    });
+});
+
+describe('BcmCapabilityMap cross-cutting toggle', () => {
+    let element;
+
+    const CAPS_DATA_WITH_CC = [
+        ...CAPS_DATA,
+        { Id: 'L1-CC', Name: 'Security', bcm_Parent__c: null, bcm_SortOrder__c: 99,
+          bcm_HideFromDiagram__c: false, bcm_IsCrossCutting__c: true },
+    ];
+
+    beforeEach(async () => {
+        mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA_WITH_CC);
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [], error: undefined });
+        await flushPromises();
+        await seedLayout(element);
+    });
+
+    afterEach(() => {
+        while (document.body.firstChild) document.body.removeChild(document.body.firstChild);
+    });
+
+    function getToggleButton() {
+        return element.shadowRoot.querySelector(
+            'lightning-button-icon[title="Cross-cutting"]'
+        );
+    }
+
+    it('Band is not rendered on initial load (default hidden)', () => {
+        const bandNodes = element.shadowRoot.querySelectorAll('.bcm-band-node');
+        expect(bandNodes.length).toBe(0);
+    });
+
+    it('Toggle button starts with neutral (border) variant', () => {
+        expect(getToggleButton().variant).toBe('border');
+    });
+
+    it('Clicking toggle renders band and flips variant to brand', async () => {
+        getToggleButton().dispatchEvent(new CustomEvent('click'));
+        await flushPromises();
+        const bandNodes = element.shadowRoot.querySelectorAll('.bcm-band-node');
+        expect(bandNodes.length).toBeGreaterThan(0);
+        expect(getToggleButton().variant).toBe('brand');
+    });
+
+    it('Clicking toggle twice hides band and resets variant to border', async () => {
+        getToggleButton().dispatchEvent(new CustomEvent('click'));
+        await flushPromises();
+        getToggleButton().dispatchEvent(new CustomEvent('click'));
+        await flushPromises();
+        const bandNodes = element.shadowRoot.querySelectorAll('.bcm-band-node');
+        expect(bandNodes.length).toBe(0);
+        expect(getToggleButton().variant).toBe('border');
     });
 });

@@ -58,6 +58,14 @@
                     onclick={handleToggleHidden}>
                 </lightning-button-icon>
             </div>
+            <div class="slds-col">
+                <lightning-button-icon
+                    icon-name="utility:rows"
+                    title="Cross-cutting"
+                    variant={crossCuttingVariant}
+                    onclick={handleToggleCrossCutting}>
+                </lightning-button-icon>
+            </div>
         </div>
     </div>
 
@@ -178,28 +186,30 @@
 
             <!-- Cross-cutting band: pans horizontally with L1 layer; pinned vertically (no panY).
                  Full-width layered chevrons — sortOrder 1 paints last → on top. -->
-            <g transform={bandTransform}>
-                <template for:each={bandNodes} for:item="node">
-                    <g key={node.id}
-                       class="bcm-band-node"
-                       data-node-id={node.id}
-                       data-node-name={node.name}
-                       data-node-level="1"
-                       onclick={handleBandClick}>
-                        <polygon points={node.points} fill={node.fill} stroke="#0e2342" stroke-width="1.2"></polygon>
-                        <text
-                            x={node.labelX}
-                            y={node.labelY}
-                            dominant-baseline="alphabetic"
-                            fill="#FFFFFF"
-                            font-size="13"
-                            font-weight="700"
-                            letter-spacing="0.4">
-                            {node.label}
-                        </text>
-                    </g>
-                </template>
-            </g>
+            <template if:true={showCrossCutting}>
+                <g transform={bandTransform}>
+                    <template for:each={bandNodes} for:item="node">
+                        <g key={node.id}
+                           class="bcm-band-node"
+                           data-node-id={node.id}
+                           data-node-name={node.name}
+                           data-node-level="1"
+                           onclick={handleBandClick}>
+                            <polygon points={node.points} fill={node.fill} stroke="#0e2342" stroke-width="1.2"></polygon>
+                            <text
+                                x={node.labelX}
+                                y={node.labelY}
+                                dominant-baseline="alphabetic"
+                                fill="#FFFFFF"
+                                font-size="13"
+                                font-weight="700"
+                                letter-spacing="0.4">
+                                {node.label}
+                            </text>
+                        </g>
+                    </template>
+                </g>
+            </template>
         </svg>
 
         <!-- Context menu overlay -->
