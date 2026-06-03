@@ -189,6 +189,86 @@ test.describe('Zoom & pan — editor project', () => {
         const transform = await getViewportTransform(page);
         expect(transform).toContain('scale(1)');
     });
+
+    // Read the L2 layer transform (second <g> child of svg) — carries panX,panY,zoom
+    async function getL2Transform(page: import('@playwright/test').Page): Promise<string | null> {
+        return page.locator('svg.bcm-canvas > g').nth(0).getAttribute('transform').catch(() => null);
+    }
+
+    test('ArrowRight pan -> L2 transform translateX increases (no clip on right)', async ({ page }) => {
+        await openDiagram(page);
+        await selectMapFromCombobox(page);
+        const svg = page.locator('svg.bcm-canvas');
+        await svg.focus();
+
+        const before = await getL2Transform(page);
+        // Six ArrowRight presses = -300px panX from origin
+        for (let i = 0; i < 6; i++) await svg.press('ArrowRight');
+        const after = await getL2Transform(page);
+
+        expect(before).toMatch(/translate\(0,\s*0\)/);
+        // After ArrowRight, panX should be -300 (negative since ArrowRight moves diagram left to reveal right side)
+        expect(after).toMatch(/translate\(-300,\s*0\)/);
+    });
+
+    test('ArrowDown pan -> L2 transform translateY decreases (free vertical pan, no clamp)', async ({ page }) => {
+        await openDiagram(page);
+        await selectMapFromCombobox(page);
+        const svg = page.locator('svg.bcm-canvas');
+        await svg.focus();
+
+        // Three ArrowDown presses = -150px panY (previously clamped at 0; should now go negative)
+        for (let i = 0; i < 3; i++) await svg.press('ArrowDown');
+        const after = await getL2Transform(page);
+
+        expect(after).toMatch(/translate\(0,\s*-150\)/);
+    });
+
+    test('ArrowUp from origin -> positive panY (was previously clamped to 0)', async ({ page }) => {
+        await openDiagram(page);
+        await selectMapFromCombobox(page);
+        const svg = page.locator('svg.bcm-canvas');
+        await svg.focus();
+
+        // Two ArrowUp presses = +100px panY. Pre-fix: clamped to 0. Post-fix: 100.
+        await svg.press('ArrowUp');
+        await svg.press('ArrowUp');
+        const after = await getL2Transform(page);
+
+        expect(after).toMatch(/translate\(0,\s*100\)/);
+    });
+
+    test('Zoom in then ArrowRight -> L2 transform shows scale>1 AND translateX moved', async ({ page }) => {
+        await openDiagram(page);
+        await selectMapFromCombobox(page);
+        await page.getByTitle('Zoom In').click();
+        await page.getByTitle('Zoom In').click();
+
+        const svg = page.locator('svg.bcm-canvas');
+        await svg.focus();
+        for (let i = 0; i < 4; i++) await svg.press('ArrowRight');
+        const after = await getL2Transform(page);
+
+        // scale at 1.2 after 2 zoom-in clicks
+        expect(after).toMatch(/scale\(1\.2\)/);
+        // panX = -200 after 4 ArrowRight
+        expect(after).toMatch(/translate\(-200,\s*0\)/);
+    });
+
+    test('L1 chevron band stays at translateY=0 even when L2 panY is non-zero', async ({ page }) => {
+        await openDiagram(page);
+        await selectMapFromCombobox(page);
+        const svg = page.locator('svg.bcm-canvas');
+        await svg.focus();
+
+        // Pan diagram down (negative panY)
+        for (let i = 0; i < 3; i++) await svg.press('ArrowDown');
+
+        // L1 layer is the SECOND <g> child (drawn last so always on top)
+        const l1Transform = await page.locator('svg.bcm-canvas > g').nth(1).getAttribute('transform');
+        // L1 must keep Y=0 regardless of panY — chevron band is X-only pinned
+        expect(l1Transform).toMatch(/translate\(0,\s*0\)/);
+    });
 });
 
 // ── Tag highlight — editor project ────────────────────────────────────────────
