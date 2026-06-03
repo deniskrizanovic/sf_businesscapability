@@ -326,6 +326,20 @@ test.describe('Keyboard navigation — editor project', () => {
         const after = await getViewportTransform(page);
         expect(after).not.toBe(before);
     });
+
+    test('No visible focus outline on canvas after click', async ({ page }) => {
+        await openDiagram(page);
+        const svg = page.locator('svg.bcm-canvas');
+        await svg.click();
+        await expect(svg).toBeFocused();
+        const outlineStyle = await svg.evaluate(
+            (el) => window.getComputedStyle(el).outlineStyle
+        );
+        const outlineWidth = await svg.evaluate(
+            (el) => window.getComputedStyle(el).outlineWidth
+        );
+        expect(outlineStyle === 'none' || outlineWidth === '0px').toBe(true);
+    });
 });
 
 // ── Permission — viewer project ───────────────────────────────────────────────

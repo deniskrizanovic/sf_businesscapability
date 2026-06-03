@@ -622,6 +622,7 @@ Distinct from FP19 (delete Capability via standard form): no record removal, onl
 | Tag colour-highlight rendering | Client-side filter on already-loaded data (no new Apex call). Data was moved in FP2; re-colouring is internal data manipulation, not a new data movement. |
 | Context menu display | The rendering of the menu UI itself carries no data about an object of interest per §3.3.3 Part 2 Guidance. Zero data movements. The "View detail" action click is a measurable triggering event counted in FP29. |
 | Map selection persistence (sessionStorage) | Persistent storage write/read for UI state restoration; sessionStorage is not a functional user per Rule 7 Note 2. Same exclusion class as zoom/pan state. No new data movement crosses the software boundary. |
+| Canvas focus outline suppression | Pure CSS visual styling; no data movement crosses the software boundary. Same exclusion class as zoom/pan visual state. |
 
 ---
 
