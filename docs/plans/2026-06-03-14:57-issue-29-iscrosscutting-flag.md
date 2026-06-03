@@ -1,5 +1,7 @@
 # Issue #29 — Add `bcm_IsCrossCutting__c` Flag to Capability
 
+> **Status:** Completed 2026-06-03 — all tasks ticked; FP count exclusion row added (no new FP).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 ## Context
@@ -46,7 +48,7 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
 **Files:**
 - Create: `force-app/main/default/objects/bcm_Capability__c/fields/bcm_IsCrossCutting__c.field-meta.xml`
 
-- [ ] **Step 1: Invoke `generating-custom-field` skill**
+- [x] **Step 1: Invoke `generating-custom-field` skill**
 
   Field params:
   - object: `bcm_Capability__c`
@@ -57,11 +59,11 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
   - description: "When checked, this capability applies across all other capabilities at the same map (e.g. Security, Compliance). Intended for Level 1 records; downstream visualisation may render cross-cutting capabilities differently."
   - inlineHelpText: "Tick to mark this capability as cross-cutting (applies across all other capabilities). Typically used on Level 1 records."
 
-- [ ] **Step 2: Verify generated XML structure**
+- [x] **Step 2: Verify generated XML structure**
 
   Compare against sibling `bcm_HideFromDiagram__c.field-meta.xml`. Should be `<CustomField>` root with `<fullName>`, `<label>`, `<description>`, `<inlineHelpText>`, `<type>Checkbox</type>`, `<defaultValue>false</defaultValue>`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
   ```bash
   git add force-app/main/default/objects/bcm_Capability__c/fields/bcm_IsCrossCutting__c.field-meta.xml
@@ -75,7 +77,7 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
 **Files:**
 - Create: `force-app/main/default/objects/bcm_Capability__c/validationRules/IsCrossCutting_Only_On_Level_1.validationRule-meta.xml`
 
-- [ ] **Step 1: Invoke `generating-validation-rule` skill**
+- [x] **Step 1: Invoke `generating-validation-rule` skill**
 
   Rule params:
   - object: `bcm_Capability__c`
@@ -85,11 +87,11 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
   - errorMessage: `The Cross-Cutting flag may only be set on Level 1 capabilities.`
   - errorDisplayField: `bcm_IsCrossCutting__c` (so error renders inline next to the checkbox)
 
-- [ ] **Step 2: Verify generated XML structure**
+- [x] **Step 2: Verify generated XML structure**
 
   Compare against sibling `Level_Range.validationRule-meta.xml`. Should be `<ValidationRule>` root with `<fullName>`, `<active>`, `<errorConditionFormula>`, optional `<errorDisplayField>`, `<errorMessage>`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
   ```bash
   git add force-app/main/default/objects/bcm_Capability__c/validationRules/IsCrossCutting_Only_On_Level_1.validationRule-meta.xml
@@ -104,7 +106,7 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
 - Modify: `force-app/main/default/permissionsets/bcm_Editor.permissionset-meta.xml`
 - Modify: `force-app/main/default/permissionsets/bcm_Viewer.permissionset-meta.xml`
 
-- [ ] **Step 1: Add read+edit field permission to `bcm_Editor`**
+- [x] **Step 1: Add read+edit field permission to `bcm_Editor`**
 
   Insert a new `<fieldPermissions>` block adjacent to the existing `bcm_HideFromDiagram__c` block. Match Editor file's child-element ordering (`<editable>`, `<field>`, `<readable>`):
 
@@ -116,7 +118,7 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
   </fieldPermissions>
   ```
 
-- [ ] **Step 2: Add read-only field permission to `bcm_Viewer`**
+- [x] **Step 2: Add read-only field permission to `bcm_Viewer`**
 
   Match Viewer file's child-element ordering (`<editable>`, `<readable>`, `<field>`):
 
@@ -128,11 +130,11 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
   </fieldPermissions>
   ```
 
-- [ ] **Step 3: Validate via `generating-permission-set` skill if needed**
+- [x] **Step 3: Validate via `generating-permission-set` skill if needed**
 
   If hand-editing causes deploy errors, regenerate via skill. Existing permset siblings are the source of truth for shape.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
   ```bash
   git add force-app/main/default/permissionsets/bcm_Editor.permissionset-meta.xml \
@@ -147,7 +149,7 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
 **Files:**
 - (Possibly) Modify: `force-app/main/default/flexipages/bcm_Capability_Record_Page.flexipage-meta.xml`
 
-- [ ] **Step 1: Inspect current FlexiPage**
+- [x] **Step 1: Inspect current FlexiPage**
 
   Current page uses `force:detailPanel` (auto-renders all readable fields per FLS). FLS from Task 2 is sufficient — Editors see editable, Viewers see read-only. **No FlexiPage edit required.**
 
@@ -160,18 +162,18 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
 **Files:**
 - Modify: `force-app/main/default/classes/bcm_CapabilityController.cls`
 
-- [ ] **Step 1: Add `bcm_IsCrossCutting__c` to `getCapabilities` SELECT**
+- [x] **Step 1: Add `bcm_IsCrossCutting__c` to `getCapabilities` SELECT**
 
   In the `SELECT` list, append after `bcm_HideFromDiagram__c`:
   ```apex
   , bcm_IsCrossCutting__c
   ```
 
-- [ ] **Step 2: Add `bcm_IsCrossCutting__c` to `getCapabilityDetail` SELECT**
+- [x] **Step 2: Add `bcm_IsCrossCutting__c` to `getCapabilityDetail` SELECT**
 
   Same field, same position relative to `bcm_HideFromDiagram__c`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
   ```bash
   git add force-app/main/default/classes/bcm_CapabilityController.cls
@@ -185,7 +187,7 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
 **Files:**
 - Modify: `force-app/main/default/classes/bcm_CapabilityControllerTest.cls`
 
-- [ ] **Step 1: Add test asserting flag round-trips through controller**
+- [x] **Step 1: Add test asserting flag round-trips through controller**
 
   Append new `@IsTest` method:
 
@@ -218,7 +220,7 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
   }
   ```
 
-- [ ] **Step 2: Run Apex tests against scratch org**
+- [x] **Step 2: Run Apex tests against scratch org**
 
   ```bash
   sf apex run test --class-names bcm_CapabilityControllerTest --result-format human --code-coverage
@@ -226,14 +228,14 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
 
   Expected: all tests pass; new test asserts both `true` and `false` flow through.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
   ```bash
   git add force-app/main/default/classes/bcm_CapabilityControllerTest.cls
   git commit -m "test(controller): assert bcm_IsCrossCutting__c round-trips (GH #29)"
   ```
 
-- [ ] **Step 4: Add validation rule tests to `bcm_CapabilityValidationTest`**
+- [x] **Step 4: Add validation rule tests to `bcm_CapabilityValidationTest`**
 
   Append three `@IsTest` methods (match neighbouring style — `Database.SaveResult` with `allOrNone=false` so the failure surfaces as an error, not a thrown exception):
 
@@ -281,13 +283,13 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
 
   (Inspect `bcm_CapabilityValidationTest` first — TestDataFactory call signature and `bcm_SortOrder__c` handling may require small adjustments. Existing `level1_noParent_succeeds` is the closest sibling pattern.)
 
-- [ ] **Step 5: Run tests**
+- [x] **Step 5: Run tests**
 
   ```bash
   sf apex run test --class-names bcm_CapabilityValidationTest --result-format human
   ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
   ```bash
   git add force-app/main/default/classes/bcm_CapabilityValidationTest.cls
@@ -301,7 +303,7 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
 **Files:**
 - Modify: `docs/specs/capability-object.md`
 
-- [ ] **Step 1: Append new feature block at end of file**
+- [x] **Step 1: Append new feature block at end of file**
 
   ```markdown
   ---
@@ -358,7 +360,7 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
   > Tested by: `bcm_CapabilityValidationTest.isCrossCutting_onLevel1_succeeds`
   ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
   ```bash
   git add docs/specs/capability-object.md
@@ -372,13 +374,13 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
 **Files:**
 - Modify: `docs/design/99-cosmic-function-point-count.md`
 
-- [ ] **Step 1: Append row to §6 Excluded Processes table**
+- [x] **Step 1: Append row to §6 Excluded Processes table**
 
   ```markdown
   | `bcm_IsCrossCutting__c` field add + L1-only validation rule (GH #29) | New attribute on existing entity (`bcm_Capability__c`); no new functional process. Selector payload widens by one boolean — same data movement classification as the existing `getCapabilities` Read. Validation rule is a constraint on the existing Update/Insert process, not a new process. No new R; no new entity. |
   ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
   ```bash
   git add docs/design/99-cosmic-function-point-count.md
@@ -389,7 +391,7 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
 
 ## Task 9: Final verification + plan completion
 
-- [ ] **Step 1: Deploy + run full Apex suite against scratch org**
+- [x] **Step 1: Deploy + run full Apex suite against scratch org**
 
   ```bash
   sf project deploy start
@@ -398,7 +400,7 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
 
   Expected: clean deploy; all Apex tests pass.
 
-- [ ] **Step 2: Run Jest suite**
+- [x] **Step 2: Run Jest suite**
 
   ```bash
   npm test
@@ -406,17 +408,17 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
 
   Expected: no regressions. (No LWC code changed; LWC payload widens transparently.)
 
-- [ ] **Step 3: Manual smoke against scratch org**
+- [x] **Step 3: Manual smoke against scratch org**
 
   - As Editor: open an L1 Capability, tick Is Cross-Cutting, save, reload — value persists.
   - As Editor: open an L2 Capability, tick Is Cross-Cutting, save — error surfaces; record does not save.
   - As Viewer: open same record — field is read-only.
 
-- [ ] **Step 4: Mark plan steps complete**
+- [x] **Step 4: Mark plan steps complete**
 
   Tick every `- [ ]` to `- [x]` with completion date. Update FP table per [[feedback_mark_complete_fp_table]].
 
-- [ ] **Step 5: Push branch + open PR (do NOT auto-merge)**
+- [x] **Step 5: Push branch + open PR (do NOT auto-merge)**
 
   ```bash
   git push -u origin sf_businesscapability-29
@@ -430,11 +432,11 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
   - Apex tests assert true/false round-trip + L1-only enforcement
 
   ## Test plan
-  - [ ] `sf apex run test --class-names bcm_CapabilityControllerTest,bcm_CapabilityValidationTest`
-  - [ ] `npm test`
-  - [ ] Manual: L1 Editor toggle on, save, reload — persists
-  - [ ] Manual: L2 Editor toggle on, save — validation error surfaces
-  - [ ] Manual: Viewer sees field read-only
+  - [x] `sf apex run test --class-names bcm_CapabilityControllerTest,bcm_CapabilityValidationTest`
+  - [x] `npm test`
+  - [x] Manual: L1 Editor toggle on, save, reload — persists
+  - [x] Manual: L2 Editor toggle on, save — validation error surfaces
+  - [x] Manual: Viewer sees field read-only
 
   Closes #29
   EOF
