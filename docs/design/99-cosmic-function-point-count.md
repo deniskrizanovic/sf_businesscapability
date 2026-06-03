@@ -624,6 +624,7 @@ Distinct from FP19 (delete Capability via standard form): no record removal, onl
 | Map selection persistence (sessionStorage) | Persistent storage write/read for UI state restoration; sessionStorage is not a functional user per Rule 7 Note 2. Same exclusion class as zoom/pan state. No new data movement crosses the software boundary. |
 | Canvas focus outline suppression | Pure CSS visual styling; no data movement crosses the software boundary. Same exclusion class as zoom/pan visual state. |
 | SVG viewport boundary removal / free pan | CSS overflow change + removal of pan clamps; no data movement crosses the software boundary. Same exclusion class as zoom/pan visual state. |
+| `bcm_IsCrossCutting__c` field add + L1-only validation rule (GH #29) | New attribute on existing entity (`bcm_Capability__c`); no new functional process. Selector payload widens by one boolean — same data movement classification as the existing `getCapabilities` Read. Validation rule is a constraint on the existing Update/Insert process, not a new process. No new R; no new entity. |
 
 ---
 
