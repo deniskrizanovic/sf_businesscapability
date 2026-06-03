@@ -630,6 +630,20 @@ describe('BcmCapabilityMap canvas click clears focus', () => {
         await flushPromises();
         expect(element.panX).toBe(before + 50);
     });
+
+    it('ArrowUp pans diagram down (positive panY) — no clamp', async () => {
+        expect(element.panY).toBe(0);
+        svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+        await flushPromises();
+        expect(element.panY).toBe(50);
+    });
+
+    it('ArrowDown pans diagram up (negative panY) — no clamp', async () => {
+        expect(element.panY).toBe(0);
+        svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        await flushPromises();
+        expect(element.panY).toBe(-50);
+    });
 });
 
 describe('BcmCapabilityMap context menu actions', () => {

@@ -11,6 +11,7 @@
 
 .bcm-canvas {
     display: block;
+    overflow: visible;
     cursor: grab;
 }
 

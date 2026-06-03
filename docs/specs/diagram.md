@@ -125,13 +125,40 @@ Then the zoom does not increase further
 
 > Tested by: BcmCapabilityMapTest.ZoomInClamped300, BcmCapabilityMapTest.ZoomOutClamped20
 
-**Scenario: Click-drag on the background pans the diagram**
+**Scenario: Pan in any direction updates the L2 viewport transform without clip**
 
 Given a map is loaded and the diagram is visible  
-When the user clicks and drags on the diagram background (not on a node)  
-Then the diagram content moves in the direction of the drag  
+When the user pans the diagram in any direction  
+Then the L2 layer `transform` attribute reflects the cumulative panX / panY offset  
+And content beyond the initial canvas bounds is no longer clipped by the SVG element  
 
-> Deferred: pan requires simulated mousedown + mousemove sequence; LWC shadow DOM makes reliable coordinate targeting fragile; covered by code review
+> Tested by: diagram.spec.ts — "ArrowRight pan -> L2 transform translateX increases (no clip on right)", "ArrowDown pan -> L2 transform translateY decreases (free vertical pan, no clamp)"
+
+**Scenario: Vertical pan is unrestricted in both directions**
+
+Given the diagram is at pan origin (panY = 0)  
+When the user presses ArrowUp from origin  
+Then panY moves into positive territory  
+And no clamp pins panY to ≤ 0  
+
+> Tested by: diagram.spec.ts — "ArrowUp from origin -> positive panY (was previously clamped to 0)"; bcm_CapabilityMap.test.js — "ArrowUp pans diagram down (positive panY) — no clamp", "ArrowDown pans diagram up (negative panY) — no clamp"
+
+**Scenario: Zoom + pan compose correctly in the L2 transform**
+
+Given the user has zoomed in (zoom > 1)  
+When the user pans right  
+Then the L2 `transform` attribute carries both the new `scale(zoom)` and an updated `translate(panX, panY)`  
+
+> Tested by: diagram.spec.ts — "Zoom in then ArrowRight -> L2 transform shows scale>1 AND translateX moved"
+
+**Scenario: L1 chevron band remains pinned vertically during pan**
+
+Given the user pans the diagram vertically (any panY)  
+When the L1 transform is read  
+Then translateY on the L1 layer remains 0  
+And the L2 layer carries the panY offset  
+
+> Tested by: diagram.spec.ts — "L1 chevron band stays at translateY=0 even when L2 panY is non-zero"
 
 ---
 
