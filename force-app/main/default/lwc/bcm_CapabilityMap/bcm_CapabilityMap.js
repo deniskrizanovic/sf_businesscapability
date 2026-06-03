@@ -124,6 +124,7 @@ export default class BcmCapabilityMap extends LightningElement {
     @track contextMenuY          = 0;
     @track contextMenuNode       = null;
     @track showHidden            = false;
+    @track showCrossCutting      = false;
     @track focusedNodeId         = null;
     @track _layoutL1             = [];
     @track _layoutL2             = [];
@@ -161,6 +162,10 @@ export default class BcmCapabilityMap extends LightningElement {
         return this.showHidden ? 'brand' : 'border';
     }
 
+    get crossCuttingVariant() {
+        return this.showCrossCutting ? 'brand' : 'border';
+    }
+
     // ── Computed SVG dimensions & transform ───────────────────────────────────
     get canvasWidth() {
         const roots = this._l1Roots || [];
@@ -178,7 +183,7 @@ export default class BcmCapabilityMap extends LightningElement {
         const nrows   = this._ccRootCount || 0;
         const hasRegular = (this._l1Roots || []).length > 0;
         const headerReserved = hasRegular ? CHEVRON_HEIGHT + BOX_GAP : 0;
-        const bandReserved = nrows > 0
+        const bandReserved = (this.showCrossCutting && nrows > 0)
             ? nrows * CHEVRON_HEIGHT - (nrows - 1) * BAND_ROW_OVERLAP + BOX_GAP
             : 0;
         return DIAGRAM_PADDING * 2 + headerReserved + tallest + bandReserved;
@@ -501,6 +506,7 @@ export default class BcmCapabilityMap extends LightningElement {
         this.zoom = ZOOM_DEFAULT;
         this.panX = 0;
         this.panY = 0;
+        this.showCrossCutting = false;
         if (this.selectedMapId) {
             safeSessionSet(SESSION_KEY_SELECTED_MAP, this.selectedMapId);
         } else {
@@ -519,6 +525,10 @@ export default class BcmCapabilityMap extends LightningElement {
         this._panX = 0;
         this._panY = 0;
         this._buildLayout(this._capabilities);
+    }
+
+    handleToggleCrossCutting() {
+        this.showCrossCutting = !this.showCrossCutting;
     }
 
     _loadCapabilities() {
