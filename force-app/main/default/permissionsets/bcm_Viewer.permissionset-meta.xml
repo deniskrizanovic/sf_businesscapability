@@ -74,6 +74,11 @@
         <readable>true</readable>
         <field>bcm_Capability__c.bcm_HideFromDiagram__c</field>
     </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <readable>true</readable>
+        <field>bcm_Capability__c.bcm_IsCrossCutting__c</field>
+    </fieldPermissions>
     <applicationVisibilities>
         <application>bcm_BusinessCapabilityMap</application>
         <visible>true</visible>
