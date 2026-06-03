@@ -346,7 +346,7 @@ When the user switches the Map combobox to Map B
 Then the band is hidden
 And the toolbar button is in the neutral variant
 
-> Deferred: covered indirectly — `handleMapChange` sets `showCrossCutting = false` alongside the existing zoom/pan reset; same code path as the toggle off
+> Tested by: bcm_CapabilityMap.test.js — "Switching map resets toggle to hidden + neutral variant"
 
 ---
 

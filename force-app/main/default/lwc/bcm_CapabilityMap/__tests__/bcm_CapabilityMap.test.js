@@ -1190,4 +1190,20 @@ describe('BcmCapabilityMap cross-cutting toggle', () => {
         expect(bandNodes.length).toBe(0);
         expect(getToggleButton().variant).toBe('border');
     });
+
+    it('Switching map resets toggle to hidden + neutral variant', async () => {
+        // Toggle on first
+        getToggleButton().dispatchEvent(new CustomEvent('click'));
+        await flushPromises();
+        expect(getToggleButton().variant).toBe('brand');
+        expect(element.shadowRoot.querySelectorAll('.bcm-band-node').length).toBeGreaterThan(0);
+
+        // Switch map -> reset
+        const combobox = element.shadowRoot.querySelector('lightning-combobox');
+        combobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'MAP-2' } }));
+        await flushPromises();
+
+        expect(getToggleButton().variant).toBe('border');
+        expect(element.shadowRoot.querySelectorAll('.bcm-band-node').length).toBe(0);
+    });
 });
