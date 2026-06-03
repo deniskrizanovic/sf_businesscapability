@@ -906,4 +906,18 @@ describe('BcmCapabilityMap session persistence', () => {
         expect(combobox.value).toBe('MAP-2');
         expect(mockCapabilitiesImpl).toHaveBeenCalledWith({ mapId: 'MAP-2' });
     });
+
+    it('Clears persisted id and leaves selector empty when id is not in mapOptions', async () => {
+        sessionStorage.setItem('bcm.visualisation.selectedMapId', 'MAP-DELETED');
+        document.body.removeChild(element);
+        mockCapabilitiesImpl.mockClear();
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        await flushPromises();
+        const combobox = element.shadowRoot.querySelector('lightning-combobox');
+        expect(combobox.value).toBeFalsy();
+        expect(sessionStorage.getItem('bcm.visualisation.selectedMapId')).toBeNull();
+        expect(mockCapabilitiesImpl).not.toHaveBeenCalled();
+    });
 });
