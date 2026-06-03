@@ -190,26 +190,6 @@ Then all capability boxes return to their default white fill
 
 ---
 
-## Feature: Context menu appears on node click
-
-**Scenario: Left-clicking a node opens the context menu**
-
-Given a map is loaded and the diagram is rendered  
-When the user left-clicks any capability node  
-Then the context menu appears near the click position  
-
-> Tested by: diagram.spec.ts — "SVG canvas is visible after opening diagram panel" (mount smoke test); click-and-menu-appear requires map load; see manual checklist
-
-**Scenario: Context menu closes when dismissed**
-
-Given the context menu is open  
-When the user clicks outside the menu or presses Escape  
-Then the context menu closes  
-
-> Deferred: dismiss behaviour is wired via document click/keydown listeners; tested manually
-
----
-
 ## Feature: Drag handles are not visible to Viewers
 
 **Scenario: Viewer sees no drag handles on the diagram**
@@ -444,50 +424,50 @@ And if the L3 bullet is focused, its text colour changes to #0070D2 on hover (ho
 
 ---
 
-## Feature: Node click UX — focus then menu
+## Feature: Node click UX — focus then panel
 
 **Scenario: First click on L1 or L2 node sets focus**
 
 Given a map is loaded and no node is focused  
 When the user left-clicks an L1 or L2 node  
 Then that node receives focus and is highlighted  
-And the context menu does not open  
+And the Detail Panel does not open  
 
-> Tested by: `bcm_CapabilityMap.test.js — "First click L1 node focuses it but does not open context menu"`, `bcm_CapabilityMap.test.js — "First click L2 node focuses it but does not open context menu"`
+> Tested by: `bcm_CapabilityMap.test.js — "First click L1 node focuses it but does not open detail panel"`, `bcm_CapabilityMap.test.js — "First click L2 node focuses it but does not open detail panel"`
 
-**Scenario: Second click on already-focused L1 or L2 node opens context menu**
+**Scenario: Second click on already-focused L1 or L2 node opens Detail Panel**
 
 Given a node is focused  
 When the user left-clicks that same node again  
-Then the context menu opens anchored to the node's right edge  
+Then the Detail Panel slides in populated with that capability  
 
-> Tested by: `bcm_CapabilityMap.test.js — "Second click on same L1 node opens context menu"`, `bcm_CapabilityMap.test.js — "Second click on same L2 node opens context menu"`
+> Tested by: `bcm_CapabilityMap.test.js — "Second click on same L1 node opens detail panel"`, `bcm_CapabilityMap.test.js — "Second click on same L2 node opens detail panel"`
 
 **Scenario: First click on L3 bullet sets focus**
 
 Given a map is loaded and no node is focused  
 When the user left-clicks an L3 bullet  
 Then that bullet receives focus (blue-tint background rect shown)  
-And the context menu does not open  
+And the Detail Panel does not open  
 
-> Tested by: `bcm_CapabilityMap.test.js — "First click on L3 bullet focuses it but does not open context menu"`
+> Tested by: `bcm_CapabilityMap.test.js — "First click on L3 bullet focuses it but does not open detail panel"`
 
-**Scenario: Second click on already-focused L3 bullet opens context menu**
+**Scenario: Second click on already-focused L3 bullet opens Detail Panel**
 
 Given an L3 bullet is focused  
 When the user left-clicks that same bullet again  
-Then the context menu opens anchored to the bullet's position  
+Then the Detail Panel slides in populated with that L3 capability  
 
-> Tested by: `bcm_CapabilityMap.test.js — "Second click on same L3 bullet opens context menu"`
+> Tested by: `bcm_CapabilityMap.test.js — "Second click on same L3 bullet opens detail panel"`
 
-**Scenario: Clicking a different node switches focus without opening menu**
+**Scenario: Clicking a different node switches focus without opening panel**
 
 Given node A is focused  
 When the user clicks node B  
 Then focus moves to node B  
-And the context menu does not open  
+And the Detail Panel does not open  
 
-> Tested by: `bcm_CapabilityMap.test.js — "Clicking a different node after first focus does not open context menu"`
+> Tested by: `bcm_CapabilityMap.test.js — "Clicking a different node after first focus does not open detail panel"`
 
 **Scenario: Clicking empty canvas background clears node focus**
 
@@ -537,49 +517,34 @@ Then focus does not change
 
 ---
 
-## Feature: Context menu actions
+## Feature: Second click opens Detail Panel
 
-**Scenario: View detail menu item is rendered for L1, L2, and L3 nodes**
+**Scenario: Second click on a focused capability opens the Detail Panel**
 
-Given the context menu is open for any capability node  
-Then the menu shows a "View detail" item  
-
-> Tested by: bcm_ContextMenu.test.js — "Renders View detail for L1", "Renders View detail for L2", "Renders View detail for L3"
-
-**Scenario: Clicking View detail fires viewdetail event with node payload**
-
-Given the context menu is open for an L1, L2, or L3 capability  
-When the user clicks "View detail"  
-Then the menu dispatches a `viewdetail` CustomEvent with `{ id, level, name }` from the node prop  
-And the menu closes  
-
-> Tested by: bcm_ContextMenu.test.js — "Click View detail at level 1/2/3 fires viewdetail with correct payload", "Click View detail also fires close event"
-
-**Scenario: View detail opens the Detail Panel**
-
-Given the context menu is open for any capability node (L1, L2, or L3)  
-When the user clicks "View detail"  
+Given a map is loaded and the user has clicked a capability once to focus it  
+When the user left-clicks that same capability again  
 Then the Detail Panel slides in from the right edge of the diagram canvas  
-And the panel displays the breadcrumb and read-only fields for the selected capability  
+And the panel is populated via Apex with that capability's record  
 
-> Tested by: capability-detail.spec.ts — "View detail opens panel with capability name in header"; bcm_CapabilityMap.test.js — "View detail loads capability via Apex and opens panel"
+> Tested by: bcm_CapabilityMap.test.js — "Second click loads capability via Apex and opens panel"; capability-detail.spec.ts — "View detail opens panel with capability name in header"
 
-**Scenario: Hide action is visible only to Editors**
+**Scenario: Clicking a different node while panel is open updates panel in place**
 
-Given the context menu is open  
-When the user has only the bcm_Viewer permission set  
-Then the "Hide" menu item is not rendered  
+Given the Detail Panel is open for capability A  
+When the user clicks capability B (any level)  
+Then the panel content updates to show capability B  
+And the panel does not close and reopen  
 
-> Tested by: diagram.spec.ts:284 — "Viewer cannot see Hide button in context menu"
+> Tested by: capability-detail.spec.ts — "Switching nodes updates panel content without closing"
 
-**Scenario: Hide persists the node as hidden and re-renders**
+**Scenario: Editors can hide a capability via the Detail Panel**
 
-Given an Editor has the context menu open for a capability  
-When the user clicks "Hide"  
-Then bcm_HideFromDiagram__c is set to true on the record via Apex  
-And the diagram re-renders with that capability absent (Show Hidden toggle off)  
+Given an Editor has the Detail Panel open for any capability  
+When the user enters edit mode, ticks Hide From Diagram, and clicks Save  
+Then `bcm_HideFromDiagram__c` is set to true on the record via Apex  
+And the diagram refreshes without that capability (Show Hidden toggle off)  
 
-> Tested by: bcm_CapabilityMap.test.js — "Hide click calls hideCapability Apex and rebuilds layout without target node"; bcm_CapabilityControllerTest.shouldHideCapability; diagram.spec.ts:231 — "Hide menu action removes node and Show Hidden restores it"
+> Tested by: bcm_CapabilityServiceTest.updateCapability_persists_hideFromDiagram; bcm_CapabilityControllerTest.updateCapability_persists; capability-detail.spec.ts — "Save persists name change and refreshes diagram"
 
 ---
 
@@ -668,10 +633,10 @@ Then zoom resets to 100% and pan resets to (0, 0) before rendering the new map
 
 ## Feature: Detail Panel — open and close
 
-**Scenario: Clicking "View detail" opens the panel**
+**Scenario: Second click on a focused node opens the panel**
 
 Given a map is loaded and the diagram is rendered  
-When the user opens the context menu on any node and clicks "View detail"  
+When the user left-clicks any capability node twice (first click focuses, second click opens)  
 Then the Detail Panel slides in from the right edge of the canvas  
 And the panel header shows the breadcrumb for that capability  
 

@@ -429,47 +429,6 @@ test.describe('Show Hidden toggle — editor project', () => {
         expect(count).toBeGreaterThan(0);
     });
 
-    test('Hide menu action removes node and Show Hidden restores it', async ({ page }) => {
-        await openDiagram(page);
-        await selectMapFromCombobox(page);
-
-        const targetName = `Domain Beta ${RUN_ID}`;
-        const targetSelector = `svg.bcm-canvas g.bcm-node[data-node-level="1"][data-node-name="${targetName}"]`;
-        const target = page.locator(targetSelector);
-
-        await expect(target).toHaveCount(1);
-
-        try {
-            await target.click();
-            await target.click();
-
-            const menu = page.locator('.bcm-menu-card');
-            await expect(menu).toBeVisible();
-            await menu.getByText('Hide', { exact: true }).click();
-
-            await expect(page.locator(targetSelector)).toHaveCount(0, { timeout: 10000 });
-
-            await page.getByTitle('Show Hidden').click();
-            await expect(page.locator(targetSelector)).toHaveCount(1, { timeout: 10000 });
-
-            await page.getByTitle('Show Hidden').click();
-        } finally {
-            const orgAlias = process.env.SF_ORG_ALIAS;
-            if (!orgAlias) throw new Error('SF_ORG_ALIAS not set');
-            const apex = `
-List<bcm_Capability__c> hidden = [SELECT Id FROM bcm_Capability__c WHERE bcm_Map__r.Name LIKE '%${RUN_ID}%' AND bcm_HideFromDiagram__c = true LIMIT 10000];
-for (bcm_Capability__c c : hidden) c.bcm_HideFromDiagram__c = false;
-if (!hidden.isEmpty()) update hidden;
-`.trim();
-            const apexFile = path.resolve(`tests/e2e/.unhide_${RUN_ID}.apex`);
-            fs.writeFileSync(apexFile, apex, 'utf-8');
-            try {
-                execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], { stdio: 'inherit' });
-            } finally {
-                fs.unlinkSync(apexFile);
-            }
-        }
-    });
 });
 
 // ── Keyboard navigation — editor project ─────────────────────────────────────
@@ -538,17 +497,6 @@ test.describe('Permission — viewer project', () => {
         expect(handles).toBe(0);
     });
 
-    test('Viewer cannot see Hide button in context menu', async ({ page }) => {
-        await openDiagram(page);
-        await selectMapFromCombobox(page);
-        const node = page.locator('.bcm-canvas .bcm-node').first();
-        await node.click();
-        await node.click();
-        const menu = page.locator('.bcm-menu-card');
-        await expect(menu).toBeVisible();
-        await expect(menu.getByText('View detail', { exact: true })).toBeVisible();
-        await expect(menu.getByText('Hide', { exact: true })).toHaveCount(0);
-    });
 });
 
 // ── Teardown — editor project ─────────────────────────────────────────────────

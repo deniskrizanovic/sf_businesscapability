@@ -8,7 +8,6 @@ const mockGetTags = createTestWireAdapter();
 // before the component module's apex-scoped imports resolve to .default.
 const BcmCapabilityMap = require('c/bcm_CapabilityMap').default;
 
-let mockHideCapabilityImpl = jest.fn().mockResolvedValue(undefined);
 let mockGetCapabilityDetailImpl = jest.fn().mockResolvedValue(null);
 let mockUpdateCapabilityImpl = jest.fn().mockResolvedValue(undefined);
 
@@ -31,15 +30,6 @@ jest.mock('@salesforce/apex/bcm_TagController.getTags', () => ({ __esModule: tru
 jest.mock('@salesforce/apex/bcm_CapabilityController.getCapabilities',
     () => {
         const fn = function(...args) { return mockCapabilitiesImpl(...args); };
-        fn.__esModule = true;
-        fn.default = fn;
-        return fn;
-    },
-    { virtual: true }
-);
-jest.mock('@salesforce/apex/bcm_CapabilityController.hideCapability',
-    () => {
-        const fn = function(...args) { return mockHideCapabilityImpl(...args); };
         fn.__esModule = true;
         fn.default = fn;
         return fn;
@@ -167,11 +157,18 @@ describe('BcmCapabilityMap zoom/pan state machine', () => {
     });
 });
 
-describe('BcmCapabilityMap node click UX — focus then menu', () => {
+function getPanel(element) {
+    return element.shadowRoot.querySelector('c-bcm_-capability-detail');
+}
+
+describe('BcmCapabilityMap node click UX — focus then panel', () => {
     let element;
 
     beforeEach(async () => {
         mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
+        mockGetCapabilityDetailImpl = jest.fn().mockImplementation(({ capabilityId }) =>
+            Promise.resolve({ Id: capabilityId, Name: capabilityId, bcm_Level__c: 1, Tags__r: [] })
+        );
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
         document.body.appendChild(element);
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
@@ -186,49 +183,49 @@ describe('BcmCapabilityMap node click UX — focus then menu', () => {
         }
     });
 
-    it('First click L1 node focuses it but does not open context menu', () => {
+    it('First click L1 node focuses it but does not open detail panel', () => {
         const l1Node = getNode(element, 'L1-A');
         clickNode(l1Node);
-        const menu = element.shadowRoot.querySelector('c-bcm_-context-menu');
-        expect(menu).toBeNull();
+        expect(mockGetCapabilityDetailImpl).not.toHaveBeenCalled();
+        expect(getPanel(element).capability).toBeNull();
     });
 
-    it('Second click on same L1 node opens context menu', async () => {
+    it('Second click on same L1 node opens detail panel', async () => {
         const l1Node = getNode(element, 'L1-A');
         clickNode(l1Node);
         await flushPromises();
         clickNode(l1Node);
         await flushPromises();
-        const menu = element.shadowRoot.querySelector('c-bcm_-context-menu');
-        expect(menu).not.toBeNull();
+        expect(mockGetCapabilityDetailImpl).toHaveBeenCalledWith({ capabilityId: 'L1-A' });
+        expect(getPanel(element).capability).toMatchObject({ Id: 'L1-A' });
     });
 
-    it('First click L2 node focuses it but does not open context menu', () => {
+    it('First click L2 node focuses it but does not open detail panel', () => {
         const l2Node = getNode(element, 'L2-A1');
         clickNode(l2Node);
-        const menu = element.shadowRoot.querySelector('c-bcm_-context-menu');
-        expect(menu).toBeNull();
+        expect(mockGetCapabilityDetailImpl).not.toHaveBeenCalled();
+        expect(getPanel(element).capability).toBeNull();
     });
 
-    it('Second click on same L2 node opens context menu', async () => {
+    it('Second click on same L2 node opens detail panel', async () => {
         const l2Node = getNode(element, 'L2-A1');
         clickNode(l2Node);
         await flushPromises();
         clickNode(l2Node);
         await flushPromises();
-        const menu = element.shadowRoot.querySelector('c-bcm_-context-menu');
-        expect(menu).not.toBeNull();
+        expect(mockGetCapabilityDetailImpl).toHaveBeenCalledWith({ capabilityId: 'L2-A1' });
+        expect(getPanel(element).capability).toMatchObject({ Id: 'L2-A1' });
     });
 
-    it('Clicking a different node after first focus does not open context menu', async () => {
+    it('Clicking a different node after first focus does not open detail panel', async () => {
         const l2A1 = getNode(element, 'L2-A1');
         const l2A2 = getNode(element, 'L2-A2');
         clickNode(l2A1);
         await flushPromises();
         clickNode(l2A2);
         await flushPromises();
-        const menu = element.shadowRoot.querySelector('c-bcm_-context-menu');
-        expect(menu).toBeNull();
+        expect(mockGetCapabilityDetailImpl).not.toHaveBeenCalled();
+        expect(getPanel(element).capability).toBeNull();
     });
 });
 
@@ -237,6 +234,9 @@ describe('BcmCapabilityMap node click UX — L3 bullets', () => {
 
     beforeEach(async () => {
         mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
+        mockGetCapabilityDetailImpl = jest.fn().mockImplementation(({ capabilityId }) =>
+            Promise.resolve({ Id: capabilityId, Name: capabilityId, bcm_Level__c: 3, Tags__r: [] })
+        );
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
         document.body.appendChild(element);
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
@@ -251,21 +251,21 @@ describe('BcmCapabilityMap node click UX — L3 bullets', () => {
         }
     });
 
-    it('First click on L3 bullet focuses it but does not open context menu', () => {
+    it('First click on L3 bullet focuses it but does not open detail panel', () => {
         const l3Text = getL3TextNode(element, 'L3-A1a');
         l3Text.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
-        const menu = element.shadowRoot.querySelector('c-bcm_-context-menu');
-        expect(menu).toBeNull();
+        expect(mockGetCapabilityDetailImpl).not.toHaveBeenCalled();
+        expect(getPanel(element).capability).toBeNull();
     });
 
-    it('Second click on same L3 bullet opens context menu', async () => {
+    it('Second click on same L3 bullet opens detail panel', async () => {
         const l3Text = getL3TextNode(element, 'L3-A1a');
         l3Text.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
         await flushPromises();
         l3Text.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
         await flushPromises();
-        const menu = element.shadowRoot.querySelector('c-bcm_-context-menu');
-        expect(menu).not.toBeNull();
+        expect(mockGetCapabilityDetailImpl).toHaveBeenCalledWith({ capabilityId: 'L3-A1a' });
+        expect(getPanel(element).capability).toMatchObject({ Id: 'L3-A1a' });
     });
 });
 
@@ -275,6 +275,9 @@ describe('BcmCapabilityMap keyboard navigation — L2 level', () => {
 
     beforeEach(async () => {
         mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
+        mockGetCapabilityDetailImpl = jest.fn().mockImplementation(({ capabilityId }) =>
+            Promise.resolve({ Id: capabilityId, Name: capabilityId, bcm_Level__c: 2, Tags__r: [] })
+        );
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
         document.body.appendChild(element);
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
@@ -299,16 +302,14 @@ describe('BcmCapabilityMap keyboard navigation — L2 level', () => {
         svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
         await flushPromises();
 
-        // After ArrowDown, menu should still be closed (nav moves focus, not opens menu)
-        const menu = element.shadowRoot.querySelector('c-bcm_-context-menu');
-        expect(menu).toBeNull();
+        // After ArrowDown, panel should still be closed (nav moves focus, not opens panel)
+        expect(getPanel(element).capability).toBeNull();
 
-        // Second click on L2-A2 should open menu immediately (it is now focused)
+        // Second click on L2-A2 opens panel (it is now focused)
         const l2A2 = getNode(element, 'L2-A2');
         clickNode(l2A2);
         await flushPromises();
-        const menuAfter = element.shadowRoot.querySelector('c-bcm_-context-menu');
-        expect(menuAfter).not.toBeNull();
+        expect(getPanel(element).capability).toMatchObject({ Id: 'L2-A2' });
     });
 
     it('ArrowUp from focused L2 moves focus to previous L2 in column', async () => {
@@ -323,11 +324,10 @@ describe('BcmCapabilityMap keyboard navigation — L2 level', () => {
         svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
         await flushPromises();
 
-        // L2-A1 should now be focused; second click opens menu
+        // L2-A1 now focused; second click opens panel
         clickNode(l2A1);
         await flushPromises();
-        const menu = element.shadowRoot.querySelector('c-bcm_-context-menu');
-        expect(menu).not.toBeNull();
+        expect(getPanel(element).capability).toMatchObject({ Id: 'L2-A1' });
     });
 
     it('ArrowUp from first L2 in column moves focus to parent L1', async () => {
@@ -338,15 +338,14 @@ describe('BcmCapabilityMap keyboard navigation — L2 level', () => {
         svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
         await flushPromises();
 
-        // L1-A should now be focused; second click on it opens menu
+        // L1-A now focused; second click opens panel
         const l1A = getNode(element, 'L1-A');
         clickNode(l1A);
         await flushPromises();
-        const menu = element.shadowRoot.querySelector('c-bcm_-context-menu');
-        expect(menu).not.toBeNull();
+        expect(getPanel(element).capability).toMatchObject({ Id: 'L1-A' });
     });
 
-    it('ArrowLeft/Right on focused L2 does not open context menu', async () => {
+    it('ArrowLeft/Right on focused L2 does not open detail panel', async () => {
         const l2A1 = getNode(element, 'L2-A1');
         clickNode(l2A1);
         await flushPromises();
@@ -355,8 +354,7 @@ describe('BcmCapabilityMap keyboard navigation — L2 level', () => {
         svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
         await flushPromises();
 
-        const menu = element.shadowRoot.querySelector('c-bcm_-context-menu');
-        expect(menu).toBeNull();
+        expect(getPanel(element).capability).toBeNull();
     });
 });
 
@@ -646,7 +644,7 @@ describe('BcmCapabilityMap canvas click clears focus', () => {
     });
 });
 
-describe('BcmCapabilityMap context menu actions', () => {
+describe('BcmCapabilityMap second-click → detail panel', () => {
     let element;
 
     beforeEach(async () => {
@@ -665,45 +663,15 @@ describe('BcmCapabilityMap context menu actions', () => {
         }
     });
 
-    // Helper: open context menu on an L1/L2 node (two clicks)
-    async function openMenuOnNode(nodeId) {
+    async function clickTwice(nodeId) {
         const node = getNode(element, nodeId);
         clickNode(node);
         await flushPromises();
         clickNode(node);
         await flushPromises();
-        return element.shadowRoot.querySelector('c-bcm_-context-menu');
     }
 
-    it('Context menu renders with correct node prop when opened', async () => {
-        const menu = await openMenuOnNode('L2-A1');
-        expect(menu).not.toBeNull();
-        expect(menu.node).toMatchObject({ id: 'L2-A1' });
-    });
-
-    it('Context menu close event hides the menu', async () => {
-        await openMenuOnNode('L2-A1');
-        let menu = element.shadowRoot.querySelector('c-bcm_-context-menu');
-        expect(menu).not.toBeNull();
-
-        menu.dispatchEvent(new CustomEvent('close', { bubbles: false }));
-        await flushPromises();
-
-        menu = element.shadowRoot.querySelector('c-bcm_-context-menu');
-        expect(menu).toBeNull();
-    });
-
-    it('Context menu is hidden when canEdit is false (no Hide button exposed via parent)', async () => {
-        // canEdit=false (mocked at top) means bcm_ContextMenu receives no special prop from parent
-        // The parent only controls visibility; Hide button visibility is a bcm_ContextMenu concern.
-        // Verify: menu opens without error when viewer clicks a node
-        const menu = await openMenuOnNode('L2-A1');
-        expect(menu).not.toBeNull();
-        // node prop passed correctly so child can gate Hide button
-        expect(menu.node).toBeDefined();
-    });
-
-    it('View detail loads capability via Apex and opens panel', async () => {
+    it('Second click loads capability via Apex and opens panel', async () => {
         const detailRecord = {
             Id: 'L2-A1',
             Name: 'Sub-Cap A1',
@@ -716,13 +684,7 @@ describe('BcmCapabilityMap context menu actions', () => {
         };
         mockGetCapabilityDetailImpl = jest.fn().mockResolvedValue(detailRecord);
 
-        const menu = await openMenuOnNode('L2-A1');
-        expect(menu).not.toBeNull();
-
-        menu.dispatchEvent(new CustomEvent('viewdetail', {
-            detail: { id: 'L2-A1', level: 2, name: 'Sub-Cap A1' },
-        }));
-        await flushPromises();
+        await clickTwice('L2-A1');
 
         expect(mockGetCapabilityDetailImpl).toHaveBeenCalledWith({ capabilityId: 'L2-A1' });
 
@@ -734,55 +696,6 @@ describe('BcmCapabilityMap context menu actions', () => {
             { id: 'L1-A', label: 'Capability A' },
             { id: 'L2-A1', label: 'Sub-Cap A1' },
         ]);
-    });
-});
-
-describe('BcmCapabilityMap context menu — Hide capability', () => {
-    let element;
-
-    beforeEach(async () => {
-        mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
-        mockHideCapabilityImpl = jest.fn().mockResolvedValue(undefined);
-        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
-        document.body.appendChild(element);
-        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
-        mockGetTags.emit({ data: [], error: undefined });
-        await flushPromises();
-        await seedLayout(element);
-    });
-
-    afterEach(() => {
-        while (document.body.firstChild) {
-            document.body.removeChild(document.body.firstChild);
-        }
-    });
-
-    async function openMenuOnNode(nodeId) {
-        const node = getNode(element, nodeId);
-        clickNode(node);
-        await flushPromises();
-        clickNode(node);
-        await flushPromises();
-        return element.shadowRoot.querySelector('c-bcm_-context-menu');
-    }
-
-    it('Hide click calls hideCapability Apex and rebuilds layout without target node', async () => {
-        // Precondition: L2-A1 visible in layout
-        expect(getNode(element, 'L2-A1')).not.toBeNull();
-
-        const menu = await openMenuOnNode('L2-A1');
-        expect(menu).not.toBeNull();
-
-        menu.dispatchEvent(new CustomEvent('hide', {
-            detail: { id: 'L2-A1', level: 2, name: 'Sub-Cap A1' },
-        }));
-        await flushPromises();
-
-        expect(mockHideCapabilityImpl).toHaveBeenCalledTimes(1);
-        expect(mockHideCapabilityImpl).toHaveBeenCalledWith({ capabilityId: 'L2-A1' });
-
-        // Layout rebuilt — hidden L2 no longer rendered (showHidden defaults to false)
-        expect(getNode(element, 'L2-A1')).toBeNull();
     });
 });
 
