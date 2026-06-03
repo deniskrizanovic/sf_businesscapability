@@ -4,24 +4,33 @@
             <div class="bcm-detail-breadcrumb-row slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
                 <nav class="bcm-detail-breadcrumb" aria-label="Capability breadcrumb">
                     <template for:each={breadcrumbItems} for:item="seg">
-                        <span key={seg.id} class="bcm-detail-breadcrumb-segment">
+                        <div key={seg.id} class="bcm-detail-breadcrumb-segment" style={seg.indentStyle}>
                             <span class="bcm-detail-breadcrumb-label">{seg.label}</span>
-                            <template if:false={seg.isLast}>
-                                <span class="bcm-detail-breadcrumb-sep" aria-hidden="true"> / </span>
-                            </template>
-                        </span>
+                        </div>
                     </template>
                 </nav>
-                <lightning-button-icon
-                    class="bcm-detail-close"
-                    icon-name="utility:close"
-                    alternative-text="Close"
-                    title="Close"
-                    variant="bare"
-                    onclick={handleClose}>
-                </lightning-button-icon>
+                <div class="slds-grid slds-grid_vertical-align-center">
+                    <template if:true={canShowEditButton}>
+                        <lightning-button-icon
+                            class="bcm-detail-edit slds-m-right_xx-small"
+                            icon-name="utility:edit"
+                            alternative-text="Edit"
+                            title="Edit"
+                            variant="bare"
+                            onclick={handleEdit}>
+                        </lightning-button-icon>
+                    </template>
+                    <lightning-button-icon
+                        class="bcm-detail-close"
+                        icon-name="utility:close"
+                        alternative-text="Close"
+                        title="Close"
+                        variant="bare"
+                        onclick={handleClose}>
+                    </lightning-button-icon>
+                </div>
             </div>
-            <template if:true={hasContent}>
+            <template if:true={isReadMode}>
                 <div class="bcm-detail-title-row slds-m-top_x-small slds-grid slds-grid_vertical-align-center">
                     <span class="bcm-detail-level-badge slds-m-right_x-small">{levelBadge}</span>
                     <h2 class="bcm-detail-name slds-text-heading_small">{name}</h2>
@@ -35,6 +44,11 @@
                         </template>
                     </div>
                 </template>
+            </template>
+            <template if:true={isEditMode}>
+                <div class="bcm-detail-title-row slds-m-top_x-small slds-grid slds-grid_vertical-align-center">
+                    <span class="bcm-detail-level-badge slds-m-right_x-small">{levelBadge}</span>
+                </div>
             </template>
         </header>
 
@@ -50,7 +64,7 @@
             </div>
         </template>
 
-        <template if:true={hasContent}>
+        <template if:true={isReadMode}>
             <div class="bcm-detail-body slds-p-around_small">
                 <div class="bcm-detail-field slds-m-bottom_small">
                     <div class="bcm-detail-field-label slds-text-title">Definition</div>
@@ -69,6 +83,71 @@
                     <div class="bcm-detail-field-value">{hideFromDiagramText}</div>
                 </div>
             </div>
+        </template>
+
+        <template if:true={isEditMode}>
+            <div class="bcm-detail-body bcm-detail-body_edit slds-p-around_small">
+                <div class="bcm-detail-field slds-m-bottom_small">
+                    <lightning-input
+                        class="bcm-detail-input-name"
+                        label="Name"
+                        value={draftName}
+                        onchange={handleNameChange}>
+                    </lightning-input>
+                </div>
+                <div class="bcm-detail-field slds-m-bottom_small">
+                    <div class="bcm-detail-field-label slds-text-title">Definition</div>
+                    <lightning-input-rich-text
+                        class="bcm-detail-input-definition"
+                        label="Definition"
+                        disabled-categories="FORMAT_FONT,FORMAT_BODY,ALIGN_TEXT,INSERT_CONTENT,REMOVE_FORMAT"
+                        value={draftDefinition}
+                        onchange={handleDefinitionChange}>
+                    </lightning-input-rich-text>
+                </div>
+                <div class="bcm-detail-field slds-m-bottom_small">
+                    <div class="bcm-detail-field-label slds-text-title">Strategy Support</div>
+                    <lightning-input-rich-text
+                        class="bcm-detail-input-strategy"
+                        label="Strategy Support"
+                        disabled-categories="FORMAT_FONT,FORMAT_BODY,ALIGN_TEXT,INSERT_CONTENT,REMOVE_FORMAT"
+                        value={draftStrategy}
+                        onchange={handleStrategyChange}>
+                    </lightning-input-rich-text>
+                </div>
+                <div class="bcm-detail-field slds-m-bottom_small">
+                    <div class="bcm-detail-field-label slds-text-title">Architectural Nuance</div>
+                    <lightning-input-rich-text
+                        class="bcm-detail-input-nuance"
+                        label="Architectural Nuance"
+                        disabled-categories="FORMAT_FONT,FORMAT_BODY,ALIGN_TEXT,INSERT_CONTENT,REMOVE_FORMAT"
+                        value={draftNuance}
+                        onchange={handleNuanceChange}>
+                    </lightning-input-rich-text>
+                </div>
+                <div class="bcm-detail-field slds-m-bottom_small">
+                    <lightning-input
+                        class="bcm-detail-input-hide"
+                        type="checkbox"
+                        label="Hide From Diagram"
+                        checked={draftHide}
+                        onchange={handleHideChange}>
+                    </lightning-input>
+                </div>
+            </div>
+            <footer class="bcm-detail-footer slds-p-around_small slds-border_top slds-grid slds-grid_align-end">
+                <lightning-button
+                    class="bcm-detail-cancel slds-m-right_x-small"
+                    label="Cancel"
+                    onclick={handleCancel}>
+                </lightning-button>
+                <lightning-button
+                    class="bcm-detail-save"
+                    variant="brand"
+                    label="Save"
+                    onclick={handleSave}>
+                </lightning-button>
+            </footer>
         </template>
     </section>
 </template>

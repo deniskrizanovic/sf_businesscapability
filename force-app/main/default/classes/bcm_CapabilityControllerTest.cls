@@ -187,6 +187,50 @@ private class bcm_CapabilityControllerTest {
     }
 
     @IsTest
+    static void updateCapability_persists() {
+        // Given
+        bcm_Map__c mapA = [SELECT Id FROM bcm_Map__c WHERE Name = 'Test Map A' LIMIT 1];
+        bcm_Capability__c l2 = [
+            SELECT Id FROM bcm_Capability__c
+            WHERE bcm_Map__c = :mapA.Id AND bcm_Level__c = 2 LIMIT 1
+        ];
+        bcm_Capability__c input = new bcm_Capability__c(
+            Id                          = l2.Id,
+            Name                        = 'Renamed L2',
+            bcm_Definition__c           = '<p>Edited def</p>',
+            bcm_StrategySupport__c      = '<p>Edited strategy</p>',
+            bcm_ArchitecturalNuance__c  = '<p>Edited nuance</p>'
+        );
+
+        // When
+        Test.startTest();
+        bcm_CapabilityController.updateCapability(input);
+        Test.stopTest();
+
+        // Then
+        bcm_Capability__c after = [
+            SELECT Name, bcm_Definition__c, bcm_StrategySupport__c, bcm_ArchitecturalNuance__c
+            FROM bcm_Capability__c WHERE Id = :l2.Id
+        ];
+        Assert.areEqual('Renamed L2',                after.Name);
+        Assert.areEqual('<p>Edited def</p>',         after.bcm_Definition__c);
+        Assert.areEqual('<p>Edited strategy</p>',    after.bcm_StrategySupport__c);
+        Assert.areEqual('<p>Edited nuance</p>',      after.bcm_ArchitecturalNuance__c);
+    }
+
+    @IsTest
+    static void updateCapability_nullCapability_throws() {
+        Test.startTest();
+        try {
+            bcm_CapabilityController.updateCapability(null);
+            Assert.fail('Expected AuraHandledException for null capability');
+        } catch (AuraHandledException ex) {
+            Assert.isNotNull(ex);
+        }
+        Test.stopTest();
+    }
+
+    @IsTest
     static void shouldWrapException_WhenUserLacksAccess() {
         // Given — user with no object permissions; USER_MODE -> QueryException -> AuraHandledException
         User restrictedUser = TestDataFactory.createUserWithPermSet('bcm_ReadOnly');

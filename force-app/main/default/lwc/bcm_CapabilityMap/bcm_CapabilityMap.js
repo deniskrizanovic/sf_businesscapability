@@ -5,6 +5,7 @@ import getCapabilities from '@salesforce/apex/bcm_CapabilityController.getCapabi
 import getCapabilityDetail from '@salesforce/apex/bcm_CapabilityController.getCapabilityDetail';
 import getTags from '@salesforce/apex/bcm_TagController.getTags';
 import hideCapability from '@salesforce/apex/bcm_CapabilityController.hideCapability';
+import updateCapability from '@salesforce/apex/bcm_CapabilityController.updateCapability';
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 const COLUMN_WIDTH      = 220;
@@ -286,15 +287,21 @@ export default class BcmCapabilityMap extends LightningElement {
                 const bulletGroups = [];
                 let   bulletY   = boxY + headerHeight;
                 for (const l3 of (l2.children || [])) {
+                    if (l3._hidden && !this.showHidden) continue;
                     const allLines = wrapText(l3.Name, maxBulletFirst, FONT_SIZE_L3, 5);
                     const l3Focused = l3.Id === this.focusedNodeId;
+                    const l3Dashed  = l3._hidden && this.showHidden;
                     const fontWeight = l3Focused ? 'bold' : 'normal';
+                    const fontStyle  = l3Dashed ? 'italic' : 'normal';
+                    const fillColour = l3Dashed ? '#999' : '#222';
                     const focusRectStartY = bulletY;
                     const lines = allLines.map((text, wIdx) => {
                         const line = {
                             key         : l3.Id + '-bullet-' + wIdx,
                             isFocused   : l3Focused,
                             fontWeight,
+                            fontStyle,
+                            fill        : fillColour,
                             text        : wIdx === 0 ? '• ' + text : text,
                             x           : wIdx === 0 ? bulletBaseX : bulletContX,
                             y           : bulletY + LINE_HEIGHT / 2,
@@ -512,6 +519,21 @@ export default class BcmCapabilityMap extends LightningElement {
         const nodeName  = targetName  || evt.currentTarget.dataset.nodeName;
         if (!nodeId) return;
 
+        // Panel open -> clicking another node refreshes the panel directly.
+        if (this.detailCapability || this.detailIsLoading) {
+            // Resolve L3 even when click lands on the group whitespace, not just the text.
+            const l3Group = evt.target.closest && evt.target.closest('[data-l3-group]');
+            const resolvedId = (nodeLevel === '3' && targetId)
+                ? targetId
+                : (l3Group ? l3Group.dataset.l3Group : nodeId);
+            this.focusedNodeId = resolvedId;
+            this._keyNavMode   = true;
+            this.contextMenuVisible = false;
+            this._buildLayout(this._capabilities);
+            this.handleViewDetail({ detail: { id: resolvedId } });
+            return;
+        }
+
         // L3 bullet click — focus first, menu on second click (same as L1/L2)
         if (nodeLevel === '3' && targetId) {
             const l3 = (this._layoutL3Map || new Map()).get(targetId);
@@ -612,6 +634,46 @@ export default class BcmCapabilityMap extends LightningElement {
             .finally(() => {
                 if (reqId !== this._detailRequestSeq) return;
                 this.detailIsLoading = false;
+            });
+    }
+
+    handleDetailSaved(evt) {
+        const payload = evt?.detail || {};
+        if (!payload.id) return;
+        const capability = {
+            Id                          : payload.id,
+            Name                        : payload.name,
+            bcm_Definition__c           : payload.definition,
+            bcm_StrategySupport__c      : payload.strategySupport,
+            bcm_ArchitecturalNuance__c  : payload.architecturalNuance,
+            bcm_HideFromDiagram__c      : payload.hideFromDiagram,
+        };
+        this.detailErrorMessage = null;
+        const reqId = ++this._detailRequestSeq;
+        updateCapability({ capability })
+            .then(() => {
+                if (reqId !== this._detailRequestSeq) return null;
+                this._capabilities = (this._capabilities || []).map(c =>
+                    c.Id === payload.id
+                        ? { ...c,
+                            Name                        : payload.name,
+                            bcm_Definition__c           : payload.definition,
+                            bcm_StrategySupport__c      : payload.strategySupport,
+                            bcm_ArchitecturalNuance__c  : payload.architecturalNuance,
+                            bcm_HideFromDiagram__c      : payload.hideFromDiagram }
+                        : c
+                );
+                this._buildLayout(this._capabilities);
+                return getCapabilityDetail({ capabilityId: payload.id });
+            })
+            .then(rec => {
+                if (reqId !== this._detailRequestSeq) return;
+                if (rec) this.detailCapability = rec;
+            })
+            .catch(err => {
+                if (reqId !== this._detailRequestSeq) return;
+                this.detailErrorMessage =
+                    err?.body?.message || 'Failed to save capability';
             });
     }
 

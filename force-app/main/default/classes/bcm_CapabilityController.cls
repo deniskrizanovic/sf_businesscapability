@@ -66,6 +66,21 @@ public with sharing class bcm_CapabilityController {
     }
 
     /**
+     * Persists Name + rich-text fields edited via the Capability Detail panel.
+     * Delegates DML to bcm_CapabilityService (per ADR 0002).
+     *
+     * @param capability  Capability with Id and editable fields populated.
+     */
+    @AuraEnabled
+    public static void updateCapability(bcm_Capability__c capability) {
+        try {
+            bcm_CapabilityService.updateCapability(capability);
+        } catch (Exception ex) {
+            throw new AuraHandledException(ex.getMessage());
+        }
+    }
+
+    /**
      * Sets bcm_HideFromDiagram__c = true on the given Capability.
      *
      * @param capabilityId  Id of the bcm_Capability__c record to hide.

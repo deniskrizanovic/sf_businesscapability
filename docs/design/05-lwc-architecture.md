@@ -7,7 +7,7 @@
 | `bcm_CapabilityMap` | Lightning App Page LWC | Container — owns data, layout, SVG viewport, zoom/pan, toolbar, all Apex interaction |
 | `bcm_CapabilityNode` | Child LWC | Renders a single capability node (chevron, box, or bullet) |
 | `bcm_ContextMenu` | Child LWC (presentational) | Left-click context menu; fires `viewdetail` and `hide` events for all levels (L1/L2/L3) |
-| `bcm_CapabilityDetail` | Child LWC (presentational) | Slide-out read-only detail panel for the selected capability; opened by `viewdetail` event from `bcm_ContextMenu` |
+| `bcm_CapabilityDetail` | Child LWC (presentational) | Slide-out detail panel for the selected capability; read-only by default, inline edit (Save / Cancel) when `canEdit` is true; opened by `viewdetail` event from `bcm_ContextMenu` |
 | `bcm_ColourSwatch` | Child LWC (presentational) | Renders a single tag colour swatch on Tag record page |
 | `bcm_ImportButton` | Quick-action / utility LWC | Launches the JSON import flow from a Map record context |
 | `bcm_VisualisationButton` | Quick-action / utility LWC | Navigates the user to the Visualisation tab |
@@ -224,18 +224,22 @@ The menu renders as an HTML `<div>` overlaid on the SVG using absolute positioni
 - Render 400px slide-in panel over the right edge of the canvas
 - Display breadcrumb, level badge, tag swatches, and all capability fields read-only
 - Fire `close` on X button click or Escape key
-- Edit affordances (Save / Cancel, editable inputs) deferred to FP30 / GH issue #3
+- When `canEdit` is true: show Edit affordance; in edit mode, render `lightning-input` (Name) and `lightning-input-rich-text` (Definition / Strategy Support / Architectural Nuance) plus Save / Cancel buttons in the footer
+- Fire `saved` with `{ id, name, definition, strategySupport, architecturalNuance }` on Save; container persists via `updateCapability` and reloads the diagram
 
 ### Properties (Public `@api`)
 ```js
 @api capability;   // bcm_Capability__c record object | null
 @api breadcrumb;   // [{ id, label }] array, root-first
 @api isLoading;    // boolean — shows spinner while parent fetches
+@api errorMessage; // string | null — surfaced inside panel error region
+@api canEdit;      // boolean — gates Edit / Save / Cancel affordances
 ```
 
 ### Events Emitted
 ```js
 this.dispatchEvent(new CustomEvent('close'));
+this.dispatchEvent(new CustomEvent('saved', { detail: { id, name, definition, strategySupport, architecturalNuance } }));
 ```
 
 ### CSS
