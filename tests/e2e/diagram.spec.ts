@@ -201,7 +201,7 @@ test.describe('Diagram structure — editor project', () => {
     test('Cross-cutting L1 renders as band chevron at bottom; non-cross-cutting still in column', async ({ page }) => {
         await openDiagram(page);
         await selectMapFromCombobox(page);
-        await page.getByTitle('Cross-cutting').click();
+        await page.locator('lightning-button-icon[data-id="cross-cutting-toggle"]').click();
 
         const ccName = `Cross-cutting Foo ${RUN_ID}`;
         const ccBand = page.locator(`g.bcm-band-node[data-node-name="${ccName}"]`);
@@ -224,7 +224,7 @@ test.describe('Diagram structure — editor project', () => {
     test('Cross-cutting band layered stack: lowest sortOrder paints last (DOM-last) and chevrons span full width', async ({ page }) => {
         await openDiagram(page);
         await selectMapFromCombobox(page);
-        await page.getByTitle('Cross-cutting').click();
+        await page.locator('lightning-button-icon[data-id="cross-cutting-toggle"]').click();
 
         const bandNodes = page.locator('g.bcm-band-node');
         await expect(bandNodes).toHaveCount(2);
@@ -242,7 +242,7 @@ test.describe('Diagram structure — editor project', () => {
     test('Clicking a cross-cutting band chevron opens the Detail Panel', async ({ page }) => {
         await openDiagram(page);
         await selectMapFromCombobox(page);
-        await page.getByTitle('Cross-cutting').click();
+        await page.locator('lightning-button-icon[data-id="cross-cutting-toggle"]').click();
 
         const ccName = `Cross-cutting Foo ${RUN_ID}`;
         await page.locator(`g.bcm-band-node[data-node-name="${ccName}"]`).click();
@@ -255,7 +255,7 @@ test.describe('Diagram structure — editor project', () => {
 
         const ccName = `Cross-cutting Foo ${RUN_ID}`;
         const ccBand = page.locator(`g.bcm-band-node[data-node-name="${ccName}"]`);
-        const toggle = page.getByTitle('Cross-cutting');
+        const toggle = page.locator('lightning-button-icon[data-id="cross-cutting-toggle"]');
 
         await expect(ccBand).toHaveCount(0);
 

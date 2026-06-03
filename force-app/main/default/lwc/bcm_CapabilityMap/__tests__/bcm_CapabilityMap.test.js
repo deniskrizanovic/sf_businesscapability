@@ -1016,7 +1016,7 @@ describe('BcmCapabilityMap cross-cutting band', () => {
         await seedLayout(element);
         // Band hidden by default (issue #31). Toggle on for these tests.
         const toggle = element.shadowRoot.querySelector(
-            'lightning-button-icon[title="Cross-cutting"]'
+            'lightning-button-icon[data-id="cross-cutting-toggle"]'
         );
         toggle.dispatchEvent(new CustomEvent('click'));
         await flushPromises();
@@ -1104,7 +1104,7 @@ describe('BcmCapabilityMap cross-cutting band — cc-only map', () => {
         await seedLayout(element);
         // Band hidden by default (issue #31). Toggle on for these tests.
         const toggle = element.shadowRoot.querySelector(
-            'lightning-button-icon[title="Cross-cutting"]'
+            'lightning-button-icon[data-id="cross-cutting-toggle"]'
         );
         toggle.dispatchEvent(new CustomEvent('click'));
         await flushPromises();
@@ -1160,7 +1160,7 @@ describe('BcmCapabilityMap cross-cutting toggle', () => {
 
     function getToggleButton() {
         return element.shadowRoot.querySelector(
-            'lightning-button-icon[title="Cross-cutting"]'
+            'lightning-button-icon[data-id="cross-cutting-toggle"]'
         );
     }
 
