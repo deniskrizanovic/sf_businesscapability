@@ -625,6 +625,7 @@ Distinct from FP19 (delete Capability via standard form): no record removal, onl
 | Canvas focus outline suppression | Pure CSS visual styling; no data movement crosses the software boundary. Same exclusion class as zoom/pan visual state. |
 | SVG viewport boundary removal / free pan | CSS overflow change + removal of pan clamps; no data movement crosses the software boundary. Same exclusion class as zoom/pan visual state. |
 | `bcm_IsCrossCutting__c` field add + L1-only validation rule (GH #29) | New attribute on existing entity (`bcm_Capability__c`); no new functional process. Selector payload widens by one boolean — same data movement classification as the existing `getCapabilities` Read. Validation rule is a constraint on the existing Update/Insert process, not a new process. No new R; no new entity. |
+| Cross-cutting band rendering (GH #30) | Pure SVG re-layout of already-loaded capability data; the read of `bcm_IsCrossCutting__c` is part of the existing `getCapabilities` payload (FP2). No new Entry, Exit, Read, or Write. The click-to-open-detail action reuses FP29 (View Capability Detail via Panel) — same data movement, different invocation surface. |
 
 ---
 

@@ -992,3 +992,133 @@ describe('BcmCapabilityMap session persistence', () => {
         }
     });
 });
+
+describe('BcmCapabilityMap cross-cutting band', () => {
+    let element;
+
+    const CAPS_DATA_WITH_CC = [
+        ...CAPS_DATA,
+        { Id: 'L1-CC', Name: 'Security', bcm_Parent__c: null, bcm_SortOrder__c: 99,
+          bcm_HideFromDiagram__c: false, bcm_IsCrossCutting__c: true },
+        { Id: 'L1-CC2', Name: 'Compliance', bcm_Parent__c: null, bcm_SortOrder__c: 100,
+          bcm_HideFromDiagram__c: false, bcm_IsCrossCutting__c: true },
+        { Id: 'L2-CC1', Name: 'Encryption', bcm_Parent__c: 'L1-CC', bcm_SortOrder__c: 1,
+          bcm_HideFromDiagram__c: false, bcm_IsCrossCutting__c: false, Tags__r: [] },
+    ];
+
+    beforeEach(async () => {
+        mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA_WITH_CC);
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [], error: undefined });
+        await flushPromises();
+        await seedLayout(element);
+    });
+
+    afterEach(() => {
+        while (document.body.firstChild) document.body.removeChild(document.body.firstChild);
+    });
+
+    it('Cross-cutting L1 renders as band node, not as column chevron', () => {
+        const band = element.shadowRoot.querySelector('.bcm-band-node[data-node-id="L1-CC"]');
+        expect(band).not.toBeNull();
+        const column = element.shadowRoot.querySelector(
+            '.bcm-node[data-node-id="L1-CC"][data-node-level="1"]'
+        );
+        expect(column).toBeNull();
+    });
+
+    it('Cross-cutting L1 child (L2) is excluded from the diagram', () => {
+        const l2 = element.shadowRoot.querySelector('[data-node-id="L2-CC1"]');
+        expect(l2).toBeNull();
+    });
+
+    it('Non-cross-cutting L1 still renders as a regular column chevron', () => {
+        const regular = element.shadowRoot.querySelector(
+            '.bcm-node[data-node-id="L1-A"][data-node-level="1"]'
+        );
+        expect(regular).not.toBeNull();
+    });
+
+    it('Click on band chevron triggers viewdetail Apex call', async () => {
+        const detailRecord = { Id: 'L1-CC', Name: 'Security', bcm_Level__c: 1, Tags__r: [] };
+        mockGetCapabilityDetailImpl = jest.fn().mockResolvedValue(detailRecord);
+        const band = element.shadowRoot.querySelector('.bcm-band-node[data-node-id="L1-CC"]');
+        band.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+        expect(mockGetCapabilityDetailImpl).toHaveBeenCalledWith({ capabilityId: 'L1-CC' });
+    });
+
+    it('Lowest-SortOrder cross-cutting renders on top of layered band stack', () => {
+        const bandNodes = element.shadowRoot.querySelectorAll('.bcm-band-node');
+        expect(bandNodes.length).toBe(2);
+        // DOM-last paints on top; sortOrder 99 (Security) < 100 (Compliance) → Security on top
+        const lastId = bandNodes[bandNodes.length - 1].getAttribute('data-node-id');
+        expect(lastId).toBe('L1-CC');
+    });
+
+    it('Band chevron spans full diagram width', () => {
+        const band = element.shadowRoot.querySelector('.bcm-band-node[data-node-id="L1-CC"]');
+        const polygon = band.querySelector('polygon');
+        const points = polygon.getAttribute('points').trim().split(/\s+/);
+        // First vertex x should equal DIAGRAM_PADDING (24)
+        const firstX = parseFloat(points[0].split(',')[0]);
+        expect(firstX).toBe(24);
+        // Tip x reaches near canvasWidth - DIAGRAM_PADDING
+        const svg = element.shadowRoot.querySelector('svg.bcm-canvas');
+        const canvasW = parseFloat(svg.getAttribute('width'));
+        const tipX = parseFloat(points[2].split(',')[0]);
+        expect(tipX).toBe(canvasW - 24);
+    });
+
+    it('Band label is uppercased and left-aligned (no text-anchor)', () => {
+        const band = element.shadowRoot.querySelector('.bcm-band-node[data-node-id="L1-CC"]');
+        const text = band.querySelector('text');
+        expect(text.textContent.trim()).toBe('SECURITY');
+        expect(text.getAttribute('text-anchor')).toBeNull();
+    });
+});
+
+describe('BcmCapabilityMap cross-cutting band — cc-only map', () => {
+    let element;
+
+    const CAPS_DATA_CC_ONLY = [
+        { Id: 'L1-CC', Name: 'Security', bcm_Parent__c: null, bcm_SortOrder__c: 1,
+          bcm_HideFromDiagram__c: false, bcm_IsCrossCutting__c: true },
+    ];
+
+    beforeEach(async () => {
+        mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA_CC_ONLY);
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [], error: undefined });
+        await flushPromises();
+        await seedLayout(element);
+    });
+
+    afterEach(() => {
+        while (document.body.firstChild) document.body.removeChild(document.body.firstChild);
+    });
+
+    it('Renders the band when there are zero regular L1s', () => {
+        const band = element.shadowRoot.querySelector('.bcm-band-node[data-node-id="L1-CC"]');
+        expect(band).not.toBeNull();
+        // No regular column chevrons should exist
+        const cols = element.shadowRoot.querySelectorAll('.bcm-node[data-node-level="1"]');
+        expect(cols.length).toBe(0);
+    });
+
+    it('Skips the empty L1-row reservation when no regular roots exist', () => {
+        // Band's bandTopY should sit at DIAGRAM_PADDING + BOX_GAP (no header strip).
+        // Polygon points: first vertex y = bandTopY = 24 + BOX_GAP.
+        const band = element.shadowRoot.querySelector('.bcm-band-node[data-node-id="L1-CC"]');
+        const polygon = band.querySelector('polygon');
+        const points = polygon.getAttribute('points').trim().split(/\s+/);
+        const firstY = parseFloat(points[0].split(',')[1]);
+        // BOX_GAP = 16; DIAGRAM_PADDING = 24 -> 40. If header strip leaked in, this would jump
+        // by CHEVRON_HEIGHT (~60) + BOX_GAP (16) = ~76 to ~116.
+        expect(firstY).toBeLessThan(60);
+    });
+});

@@ -30,6 +30,10 @@
     cursor: pointer;
 }
 
+.bcm-band-node {
+    cursor: pointer;
+}
+
 g[data-l3-group]:hover text[data-node-level="3"] {
     fill: #0070D2 !important;
 }
