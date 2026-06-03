@@ -8,6 +8,7 @@ const mockGetTags = createTestWireAdapter();
 
 let mockHideCapabilityImpl = jest.fn().mockResolvedValue(undefined);
 let mockGetCapabilityDetailImpl = jest.fn().mockResolvedValue(null);
+let mockUpdateCapabilityImpl = jest.fn().mockResolvedValue(undefined);
 
 // Imperative Apex mock — returns a resolved promise with seeded data
 const CAPS_DATA = [
@@ -46,6 +47,15 @@ jest.mock('@salesforce/apex/bcm_CapabilityController.hideCapability',
 jest.mock('@salesforce/apex/bcm_CapabilityController.getCapabilityDetail',
     () => {
         const fn = function(...args) { return mockGetCapabilityDetailImpl(...args); };
+        fn.__esModule = true;
+        fn.default = fn;
+        return fn;
+    },
+    { virtual: true }
+);
+jest.mock('@salesforce/apex/bcm_CapabilityController.updateCapability',
+    () => {
+        const fn = function(...args) { return mockUpdateCapabilityImpl(...args); };
         fn.__esModule = true;
         fn.default = fn;
         return fn;
@@ -757,5 +767,103 @@ describe('BcmCapabilityMap context menu — Hide capability', () => {
 
         // Layout rebuilt — hidden L2 no longer rendered (showHidden defaults to false)
         expect(getNode(element, 'L2-A1')).toBeNull();
+    });
+});
+
+describe('BcmCapabilityMap detail panel — saved flow', () => {
+    let element;
+
+    beforeEach(async () => {
+        mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
+        mockUpdateCapabilityImpl = jest.fn().mockResolvedValue(undefined);
+        mockGetCapabilityDetailImpl = jest.fn().mockResolvedValue({
+            Id: 'L2-A1',
+            Name: 'Renamed L2',
+            bcm_Level__c: 2,
+            bcm_Definition__c: '<p>D</p>',
+            bcm_StrategySupport__c: null,
+            bcm_ArchitecturalNuance__c: null,
+            bcm_HideFromDiagram__c: false,
+            Tags__r: [],
+        });
+
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [], error: undefined });
+        await flushPromises();
+        await seedLayout(element);
+    });
+
+    afterEach(() => {
+        while (document.body.firstChild) {
+            document.body.removeChild(document.body.firstChild);
+        }
+    });
+
+    it('saved event calls updateCapability and rebuilds diagram with new name', async () => {
+        const callsBefore = mockCapabilitiesImpl.mock.calls.length;
+        const panel = element.shadowRoot.querySelector('c-bcm_-capability-detail');
+        expect(panel).not.toBeNull();
+
+        panel.dispatchEvent(new CustomEvent('saved', {
+            detail: {
+                id                  : 'L2-A1',
+                name                : 'Renamed L2',
+                definition          : '<p>D</p>',
+                strategySupport     : '<p>S</p>',
+                architecturalNuance : '<p>N</p>',
+                hideFromDiagram     : false,
+            },
+        }));
+        await flushPromises();
+        await flushPromises();
+
+        expect(mockUpdateCapabilityImpl).toHaveBeenCalledTimes(1);
+        const arg = mockUpdateCapabilityImpl.mock.calls[0][0];
+        expect(arg.capability).toMatchObject({
+            Id                          : 'L2-A1',
+            Name                        : 'Renamed L2',
+            bcm_Definition__c           : '<p>D</p>',
+            bcm_StrategySupport__c      : '<p>S</p>',
+            bcm_ArchitecturalNuance__c  : '<p>N</p>',
+            bcm_HideFromDiagram__c      : false,
+        });
+        // Local-patch + rebuild — no extra Apex call to cacheable getCapabilities
+        expect(mockCapabilitiesImpl.mock.calls.length).toBe(callsBefore);
+        // Layout reflects the new name on the L2 node
+        const renamed = element.shadowRoot.querySelector('[data-node-id="L2-A1"][data-node-name="Renamed L2"]');
+        expect(renamed).not.toBeNull();
+    });
+
+    it('saved event with no id is ignored (no Apex call)', async () => {
+        const panel = element.shadowRoot.querySelector('c-bcm_-capability-detail');
+        panel.dispatchEvent(new CustomEvent('saved', { detail: {} }));
+        await flushPromises();
+        expect(mockUpdateCapabilityImpl).not.toHaveBeenCalled();
+    });
+
+    it('saved event Apex error surfaces errorMessage to detail panel', async () => {
+        mockUpdateCapabilityImpl = jest.fn().mockRejectedValue({
+            body: { message: 'Validation rule blocked the save' },
+        });
+        const panel = element.shadowRoot.querySelector('c-bcm_-capability-detail');
+
+        panel.dispatchEvent(new CustomEvent('saved', {
+            detail: {
+                id                  : 'L2-A1',
+                name                : 'Will Fail',
+                definition          : '<p>D</p>',
+                strategySupport     : '<p>S</p>',
+                architecturalNuance : '<p>N</p>',
+                hideFromDiagram     : false,
+            },
+        }));
+        await flushPromises();
+        await flushPromises();
+
+        expect(mockUpdateCapabilityImpl).toHaveBeenCalledTimes(1);
+        const refreshed = element.shadowRoot.querySelector('c-bcm_-capability-detail');
+        expect(refreshed.errorMessage).toBe('Validation rule blocked the save');
     });
 });

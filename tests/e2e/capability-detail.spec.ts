@@ -155,13 +155,9 @@ test.describe('Detail panel — open and close — editor project', () => {
         await openDiagram(page);
         await selectMap(page);
         await openDetailPanelOnL2(page);
-        // Open detail on L1 while panel still open
+        // Panel open -> single click on another node refreshes panel directly (no menu).
         const l1 = page.locator(`svg.bcm-canvas g.bcm-node[data-node-level="1"][data-node-name="${L1_NAME}"]`);
         await l1.click();
-        await l1.click();
-        const menu = page.locator('.bcm-menu-card');
-        await expect(menu).toBeVisible();
-        await menu.getByText('View detail', { exact: true }).click();
         const panel = page.locator('.bcm-detail-panel[data-open="true"]');
         await expect(panel).toBeVisible();
         await expect(panel.locator('.bcm-detail-name')).toHaveText(L1_NAME, { timeout: 5000 });
@@ -221,9 +217,71 @@ test.describe('Detail panel — fields — editor project', () => {
     });
 });
 
-// Note: viewer-no-save regression is covered by Jest:
-//   bcm_CapabilityDetail.test.js — "No Save / Cancel buttons rendered (read-only scope)"
-// E2e viewer coverage is omitted because FP30 (edit affordances) is out of scope for #22.
+// ── FP30 scenarios — editor project ───────────────────────────────────────────
+
+test.describe('Detail panel — edit + save — editor project', () => {
+    test('Editor sees Edit button and can enter edit mode', async ({ page }) => {
+        await openDiagram(page);
+        await selectMap(page);
+        const panel = await openDetailPanelOnL2(page);
+        const editBtn = panel.locator('.bcm-detail-edit button');
+        await expect(editBtn).toBeVisible();
+        await editBtn.click();
+        await expect(panel.locator('.bcm-detail-save')).toBeVisible();
+        await expect(panel.locator('.bcm-detail-cancel')).toBeVisible();
+        await expect(panel.locator('.bcm-detail-input-name')).toBeVisible();
+    });
+
+    test('Save persists name change and refreshes diagram', async ({ page }) => {
+        const newName = `${L2_NAME} EDITED`;
+        await openDiagram(page);
+        await selectMap(page);
+        const panel = await openDetailPanelOnL2(page);
+        await panel.locator('.bcm-detail-edit button').click();
+        const nameInput = panel.locator('.bcm-detail-input-name input');
+        await nameInput.fill(newName);
+        await panel.locator('.bcm-detail-save button').click();
+        // Panel returns to read mode showing new name
+        await expect(panel.locator('.bcm-detail-name')).toHaveText(newName, { timeout: 10000 });
+        // Diagram L2 box reflects new label
+        await expect(
+            page.locator(`svg.bcm-canvas g.bcm-node[data-node-level="2"][data-node-name="${newName}"]`)
+        ).toBeVisible({ timeout: 10000 });
+
+        // Reset name back so this test is idempotent for re-runs
+        await panel.locator('.bcm-detail-edit button').click();
+        await panel.locator('.bcm-detail-input-name input').fill(L2_NAME);
+        await panel.locator('.bcm-detail-save button').click();
+        await expect(panel.locator('.bcm-detail-name')).toHaveText(L2_NAME, { timeout: 10000 });
+    });
+
+    test('Cancel reverts unsaved name change', async ({ page }) => {
+        await openDiagram(page);
+        await selectMap(page);
+        const panel = await openDetailPanelOnL2(page);
+        await panel.locator('.bcm-detail-edit button').click();
+        const nameInput = panel.locator('.bcm-detail-input-name input');
+        await nameInput.fill('Unsaved Garbage');
+        await panel.locator('.bcm-detail-cancel button').click();
+        // Back in read mode with original name
+        await expect(panel.locator('.bcm-detail-name')).toHaveText(L2_NAME);
+        // Edit button visible again
+        await expect(panel.locator('.bcm-detail-edit')).toBeVisible();
+    });
+});
+
+// ── FP30 viewer regression — viewer project ───────────────────────────────────
+
+test.describe('Detail panel — viewer no-edit — viewer project', () => {
+    test('Viewer sees no Edit/Save/Cancel buttons in panel', async ({ page }) => {
+        await openDiagram(page);
+        await selectMap(page);
+        const panel = await openDetailPanelOnL2(page);
+        await expect(panel.locator('.bcm-detail-edit')).toHaveCount(0);
+        await expect(panel.locator('.bcm-detail-save')).toHaveCount(0);
+        await expect(panel.locator('.bcm-detail-cancel')).toHaveCount(0);
+    });
+});
 
 // ── Teardown — editor project ─────────────────────────────────────────────────
 

@@ -616,7 +616,7 @@ When the Detail Panel is open
 Then Name, Definition, Strategy Support, Architectural Nuance, and Hide From Diagram are editable  
 And Save and Cancel buttons are visible  
 
-> Deferred: edit affordances out of scope for #22; FP30 in #3
+> Tested by: capability-detail.spec.ts — "Editor sees Edit button and can enter edit mode"
 
 **Scenario: Viewer sees read-only fields**
 
@@ -625,7 +625,7 @@ When the Detail Panel is open
 Then all fields are read-only  
 And no Save or Cancel button is visible  
 
-> Tested by: bcm_CapabilityDetail.test.js — "No Save / Cancel buttons rendered (read-only scope)"
+> Tested by: capability-detail.spec.ts — "Viewer sees no Edit/Save/Cancel buttons in panel"; bcm_CapabilityDetail.test.js — "Viewer (canEdit=false) sees no Edit button", "Read mode has no Save / Cancel buttons"
 
 **Scenario: Save persists field changes**
 
@@ -633,9 +633,9 @@ Given an Editor has edited one or more fields in the Detail Panel
 When the user clicks Save  
 Then the changes are written to the Salesforce record via Apex  
 And the panel shows the saved values  
-And the diagram refreshes to reflect any Name or Hide From Diagram changes  
+And the diagram refreshes to reflect any Name change  
 
-> Deferred: edit affordances out of scope for #22; FP30 in #3
+> Tested by: capability-detail.spec.ts — "Save persists name change and refreshes diagram"; bcm_CapabilityServiceTest.updateCapability_persists_allowlistedFields; bcm_CapabilityServiceTest.updateCapability_persists_hideFromDiagram; bcm_CapabilityControllerTest.updateCapability_persists; bcm_CapabilityMap.test.js — "saved event calls updateCapability and rebuilds diagram with new name"
 
 **Scenario: Cancel discards unsaved changes**
 
@@ -643,7 +643,7 @@ Given an Editor has edited fields without saving
 When the user clicks Cancel  
 Then the field values revert to their last-saved state  
 
-> Deferred: edit affordances out of scope for #22; FP30 in #3
+> Tested by: capability-detail.spec.ts — "Cancel reverts unsaved name change"; bcm_CapabilityDetail.test.js — "Cancel reverts to read mode without firing saved"
 
 **Scenario: Save error shows inline message**
 
@@ -652,4 +652,4 @@ When the Apex call returns an error
 Then an error message is shown inside the panel  
 And the panel remains open  
 
-> Deferred: Apex error path requires a seeded validation rule trigger; verified manually
+> Tested by: bcm_CapabilityDetail.test.js — "Save error keeps edit mode and surfaces error message"; bcm_CapabilityMap.test.js — "saved event Apex error surfaces errorMessage to detail panel"

@@ -609,7 +609,7 @@ Distinct from FP19 (delete Capability via standard form): no record removal, onl
 
 **Total COSMIC Functional Size: 122 CFP**
 
-> **Delivery status:** FP29 delivered in GH issue #22 (2026-06-02). FP30 deferred to GH issue #3.
+> **Delivery status:** FP29 delivered in GH issue #22 (2026-06-02). FP30 delivered in GH issue #23 (2026-06-03).
 
 ---
 

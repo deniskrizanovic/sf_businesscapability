@@ -22,12 +22,13 @@ const SAMPLE_BREADCRUMB = [
     { id: 'L2-1', label: 'Sub-Capability A' },
 ];
 
-function mount({ capability = null, breadcrumb = [], isLoading = false, errorMessage = null } = {}) {
+function mount({ capability = null, breadcrumb = [], isLoading = false, errorMessage = null, canEdit = false } = {}) {
     const element = createElement('c-bcm_-capability-detail', { is: BcmCapabilityDetail });
     element.capability   = capability;
     element.breadcrumb   = breadcrumb;
     element.isLoading    = isLoading;
     element.errorMessage = errorMessage;
+    element.canEdit      = canEdit;
     document.body.appendChild(element);
     return element;
 }
@@ -123,7 +124,7 @@ describe('bcm_CapabilityDetail rendering', () => {
         expect(err.textContent).toContain('Failed to load capability detail');
     });
 
-    it('No Save / Cancel buttons rendered (read-only scope)', () => {
+    it('Read mode has no Save / Cancel buttons', () => {
         const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB });
         const buttons = el.shadowRoot.querySelectorAll('lightning-button');
         for (const btn of buttons) {
@@ -131,6 +132,133 @@ describe('bcm_CapabilityDetail rendering', () => {
             expect(label).not.toBe('save');
             expect(label).not.toBe('cancel');
         }
+    });
+});
+
+describe('bcm_CapabilityDetail edit mode', () => {
+    it('Viewer (canEdit=false) sees no Edit button', () => {
+        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: false });
+        expect(el.shadowRoot.querySelector('.bcm-detail-edit')).toBeNull();
+    });
+
+    it('Editor (canEdit=true) sees Edit button in read mode', () => {
+        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: true });
+        expect(el.shadowRoot.querySelector('.bcm-detail-edit')).not.toBeNull();
+        expect(el.shadowRoot.querySelector('.bcm-detail-save')).toBeNull();
+        expect(el.shadowRoot.querySelector('.bcm-detail-cancel')).toBeNull();
+    });
+
+    it('Click Edit shows inputs and Save+Cancel; hides Edit', async () => {
+        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: true });
+        el.shadowRoot.querySelector('.bcm-detail-edit')
+            .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+        expect(el.shadowRoot.querySelector('.bcm-detail-input-name')).not.toBeNull();
+        expect(el.shadowRoot.querySelector('.bcm-detail-input-definition')).not.toBeNull();
+        expect(el.shadowRoot.querySelector('.bcm-detail-input-strategy')).not.toBeNull();
+        expect(el.shadowRoot.querySelector('.bcm-detail-input-nuance')).not.toBeNull();
+        expect(el.shadowRoot.querySelector('.bcm-detail-save')).not.toBeNull();
+        expect(el.shadowRoot.querySelector('.bcm-detail-cancel')).not.toBeNull();
+        expect(el.shadowRoot.querySelector('.bcm-detail-edit')).toBeNull();
+    });
+
+    it('Save fires saved event with draft payload', async () => {
+        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: true });
+        const handler = jest.fn();
+        el.addEventListener('saved', handler);
+
+        el.shadowRoot.querySelector('.bcm-detail-edit')
+            .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+
+        // Mutate name draft — set value then fire change event; handler reads evt.target.value
+        const nameInput = el.shadowRoot.querySelector('.bcm-detail-input-name');
+        nameInput.value = 'Edited Name';
+        nameInput.dispatchEvent(new CustomEvent('change'));
+        await flushPromises();
+
+        el.shadowRoot.querySelector('.bcm-detail-save')
+            .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+
+        expect(handler).toHaveBeenCalledTimes(1);
+        const payload = handler.mock.calls[0][0].detail;
+        expect(payload.id).toBe('L2-1');
+        expect(payload.name).toBe('Edited Name');
+        expect(payload.definition).toBe('<p>Definition body</p>');
+        expect(payload.strategySupport).toBe('<p>Strategy body</p>');
+        expect(payload.architecturalNuance).toBe('<p>Nuance body</p>');
+        expect(payload.hideFromDiagram).toBe(false);
+    });
+
+    it('Save keeps edit mode until parent re-feeds capability prop (success path)', async () => {
+        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: true });
+        el.shadowRoot.querySelector('.bcm-detail-edit')
+            .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+        el.shadowRoot.querySelector('.bcm-detail-save')
+            .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+        // Still in edit mode immediately after Save dispatch — parent has not confirmed yet
+        expect(el.shadowRoot.querySelector('.bcm-detail-input-name')).not.toBeNull();
+
+        // Parent re-feeds same id with no error -> exit edit mode
+        el.capability = { ...SAMPLE_CAPABILITY, Name: 'Edited' };
+        await flushPromises();
+        expect(el.shadowRoot.querySelector('.bcm-detail-input-name')).toBeNull();
+        expect(el.shadowRoot.querySelector('.bcm-detail-name')).not.toBeNull();
+    });
+
+    it('Save error keeps edit mode and surfaces error message', async () => {
+        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: true });
+        el.shadowRoot.querySelector('.bcm-detail-edit')
+            .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+        el.shadowRoot.querySelector('.bcm-detail-save')
+            .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+
+        // Parent surfaces error — edit mode must remain so drafts are not lost
+        el.errorMessage = 'Save failed';
+        el.capability = { ...SAMPLE_CAPABILITY };
+        await flushPromises();
+        expect(el.shadowRoot.querySelector('.bcm-detail-input-name')).not.toBeNull();
+        const err = el.shadowRoot.querySelector('.bcm-detail-error');
+        expect(err).not.toBeNull();
+        expect(err.textContent).toContain('Save failed');
+    });
+
+    it('Switching to a different capability id resets edit mode to read', async () => {
+        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: true });
+        el.shadowRoot.querySelector('.bcm-detail-edit')
+            .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+        expect(el.shadowRoot.querySelector('.bcm-detail-input-name')).not.toBeNull();
+
+        el.capability = { ...SAMPLE_CAPABILITY, Id: 'L2-OTHER', Name: 'Other' };
+        await flushPromises();
+        expect(el.shadowRoot.querySelector('.bcm-detail-input-name')).toBeNull();
+        expect(el.shadowRoot.querySelector('.bcm-detail-name')).not.toBeNull();
+    });
+
+    it('Cancel reverts to read mode without firing saved', async () => {
+        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: true });
+        const handler = jest.fn();
+        el.addEventListener('saved', handler);
+
+        el.shadowRoot.querySelector('.bcm-detail-edit')
+            .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+        el.shadowRoot.querySelector('.bcm-detail-cancel')
+            .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+
+        expect(handler).not.toHaveBeenCalled();
+        // Read-mode markers re-appear
+        expect(el.shadowRoot.querySelector('.bcm-detail-name')).not.toBeNull();
+        expect(el.shadowRoot.querySelector('.bcm-detail-input-name')).toBeNull();
+        // Read-mode shows the original (unedited) name
+        expect(el.shadowRoot.querySelector('.bcm-detail-name').textContent).toBe('Sub-Capability A');
     });
 });
 

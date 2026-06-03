@@ -141,9 +141,10 @@
                                         x={line.x}
                                         y={line.y}
                                         dominant-baseline="middle"
-                                        fill="#444444"
+                                        fill={line.fill}
                                         font-size="11"
-                                        font-weight={line.fontWeight}>
+                                        font-weight={line.fontWeight}
+                                        font-style={line.fontStyle}>
                                         {line.text}
                                     </text>
                                 </template>
@@ -195,7 +196,9 @@
             breadcrumb={detailBreadcrumb}
             is-loading={detailIsLoading}
             error-message={detailErrorMessage}
-            onclose={handleDetailClose}>
+            can-edit={canEdit}
+            onclose={handleDetailClose}
+            onsaved={handleDetailSaved}>
         </c-bcm_-capability-detail>
     </div>
 </template>

@@ -156,7 +156,7 @@ private class bcm_CapabilityControllerTest {
         update l2;
 
         // Seed own tag junction so assertion is independent of @TestSetup
-        bcm_Tag__c localTag = TestDataFactory.createTag('Detail Test Tag', '#1D3557', true);
+        bcm_Tag__c localTag = TestDataFactory.createTag('Detail Test Tag', '#E63946', true);
         TestDataFactory.createCapabilityTag(l2.Id, localTag.Id, true);
 
         // When
@@ -187,6 +187,50 @@ private class bcm_CapabilityControllerTest {
     }
 
     @IsTest
+    static void updateCapability_persists() {
+        // Given
+        bcm_Map__c mapA = [SELECT Id FROM bcm_Map__c WHERE Name = 'Test Map A' LIMIT 1];
+        bcm_Capability__c l2 = [
+            SELECT Id FROM bcm_Capability__c
+            WHERE bcm_Map__c = :mapA.Id AND bcm_Level__c = 2 LIMIT 1
+        ];
+        bcm_Capability__c input = new bcm_Capability__c(
+            Id                          = l2.Id,
+            Name                        = 'Renamed L2',
+            bcm_Definition__c           = '<p>Edited def</p>',
+            bcm_StrategySupport__c      = '<p>Edited strategy</p>',
+            bcm_ArchitecturalNuance__c  = '<p>Edited nuance</p>'
+        );
+
+        // When
+        Test.startTest();
+        bcm_CapabilityController.updateCapability(input);
+        Test.stopTest();
+
+        // Then
+        bcm_Capability__c after = [
+            SELECT Name, bcm_Definition__c, bcm_StrategySupport__c, bcm_ArchitecturalNuance__c
+            FROM bcm_Capability__c WHERE Id = :l2.Id
+        ];
+        Assert.areEqual('Renamed L2',                after.Name);
+        Assert.areEqual('<p>Edited def</p>',         after.bcm_Definition__c);
+        Assert.areEqual('<p>Edited strategy</p>',    after.bcm_StrategySupport__c);
+        Assert.areEqual('<p>Edited nuance</p>',      after.bcm_ArchitecturalNuance__c);
+    }
+
+    @IsTest
+    static void updateCapability_nullCapability_throws() {
+        Test.startTest();
+        try {
+            bcm_CapabilityController.updateCapability(null);
+            Assert.fail('Expected AuraHandledException for null capability');
+        } catch (AuraHandledException ex) {
+            Assert.isNotNull(ex);
+        }
+        Test.stopTest();
+    }
+
+    @IsTest
     static void shouldWrapException_WhenUserLacksAccess() {
         // Given — user with no object permissions; USER_MODE -> QueryException -> AuraHandledException
         User restrictedUser = TestDataFactory.createUserWithPermSet('bcm_ReadOnly');
@@ -199,6 +243,49 @@ private class bcm_CapabilityControllerTest {
                 bcm_CapabilityController.getCapabilities(mapA.Id);
             } catch (AuraHandledException ex) {
                 Assert.isNotNull(ex, 'AuraHandledException expected when USER_MODE denies access');
+            }
+        }
+        Test.stopTest();
+    }
+
+    @IsTest
+    static void getCapabilityDetail_wrapsException_WhenUserLacksAccess() {
+        // Given — restricted user; USER_MODE on detail query -> wrapped AuraHandledException
+        User restrictedUser = TestDataFactory.createUserWithPermSet('bcm_ReadOnly');
+        bcm_Map__c mapA = [SELECT Id FROM bcm_Map__c WHERE Name = 'Test Map A' LIMIT 1];
+        bcm_Capability__c l2 = [
+            SELECT Id FROM bcm_Capability__c
+            WHERE bcm_Map__c = :mapA.Id AND bcm_Level__c = 2 LIMIT 1
+        ];
+
+        Test.startTest();
+        System.runAs(restrictedUser) {
+            try {
+                bcm_CapabilityController.getCapabilityDetail(l2.Id);
+            } catch (AuraHandledException ex) {
+                Assert.isNotNull(ex, 'AuraHandledException expected when USER_MODE denies access');
+            }
+        }
+        Test.stopTest();
+    }
+
+    @IsTest
+    static void hideCapability_wrapsException_WhenUserLacksAccess() {
+        // Given — restricted user; `update as user` -> SecurityException -> wrapped AuraHandledException
+        User restrictedUser = TestDataFactory.createUserWithPermSet('bcm_ReadOnly');
+        bcm_Map__c mapA = [SELECT Id FROM bcm_Map__c WHERE Name = 'Test Map A' LIMIT 1];
+        bcm_Capability__c l1 = [
+            SELECT Id FROM bcm_Capability__c
+            WHERE bcm_Map__c = :mapA.Id AND bcm_Level__c = 1 LIMIT 1
+        ];
+
+        Test.startTest();
+        System.runAs(restrictedUser) {
+            try {
+                bcm_CapabilityController.hideCapability(l1.Id);
+                Assert.fail('Expected AuraHandledException when restricted user attempts hide');
+            } catch (AuraHandledException ex) {
+                Assert.isNotNull(ex, 'AuraHandledException expected when update as user denied');
             }
         }
         Test.stopTest();
