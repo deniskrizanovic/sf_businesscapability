@@ -842,4 +842,28 @@ describe('BcmCapabilityMap detail panel — saved flow', () => {
         await flushPromises();
         expect(mockUpdateCapabilityImpl).not.toHaveBeenCalled();
     });
+
+    it('saved event Apex error surfaces errorMessage to detail panel', async () => {
+        mockUpdateCapabilityImpl = jest.fn().mockRejectedValue({
+            body: { message: 'Validation rule blocked the save' },
+        });
+        const panel = element.shadowRoot.querySelector('c-bcm_-capability-detail');
+
+        panel.dispatchEvent(new CustomEvent('saved', {
+            detail: {
+                id                  : 'L2-A1',
+                name                : 'Will Fail',
+                definition          : '<p>D</p>',
+                strategySupport     : '<p>S</p>',
+                architecturalNuance : '<p>N</p>',
+                hideFromDiagram     : false,
+            },
+        }));
+        await flushPromises();
+        await flushPromises();
+
+        expect(mockUpdateCapabilityImpl).toHaveBeenCalledTimes(1);
+        const refreshed = element.shadowRoot.querySelector('c-bcm_-capability-detail');
+        expect(refreshed.errorMessage).toBe('Validation rule blocked the save');
+    });
 });

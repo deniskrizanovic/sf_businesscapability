@@ -652,4 +652,4 @@ When the Apex call returns an error
 Then an error message is shown inside the panel  
 And the panel remains open  
 
-> Deferred: Apex error path requires a seeded validation rule trigger; verified manually
+> Tested by: bcm_CapabilityDetail.test.js — "Save error keeps edit mode and surfaces error message"; bcm_CapabilityMap.test.js — "saved event Apex error surfaces errorMessage to detail panel"

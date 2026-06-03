@@ -209,7 +209,7 @@ describe('bcm_CapabilityDetail edit mode', () => {
         expect(el.shadowRoot.querySelector('.bcm-detail-name')).not.toBeNull();
     });
 
-    it('Save error keeps edit mode so user can retry', async () => {
+    it('Save error keeps edit mode and surfaces error message', async () => {
         const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: true });
         el.shadowRoot.querySelector('.bcm-detail-edit')
             .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
@@ -223,6 +223,9 @@ describe('bcm_CapabilityDetail edit mode', () => {
         el.capability = { ...SAMPLE_CAPABILITY };
         await flushPromises();
         expect(el.shadowRoot.querySelector('.bcm-detail-input-name')).not.toBeNull();
+        const err = el.shadowRoot.querySelector('.bcm-detail-error');
+        expect(err).not.toBeNull();
+        expect(err.textContent).toContain('Save failed');
     });
 
     it('Switching to a different capability id resets edit mode to read', async () => {

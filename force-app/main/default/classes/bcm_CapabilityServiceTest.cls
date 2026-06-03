@@ -78,6 +78,74 @@ private class bcm_CapabilityServiceTest {
     }
 
     @IsTest
+    static void updateCapability_partialInput_preservesUnsetFields() {
+        // Given — record seeded with Definition / Strategy / Nuance values
+        bcm_Capability__c cap = [
+            SELECT Id, Name, bcm_Definition__c, bcm_StrategySupport__c,
+                   bcm_ArchitecturalNuance__c, bcm_HideFromDiagram__c
+            FROM bcm_Capability__c
+            WHERE bcm_Map__r.Name = 'Service Test Map' LIMIT 1
+        ];
+        String  origDef    = cap.bcm_Definition__c;
+        String  origStrat  = cap.bcm_StrategySupport__c;
+        String  origNuance = cap.bcm_ArchitecturalNuance__c;
+        Boolean origHide   = cap.bcm_HideFromDiagram__c;
+
+        // Caller submits ONLY a Name change — other fields left null on input
+        bcm_Capability__c input = new bcm_Capability__c(
+            Id   = cap.Id,
+            Name = 'Only Name Changed'
+        );
+
+        // When
+        Test.startTest();
+        bcm_CapabilityService.updateCapability(input);
+        Test.stopTest();
+
+        // Then — Name updated; other fields untouched (no null overwrite)
+        bcm_Capability__c after = [
+            SELECT Name, bcm_Definition__c, bcm_StrategySupport__c,
+                   bcm_ArchitecturalNuance__c, bcm_HideFromDiagram__c
+            FROM bcm_Capability__c WHERE Id = :cap.Id
+        ];
+        Assert.areEqual('Only Name Changed', after.Name);
+        Assert.areEqual(origDef,    after.bcm_Definition__c,
+            'Definition must not be nulled when input omits it');
+        Assert.areEqual(origStrat,  after.bcm_StrategySupport__c,
+            'StrategySupport must not be nulled when input omits it');
+        Assert.areEqual(origNuance, after.bcm_ArchitecturalNuance__c,
+            'ArchitecturalNuance must not be nulled when input omits it');
+        Assert.areEqual(origHide,   after.bcm_HideFromDiagram__c,
+            'HideFromDiagram must not be flipped when input omits it');
+    }
+
+    @IsTest
+    static void updateCapability_emptyString_clearsRichTextField() {
+        // Given — record with seeded Definition
+        bcm_Capability__c cap = [
+            SELECT Id, bcm_Definition__c FROM bcm_Capability__c
+            WHERE bcm_Map__r.Name = 'Service Test Map' LIMIT 1
+        ];
+        Assert.isNotNull(cap.bcm_Definition__c, 'Precondition: Definition seeded');
+
+        // When — empty string is the explicit "clear" signal
+        // (Salesforce coerces empty rich-text to null on persist; both reflect "cleared".)
+        Test.startTest();
+        bcm_CapabilityService.updateCapability(new bcm_Capability__c(
+            Id                = cap.Id,
+            bcm_Definition__c = ''
+        ));
+        Test.stopTest();
+
+        // Then
+        bcm_Capability__c after = [
+            SELECT bcm_Definition__c FROM bcm_Capability__c WHERE Id = :cap.Id
+        ];
+        Assert.isTrue(String.isBlank(after.bcm_Definition__c),
+            'Empty string input should clear the field (null or empty after persist)');
+    }
+
+    @IsTest
     static void updateCapability_persists_hideFromDiagram() {
         // Given
         bcm_Capability__c cap = [
