@@ -516,7 +516,7 @@ export default class BcmCapabilityMap extends LightningElement {
         const mouseX = evt.clientX - rect.left;
         const mouseY = evt.clientY - rect.top;
         this.panX    = mouseX - (mouseX - this.panX) * (newZoom / this.zoom);
-        this.panY    = Math.min(0, mouseY - (mouseY - this.panY) * (newZoom / this.zoom));
+        this.panY    = mouseY - (mouseY - this.panY) * (newZoom / this.zoom);
         this.zoom    = newZoom;
     }
 
@@ -537,7 +537,7 @@ export default class BcmCapabilityMap extends LightningElement {
     handleSvgMouseMove(evt) {
         if (!this._isDragging) return;
         this.panX = this._panStartX + (evt.clientX - this._dragStartX);
-        this.panY = Math.min(0, this._panStartY + (evt.clientY - this._dragStartY));
+        this.panY = this._panStartY + (evt.clientY - this._dragStartY);
     }
 
     handleSvgMouseUp() {
@@ -757,8 +757,8 @@ export default class BcmCapabilityMap extends LightningElement {
         if (!this._keyNavMode) {
             if (evt.key === 'ArrowLeft')  this.panX += PAN_STEP;
             if (evt.key === 'ArrowRight') this.panX -= PAN_STEP;
-            if (evt.key === 'ArrowUp')    this.panY = Math.min(0, this.panY + PAN_STEP);
-            if (evt.key === 'ArrowDown')  this.panY += -PAN_STEP;
+            if (evt.key === 'ArrowUp')    this.panY += PAN_STEP;
+            if (evt.key === 'ArrowDown')  this.panY -= PAN_STEP;
         } else {
             if (evt.key === 'Escape') {
                 this._keyNavMode   = false;
