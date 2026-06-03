@@ -22,6 +22,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>bcm_Capability__c.bcm_IsCrossCutting__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>bcm_Capability__c.bcm_ExternalId__c</field>
         <readable>true</readable>
     </fieldPermissions>

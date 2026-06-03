@@ -270,6 +270,33 @@ private class bcm_CapabilityControllerTest {
     }
 
     @IsTest
+    static void getCapabilities_returnsIsCrossCuttingFlag_forBothValues() {
+        // Given — flip the L1 record's flag on, leave L2 default false
+        bcm_Map__c mapA = [SELECT Id FROM bcm_Map__c WHERE Name = 'Test Map A' LIMIT 1];
+        bcm_Capability__c l1 = [
+            SELECT Id FROM bcm_Capability__c
+            WHERE bcm_Map__c = :mapA.Id AND bcm_Level__c = 1 LIMIT 1
+        ];
+        l1.bcm_IsCrossCutting__c = true;
+        update l1;
+
+        // When
+        Test.startTest();
+        List<bcm_Capability__c> result = bcm_CapabilityController.getCapabilities(mapA.Id);
+        Test.stopTest();
+
+        // Then
+        Boolean l1Flag = null;
+        Boolean l2Flag = null;
+        for (bcm_Capability__c cap : result) {
+            if (cap.bcm_Level__c == 1) l1Flag = cap.bcm_IsCrossCutting__c;
+            if (cap.bcm_Level__c == 2) l2Flag = cap.bcm_IsCrossCutting__c;
+        }
+        Assert.areEqual(true,  l1Flag, 'L1 should round-trip the cross-cutting flag as true');
+        Assert.areEqual(false, l2Flag, 'L2 default should round-trip as false');
+    }
+
+    @IsTest
     static void hideCapability_wrapsException_WhenUserLacksAccess() {
         // Given — restricted user; `update as user` -> SecurityException -> wrapped AuraHandledException
         User restrictedUser = TestDataFactory.createUserWithPermSet('bcm_ReadOnly');

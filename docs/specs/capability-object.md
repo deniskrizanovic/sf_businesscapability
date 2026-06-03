@@ -236,3 +236,72 @@ Then I see a Capabilities tab in the navigation bar
 Given I am logged in as a Viewer  
 When I open the Business Capability Map app  
 Then I see a Capabilities tab in the navigation bar  
+
+---
+
+## Feature: Cross-cutting flag on Capability
+
+**Scenario: Editor can toggle the cross-cutting flag**
+
+Given I am logged in as an Editor  
+When I open a Capability record page and tick the Is Cross-Cutting checkbox  
+Then the field saves and the value persists on reload  
+
+> Deferred: platform-enforced (FLS + standard inline edit); verified via UI, not Apex
+
+**Scenario: Viewer sees the cross-cutting flag read-only**
+
+Given I am logged in as a Viewer  
+When I open a Capability record page  
+Then I see the Is Cross-Cutting field as read-only  
+
+> Deferred: read access is permission-set-enforced; verified via UI, not Apex
+
+**Scenario: Capability selector returns the cross-cutting flag in its payload**
+
+Given a Level 1 Capability with Is Cross-Cutting set to true and a Level 2 Capability with the default value  
+When the diagram requests capabilities for the map  
+Then the L1 record's payload contains `bcm_IsCrossCutting__c = true`  
+And the L2 record's payload contains `bcm_IsCrossCutting__c = false`  
+
+> Tested by: `bcm_CapabilityControllerTest.getCapabilities_returnsIsCrossCuttingFlag_forBothValues`
+
+**Scenario: Cross-cutting flag is rejected on a Level 2 capability**
+
+Given I am logged in as an Editor and a Level 2 Capability exists  
+When I tick Is Cross-Cutting and try to save  
+Then I see the error: "The Cross-Cutting flag may only be set on Level 1 capabilities."  
+
+> Tested by: `bcm_CapabilityValidationTest.isCrossCutting_onLevel2_isRejected`
+
+**Scenario: Cross-cutting flag is rejected on a Level 3 capability**
+
+Given I am logged in as an Editor and a Level 3 Capability exists  
+When I tick Is Cross-Cutting and try to save  
+Then I see the error: "The Cross-Cutting flag may only be set on Level 1 capabilities."  
+
+> Tested by: `bcm_CapabilityValidationTest.isCrossCutting_onLevel3_isRejected`
+
+**Scenario: Cross-cutting flag saves successfully on a Level 1 capability**
+
+Given I am logged in as an Editor  
+When I tick Is Cross-Cutting on a new Capability with Level 1 and no parent  
+Then the record saves successfully  
+
+> Tested by: `bcm_CapabilityValidationTest.isCrossCutting_onLevel1_succeeds`
+
+**Scenario: Cross-cutting flag can be cleared when reparenting an L1 to L2**
+
+Given a Level 1 Capability with Is Cross-Cutting set to true  
+When I reparent it under another Level 1 (making it Level 2) and clear Is Cross-Cutting in the same save  
+Then the record saves successfully  
+
+> Tested by: `bcm_CapabilityValidationTest.isCrossCutting_clearedOnReparentToL2_succeeds`
+
+**Scenario: Reparenting an L1 with the cross-cutting flag still set is rejected**
+
+Given a Level 1 Capability with Is Cross-Cutting set to true  
+When I reparent it under another Level 1 (making it Level 2) without clearing Is Cross-Cutting  
+Then I see the error: "The Cross-Cutting flag may only be set on Level 1 capabilities."  
+
+> Tested by: `bcm_CapabilityValidationTest.isCrossCutting_remainsTrue_whenReparentedToL2_isRejected`

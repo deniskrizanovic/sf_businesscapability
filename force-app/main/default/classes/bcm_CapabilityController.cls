@@ -23,7 +23,7 @@ public with sharing class bcm_CapabilityController {
                 SELECT Id, Name, bcm_Parent__c, bcm_Level__c, bcm_SortOrder__c,
                        bcm_ExternalId__c, bcm_Definition__c,
                        bcm_StrategySupport__c, bcm_ArchitecturalNuance__c,
-                       bcm_HideFromDiagram__c,
+                       bcm_HideFromDiagram__c, bcm_IsCrossCutting__c,
                        (SELECT bcm_Tag__c, bcm_Tag__r.Name, bcm_Tag__r.bcm_Colour__c
                         FROM Tags__r)
                 FROM bcm_Capability__c
@@ -53,6 +53,7 @@ public with sharing class bcm_CapabilityController {
                 SELECT Id, Name, bcm_Parent__c, bcm_Level__c,
                        bcm_Definition__c, bcm_StrategySupport__c,
                        bcm_ArchitecturalNuance__c, bcm_HideFromDiagram__c,
+                       bcm_IsCrossCutting__c,
                        (SELECT bcm_Tag__c, bcm_Tag__r.Name, bcm_Tag__r.bcm_Colour__c
                           FROM Tags__r)
                 FROM bcm_Capability__c

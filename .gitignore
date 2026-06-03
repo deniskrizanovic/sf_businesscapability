@@ -75,3 +75,6 @@ docs/homes-nsw-bcm.json
 
 # Temporary retrieved org metadata
 retrieved_temp/
+
+# AI session artifacts
+.ai/
