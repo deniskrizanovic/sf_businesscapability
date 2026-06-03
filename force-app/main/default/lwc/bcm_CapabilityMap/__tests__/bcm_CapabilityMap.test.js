@@ -937,4 +937,44 @@ describe('BcmCapabilityMap session persistence', () => {
             setItemSpy.mockRestore();
         }
     });
+
+    it('Silent fallback when sessionStorage.getItem throws on init', async () => {
+        const getItemSpy = jest.spyOn(Storage.prototype, 'getItem')
+            .mockImplementation(() => { throw new Error('SecurityError'); });
+        try {
+            document.body.removeChild(element);
+            mockCapabilitiesImpl.mockClear();
+            element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+            document.body.appendChild(element);
+            expect(() => {
+                mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+            }).not.toThrow();
+            await flushPromises();
+            // No restore attempted -> _loadCapabilities not called
+            expect(mockCapabilitiesImpl).not.toHaveBeenCalled();
+        } finally {
+            getItemSpy.mockRestore();
+        }
+    });
+
+    it('Silent fallback when sessionStorage.removeItem throws (stale-id path)', async () => {
+        sessionStorage.setItem('bcm.visualisation.selectedMapId', 'MAP-DELETED');
+        const removeItemSpy = jest.spyOn(Storage.prototype, 'removeItem')
+            .mockImplementation(() => { throw new Error('SecurityError'); });
+        try {
+            document.body.removeChild(element);
+            mockCapabilitiesImpl.mockClear();
+            element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+            document.body.appendChild(element);
+            expect(() => {
+                mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+            }).not.toThrow();
+            await flushPromises();
+            const combobox = element.shadowRoot.querySelector('lightning-combobox');
+            expect(combobox.value).toBeFalsy();
+            expect(mockCapabilitiesImpl).not.toHaveBeenCalled();
+        } finally {
+            removeItemSpy.mockRestore();
+        }
+    });
 });
