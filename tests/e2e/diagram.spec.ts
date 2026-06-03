@@ -119,6 +119,22 @@ test.describe('Map selector — editor project', () => {
         const polygonCount = await page.locator('.bcm-canvas polygon').count();
         expect(polygonCount).toBe(0);
     });
+
+    test('Selected map persists across page reload within same session', async ({ page }) => {
+        await openDiagram(page);
+        await selectMapFromCombobox(page);
+        // Reload reuses tab — sessionStorage retained
+        await page.reload();
+        await page.locator('.bcm-canvas').waitFor({ state: 'visible', timeout: 20000 });
+        // Polygon must render without re-selecting from dropdown
+        await page.locator('.bcm-canvas polygon').first().waitFor({ state: 'visible', timeout: 20000 });
+        // Combobox displays the seeded map name
+        const combobox = page.getByRole('combobox', { name: 'Map' }).first();
+        await expect(combobox).toHaveValue(MAP_NAME).catch(async () => {
+            // lightning-combobox surfaces selection via aria-activedescendant; fall back to text
+            await expect(combobox).toContainText(MAP_NAME);
+        });
+    });
 });
 
 // ── Diagram structure — editor project ────────────────────────────────────────

@@ -1,10 +1,12 @@
 import { createElement } from 'lwc';
 import { createTestWireAdapter } from '@salesforce/wire-service-jest-util';
 
-import BcmCapabilityMap from 'c/bcm_CapabilityMap';
-
 const mockGetMaps = createTestWireAdapter();
 const mockGetTags = createTestWireAdapter();
+
+// require() (not import) ensures mockGetMaps/mockGetTags are constructed
+// before the component module's apex-scoped imports resolve to .default.
+const BcmCapabilityMap = require('c/bcm_CapabilityMap').default;
 
 let mockHideCapabilityImpl = jest.fn().mockResolvedValue(undefined);
 let mockGetCapabilityDetailImpl = jest.fn().mockResolvedValue(null);
@@ -24,8 +26,8 @@ const CAPS_DATA = [
 let mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
 
 jest.mock('@salesforce/customPermission/bcm_CanEdit', () => false, { virtual: true });
-jest.mock('@salesforce/apex/bcm_MapController.getMaps', () => mockGetMaps, { virtual: true });
-jest.mock('@salesforce/apex/bcm_TagController.getTags', () => mockGetTags, { virtual: true });
+jest.mock('@salesforce/apex/bcm_MapController.getMaps', () => ({ __esModule: true, default: mockGetMaps }), { virtual: true });
+jest.mock('@salesforce/apex/bcm_TagController.getTags', () => ({ __esModule: true, default: mockGetTags }), { virtual: true });
 jest.mock('@salesforce/apex/bcm_CapabilityController.getCapabilities',
     () => {
         const fn = function(...args) { return mockCapabilitiesImpl(...args); };
@@ -865,5 +867,114 @@ describe('BcmCapabilityMap detail panel — saved flow', () => {
         expect(mockUpdateCapabilityImpl).toHaveBeenCalledTimes(1);
         const refreshed = element.shadowRoot.querySelector('c-bcm_-capability-detail');
         expect(refreshed.errorMessage).toBe('Validation rule blocked the save');
+    });
+});
+
+describe('BcmCapabilityMap session persistence', () => {
+    let element;
+
+    beforeEach(() => {
+        sessionStorage.clear();
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+    });
+
+    afterEach(() => {
+        document.body.removeChild(element);
+        sessionStorage.clear();
+        jest.clearAllMocks();
+    });
+
+    it('Writes selectedMapId to sessionStorage on map change', async () => {
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }, { Id: 'MAP-2', Name: 'Map 2' }], error: undefined });
+        await flushPromises();
+        const combobox = element.shadowRoot.querySelector('lightning-combobox');
+        combobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'MAP-2' } }));
+        await flushPromises();
+        expect(sessionStorage.getItem('bcm.visualisation.selectedMapId')).toBe('MAP-2');
+    });
+
+    it('Restores selectedMapId from sessionStorage on init when id is in mapOptions', async () => {
+        sessionStorage.setItem('bcm.visualisation.selectedMapId', 'MAP-2');
+        document.body.removeChild(element);
+        mockCapabilitiesImpl.mockClear();
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }, { Id: 'MAP-2', Name: 'Map 2' }], error: undefined });
+        await flushPromises();
+        const combobox = element.shadowRoot.querySelector('lightning-combobox');
+        expect(combobox.value).toBe('MAP-2');
+        expect(mockCapabilitiesImpl).toHaveBeenCalledWith({ mapId: 'MAP-2' });
+    });
+
+    it('Clears persisted id and leaves selector empty when id is not in mapOptions', async () => {
+        sessionStorage.setItem('bcm.visualisation.selectedMapId', 'MAP-DELETED');
+        document.body.removeChild(element);
+        mockCapabilitiesImpl.mockClear();
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        await flushPromises();
+        const combobox = element.shadowRoot.querySelector('lightning-combobox');
+        expect(combobox.value).toBeFalsy();
+        expect(sessionStorage.getItem('bcm.visualisation.selectedMapId')).toBeNull();
+        expect(mockCapabilitiesImpl).not.toHaveBeenCalled();
+    });
+
+    it('Silent fallback when sessionStorage.setItem throws (no crash, no abort)', async () => {
+        const setItemSpy = jest.spyOn(Storage.prototype, 'setItem')
+            .mockImplementation(() => { throw new Error('QuotaExceeded'); });
+        try {
+            mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+            await flushPromises();
+            const combobox = element.shadowRoot.querySelector('lightning-combobox');
+            expect(() => {
+                combobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'MAP-1' } }));
+            }).not.toThrow();
+            await flushPromises();
+            expect(mockCapabilitiesImpl).toHaveBeenCalledWith({ mapId: 'MAP-1' });
+        } finally {
+            setItemSpy.mockRestore();
+        }
+    });
+
+    it('Silent fallback when sessionStorage.getItem throws on init', async () => {
+        const getItemSpy = jest.spyOn(Storage.prototype, 'getItem')
+            .mockImplementation(() => { throw new Error('SecurityError'); });
+        try {
+            document.body.removeChild(element);
+            mockCapabilitiesImpl.mockClear();
+            element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+            document.body.appendChild(element);
+            expect(() => {
+                mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+            }).not.toThrow();
+            await flushPromises();
+            // No restore attempted -> _loadCapabilities not called
+            expect(mockCapabilitiesImpl).not.toHaveBeenCalled();
+        } finally {
+            getItemSpy.mockRestore();
+        }
+    });
+
+    it('Silent fallback when sessionStorage.removeItem throws (stale-id path)', async () => {
+        sessionStorage.setItem('bcm.visualisation.selectedMapId', 'MAP-DELETED');
+        const removeItemSpy = jest.spyOn(Storage.prototype, 'removeItem')
+            .mockImplementation(() => { throw new Error('SecurityError'); });
+        try {
+            document.body.removeChild(element);
+            mockCapabilitiesImpl.mockClear();
+            element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+            document.body.appendChild(element);
+            expect(() => {
+                mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+            }).not.toThrow();
+            await flushPromises();
+            const combobox = element.shadowRoot.querySelector('lightning-combobox');
+            expect(combobox.value).toBeFalsy();
+            expect(mockCapabilitiesImpl).not.toHaveBeenCalled();
+        } finally {
+            removeItemSpy.mockRestore();
+        }
     });
 });

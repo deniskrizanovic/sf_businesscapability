@@ -26,6 +26,20 @@ const ZOOM_MAX   = 3.0;
 const ZOOM_STEP  = 0.1;
 const ZOOM_DEFAULT = 1.0;
 
+const SESSION_KEY_SELECTED_MAP = 'bcm.visualisation.selectedMapId';
+
+function safeSessionGet(key) {
+    try { return sessionStorage.getItem(key); } catch (_) { return null; }
+}
+
+function safeSessionSet(key, value) {
+    try { sessionStorage.setItem(key, value); } catch (_) { /* silent */ }
+}
+
+function safeSessionRemove(key) {
+    try { sessionStorage.removeItem(key); } catch (_) { /* silent */ }
+}
+
 // ── Text wrap helper ──────────────────────────────────────────────────────────
 function wrapText(text, maxWidth, fontSize, maxLines) {
     const charWidth  = fontSize * 0.6;
@@ -58,9 +72,24 @@ export default class BcmCapabilityMap extends LightningElement {
     wiredMaps({ data, error }) {
         if (data) {
             this.mapOptions = data.map(m => ({ label: m.Name, value: m.Id }));
+            this._maybeRestoreSelectedMap();
         } else if (error) {
             this.errorMessage = error?.body?.message || 'Failed to load maps';
         }
+    }
+
+    _maybeRestoreSelectedMap() {
+        if (this._restoreAttempted) return;
+        this._restoreAttempted = true;
+        const persistedId = safeSessionGet(SESSION_KEY_SELECTED_MAP);
+        if (!persistedId) return;
+        const isValid = this.mapOptions.some(opt => opt.value === persistedId);
+        if (!isValid) {
+            safeSessionRemove(SESSION_KEY_SELECTED_MAP);
+            return;
+        }
+        this.selectedMapId = persistedId;
+        this._loadCapabilities();
     }
 
     @wire(getTags)
@@ -105,6 +134,7 @@ export default class BcmCapabilityMap extends LightningElement {
     _dragStartY     = 0;
     _panStartX      = 0;
     _panStartY      = 0;
+    _restoreAttempted = false;
 
     @api get zoom() { return this._zoom; }
     set zoom(v)      { this._zoom = v; }
@@ -407,6 +437,11 @@ export default class BcmCapabilityMap extends LightningElement {
         this.zoom = ZOOM_DEFAULT;
         this.panX = 0;
         this.panY = 0;
+        if (this.selectedMapId) {
+            safeSessionSet(SESSION_KEY_SELECTED_MAP, this.selectedMapId);
+        } else {
+            safeSessionRemove(SESSION_KEY_SELECTED_MAP);
+        }
         this._loadCapabilities();
     }
 

@@ -18,6 +18,33 @@ Then the diagram canvas is empty and no capabilities are rendered
 
 > Tested by: diagram.spec.ts — "Canvas shows no chevrons before a map is selected"
 
+**Scenario: Map selection persists for session — restore after navigation**
+
+Given the user selected a Map in the Visualisation page  
+When the user navigates to another tab and returns within the same browser session  
+Then the Map dropdown still shows the previously selected Map  
+And the canvas renders the capabilities for that Map  
+
+> Tested by: bcm_CapabilityMap.test.js — "Restores selectedMapId from sessionStorage on init when id is in mapOptions"; diagram.spec.ts — "Selected map persists across page reload within same session"
+
+**Scenario: Persisted Map id no longer in options is silently cleared**
+
+Given the user has a persisted Map id in sessionStorage that no longer exists in `mapOptions`  
+When the Visualisation panel reloads  
+Then the dropdown is empty  
+And the persisted key is removed from sessionStorage  
+
+> Tested by: bcm_CapabilityMap.test.js — "Clears persisted id and leaves selector empty when id is not in mapOptions"
+
+**Scenario: sessionStorage unavailable does not crash the page**
+
+Given `sessionStorage.setItem` throws (privacy mode / quota)  
+When the user selects a Map  
+Then the diagram still loads capabilities for that map  
+And no error is surfaced to the user  
+
+> Tested by: bcm_CapabilityMap.test.js — "Silent fallback when sessionStorage.setItem throws (no crash, no abort)"
+
 ---
 
 ## Feature: Diagram renders the correct structure for a selected Map
