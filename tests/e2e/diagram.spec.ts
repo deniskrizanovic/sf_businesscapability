@@ -64,6 +64,26 @@ const SAMPLE_JSON = JSON.stringify({
                 },
             ],
         },
+        {
+            externalId: `diag-l1cc-${RUN_ID}`,
+            name: `Cross-cutting Foo ${RUN_ID}`,
+            level: 1,
+            sortOrder: 3,
+            definition: '',
+            strategySupport: '',
+            architecturalNuance: '',
+            children: [],
+        },
+        {
+            externalId: `diag-l1cc2-${RUN_ID}`,
+            name: `Cross-cutting Bar ${RUN_ID}`,
+            level: 1,
+            sortOrder: 4,
+            definition: '',
+            strategySupport: '',
+            architecturalNuance: '',
+            children: [],
+        },
     ],
 });
 
@@ -105,6 +125,23 @@ test.describe('Map selector — editor project', () => {
         await flow.getByRole('button', { name: 'Import', exact: true }).click();
         await flow.getByText(/Successfully imported \d+ capabilities/).waitFor({ timeout: 90000 });
         await flow.getByRole('button', { name: 'Close', exact: true }).click();
+
+        // Flip the cross-cutting flag on Cross-cutting Foo via Apex (Import service does not yet expose it)
+        const orgAlias = process.env.SF_ORG_ALIAS;
+        if (!orgAlias) throw new Error('SF_ORG_ALIAS not set');
+        const apex = `
+List<bcm_Capability__c> cc = [SELECT Id FROM bcm_Capability__c
+                              WHERE Name IN ('Cross-cutting Foo ${RUN_ID}', 'Cross-cutting Bar ${RUN_ID}')];
+for (bcm_Capability__c c : cc) c.bcm_IsCrossCutting__c = true;
+update cc;
+`.trim();
+        const apexFile = path.resolve(`tests/e2e/.cc_${RUN_ID}.apex`);
+        fs.writeFileSync(apexFile, apex, 'utf-8');
+        try {
+            execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], { stdio: 'inherit' });
+        } finally {
+            fs.unlinkSync(apexFile);
+        }
 
         await ctx.close();
     });
@@ -159,6 +196,54 @@ test.describe('Diagram structure — editor project', () => {
         await selectMapFromCombobox(page);
         const bullets = page.locator('svg.bcm-canvas text').filter({ hasText: '•' });
         await expect(bullets.first()).toBeVisible({ timeout: 10000 });
+    });
+
+    test('Cross-cutting L1 renders as band chevron at bottom; non-cross-cutting still in column', async ({ page }) => {
+        await openDiagram(page);
+        await selectMapFromCombobox(page);
+
+        const ccName = `Cross-cutting Foo ${RUN_ID}`;
+        const ccBand = page.locator(`g.bcm-band-node[data-node-name="${ccName}"]`);
+        await expect(ccBand).toHaveCount(1);
+
+        // Non-cross-cutting L1 still in the regular column layer
+        const regularName = `Domain Alpha ${RUN_ID}`;
+        const regularCol = page.locator(
+            `g.bcm-node[data-node-level="1"][data-node-name="${regularName}"]`
+        );
+        await expect(regularCol).toHaveCount(1);
+
+        // Cross-cutting L1 is NOT in the regular column layer
+        const ccColumn = page.locator(
+            `g.bcm-node[data-node-level="1"][data-node-name="${ccName}"]`
+        );
+        await expect(ccColumn).toHaveCount(0);
+    });
+
+    test('Cross-cutting band layered stack: lowest sortOrder paints last (DOM-last) and chevrons span full width', async ({ page }) => {
+        await openDiagram(page);
+        await selectMapFromCombobox(page);
+
+        const bandNodes = page.locator('g.bcm-band-node');
+        await expect(bandNodes).toHaveCount(2);
+
+        // sortOrder 3 (Foo) < sortOrder 4 (Bar) → Foo last in DOM (on top of stack)
+        const lastName = await bandNodes.last().getAttribute('data-node-name');
+        expect(lastName).toBe(`Cross-cutting Foo ${RUN_ID}`);
+
+        // Polygon spans full width: first vertex x = DIAGRAM_PADDING (24)
+        const points = await bandNodes.last().locator('polygon').getAttribute('points');
+        const firstX = parseFloat(points!.trim().split(/\s+/)[0].split(',')[0]);
+        expect(firstX).toBe(24);
+    });
+
+    test('Clicking a cross-cutting band chevron opens the Detail Panel', async ({ page }) => {
+        await openDiagram(page);
+        await selectMapFromCombobox(page);
+
+        const ccName = `Cross-cutting Foo ${RUN_ID}`;
+        await page.locator(`g.bcm-band-node[data-node-name="${ccName}"]`).click();
+        await expect(page.locator('.bcm-detail-panel[data-open="true"]')).toBeVisible({ timeout: 10000 });
     });
 });
 

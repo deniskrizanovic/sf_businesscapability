@@ -21,6 +21,13 @@ const FONT_SIZE_L2      = 12;
 const FONT_SIZE_L3      = 11;
 const BULLET_INDENT     = Math.round(FONT_SIZE_L3 * 0.6 * 2);
 
+// Cross-cutting band layered visual
+const BAND_ROW_OVERLAP    = 12;
+const BAND_NOTCH          = CHEVRON_NOTCH * 2;
+const BAND_LABEL_PAD_X    = 18;
+const BAND_LABEL_PAD_BOTTOM = 8;
+const BAND_PALETTE        = ['#1a3d6b', '#2b4f7a', '#3f6492', '#587bad'];
+
 const ZOOM_MIN   = 0.2;
 const ZOOM_MAX   = 3.0;
 const ZOOM_STEP  = 0.1;
@@ -120,6 +127,7 @@ export default class BcmCapabilityMap extends LightningElement {
     @track focusedNodeId         = null;
     @track _layoutL1             = [];
     @track _layoutL2             = [];
+    @track _layoutBand           = [];
     @track detailCapability      = null;
     @track detailBreadcrumb      = [];
     @track detailIsLoading       = false;
@@ -159,13 +167,21 @@ export default class BcmCapabilityMap extends LightningElement {
         const cols  = this.showHidden
             ? roots.length
             : roots.filter(r => !r._hidden).length;
-        if (cols === 0) return 600;
-        return DIAGRAM_PADDING * 2 + cols * COLUMN_WIDTH + Math.max(0, cols - 1) * COLUMN_GAP;
+        const colWidth = cols > 0
+            ? DIAGRAM_PADDING * 2 + cols * COLUMN_WIDTH + Math.max(0, cols - 1) * COLUMN_GAP
+            : 0;
+        return colWidth === 0 ? 600 : colWidth;
     }
 
     get canvasHeight() {
         const tallest = this._tallestColumnHeight || 0;
-        return DIAGRAM_PADDING * 2 + CHEVRON_HEIGHT + BOX_GAP + tallest;
+        const nrows   = this._ccRootCount || 0;
+        const hasRegular = (this._l1Roots || []).length > 0;
+        const headerReserved = hasRegular ? CHEVRON_HEIGHT + BOX_GAP : 0;
+        const bandReserved = nrows > 0
+            ? nrows * CHEVRON_HEIGHT - (nrows - 1) * BAND_ROW_OVERLAP + BOX_GAP
+            : 0;
+        return DIAGRAM_PADDING * 2 + headerReserved + tallest + bandReserved;
     }
 
     get viewportTransform() {
@@ -176,6 +192,10 @@ export default class BcmCapabilityMap extends LightningElement {
         return `translate(${this.panX}, 0) scale(${this.zoom})`;
     }
 
+    get bandTransform() {
+        return `translate(${this.panX}, 0) scale(${this.zoom})`;
+    }
+
     get l2ClipY() {
         return (DIAGRAM_PADDING + CHEVRON_HEIGHT) * this.zoom;
     }
@@ -183,6 +203,7 @@ export default class BcmCapabilityMap extends LightningElement {
     // ── Tree & layout ─────────────────────────────────────────────────────────
     get l1Nodes() { return this._layoutL1 || []; }
     get l2Nodes() { return this._layoutL2 || []; }
+    get bandNodes() { return this._layoutBand || []; }
 
     _buildLayout(capabilities) {
         if (!capabilities?.length) {
@@ -190,6 +211,8 @@ export default class BcmCapabilityMap extends LightningElement {
             this._tallestColumnHeight = 0;
             this._layoutL1           = [];
             this._layoutL2           = [];
+            this._layoutBand         = [];
+            this._ccRootCount        = 0;
             this._colMap             = {};
             this._l2ByCol            = {};
             return;
@@ -220,7 +243,11 @@ export default class BcmCapabilityMap extends LightningElement {
             sortByOrder(node.children);
         }
 
-        this._l1Roots = roots;
+        // ── Partition cross-cutting L1s into the band layer ──────────────────
+        const ccRoots      = roots.filter(r => r.bcm_IsCrossCutting__c);
+        const regularRoots = roots.filter(r => !r.bcm_IsCrossCutting__c);
+        this._ccRootCount  = ccRoots.length;
+        this._l1Roots      = regularRoots;
 
         // ── Two-pass hidden cascade ──────────────────────────────────────────
         // Pass 1: mark nodes explicitly hidden
@@ -245,7 +272,7 @@ export default class BcmCapabilityMap extends LightningElement {
         const l2ByCol  = {};   // colIdx → [l2 ids]
 
         let visibleColIdx = 0;
-        roots.forEach((l1) => {
+        regularRoots.forEach((l1) => {
             // Skip hidden L1 when toggle is OFF
             if (l1._hidden && !this.showHidden) return;
 
@@ -417,6 +444,43 @@ export default class BcmCapabilityMap extends LightningElement {
         }
         this._layoutL3Map = l3Map;
         this._l3ByL2      = l3ByL2;
+
+        // ── Build cross-cutting band (layered full-width chevrons) ───────────
+        const bandNodes = [];
+        if (ccRoots.length) {
+            // Span full column area: x = DIAGRAM_PADDING, width = canvasWidth - 2*pad
+            const bandX = DIAGRAM_PADDING;
+            const bandW = this.canvasWidth - DIAGRAM_PADDING * 2;
+            // cc-only map (zero regularRoots) -> drop the empty L1-row reservation
+            const headerReserved = regularRoots.length ? CHEVRON_HEIGHT + BOX_GAP : 0;
+            const bandTopY = DIAGRAM_PADDING + headerReserved + tallest + BOX_GAP;
+            const h = CHEVRON_HEIGHT;
+            const n = BAND_NOTCH;
+
+            // Iterate reverse so bandNodes[0] = bottom-most row (drawn first → painted behind);
+            // sortOrder 1 ends up DOM-last → on top of stack.
+            for (let i = ccRoots.length - 1; i >= 0; i--) {
+                const cc = ccRoots[i];
+                const y  = bandTopY + i * (h - BAND_ROW_OVERLAP);
+                const points = [
+                    `${bandX},${y}`,
+                    `${bandX + bandW - n},${y}`,
+                    `${bandX + bandW},${y + h / 2}`,
+                    `${bandX + bandW - n},${y + h}`,
+                    `${bandX},${y + h}`,
+                ].join(' ');
+                bandNodes.push({
+                    id    : cc.Id,
+                    name  : cc.Name,
+                    label : String(cc.Name || '').toUpperCase(),
+                    fill  : BAND_PALETTE[i % BAND_PALETTE.length],
+                    points,
+                    labelX: bandX + BAND_LABEL_PAD_X,
+                    labelY: y + h - BAND_LABEL_PAD_BOTTOM,
+                });
+            }
+        }
+        this._layoutBand = bandNodes;
     }
 
     _getTagFill(capId, tagsRelation) {
@@ -521,7 +585,7 @@ export default class BcmCapabilityMap extends LightningElement {
     }
 
     handleSvgMouseDown(evt) {
-        if (evt.target.closest('.bcm-node')) return;
+        if (evt.target.closest('.bcm-node, .bcm-band-node')) return;
         const hadFocus = this.focusedNodeId !== null;
         this.focusedNodeId      = null;
         this.contextMenuVisible = false;
@@ -647,6 +711,14 @@ export default class BcmCapabilityMap extends LightningElement {
 
     handleContextMenuClose() {
         this.contextMenuVisible = false;
+    }
+
+    handleBandClick(evt) {
+        evt.stopPropagation();
+        const id = evt.currentTarget.dataset.nodeId;
+        if (!id) return;
+        this.contextMenuVisible = false;
+        this.handleViewDetail({ detail: { id } });
     }
 
     handleViewDetail(evt) {

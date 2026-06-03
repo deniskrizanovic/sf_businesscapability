@@ -22,6 +22,12 @@ The diagram toolbar has a single-tag combobox. Selecting a Tag highlights all Ca
 
 Tags replace status flags and freeform colour choices. The `[NEW]` and `[MODIFIED]` markers in the source data are Tags. Tags are org-wide — not scoped to a single Map.
 
+## Cross-cutting Capability
+A Level 1 Business Capability flagged as cutting across the rest of the capability model rather than belonging to a single column. Stored as `bcm_IsCrossCutting__c = true` on `bcm_Capability__c` and only valid at Level 1 (validation rule rejects Level 2/3). Cross-cutting L1s and all their L2/L3 descendants are excluded from the regular column layout in the diagram and rendered separately as a Cross-cutting Band.
+
+## Cross-cutting Band
+A horizontal stack of full-width chevrons rendered at the bottom of the diagram canvas, one chevron per Cross-cutting Capability. Each chevron spans from the first column to the last and overlaps the row above, exposing only the bottom strip. The capability with the lowest `bcm_SortOrder__c` paints last (DOM-last) so it sits on top of the stack. Labels are uppercased and bottom-left-aligned. Clicking a band chevron opens the Detail Panel via the existing `viewdetail` flow. The band layer is pinned vertically (translateY = 0) when the diagram pans, mirroring the L1 top-row pin.
+
 ## Sort Order
 A sequential integer (1, 2, 3...) stored on each `bcm_Capability__c` record indicating its position among siblings (Capabilities sharing the same parent). When a Capability is reordered or reparented via drag-and-drop, the Sort Order of all affected siblings is rewritten in full from 1. Gaps and fractional values are not used.
 

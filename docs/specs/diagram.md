@@ -263,6 +263,62 @@ Then both layers move together and columns remain aligned
 
 ---
 
+## Feature: Cross-cutting band
+
+**Scenario: Cross-cutting L1 capabilities render as a layered chevron band at the bottom**
+
+Given a Map contains at least one Level 1 Capability with `bcm_IsCrossCutting__c = true`  
+When the diagram renders  
+Then those L1s appear as a stack of full-width chevrons at the bottom of the canvas  
+And each chevron spans the full diagram width (first column to last column)  
+And rows overlap vertically so each row's bottom strip remains visible below the next  
+
+> Tested by: bcm_CapabilityMap.test.js — "Cross-cutting L1 renders as band node, not as column chevron", "Band chevron spans full diagram width"; diagram.spec.ts — "Cross-cutting L1 renders as band chevron at bottom; non-cross-cutting still in column"
+
+**Scenario: Lowest-SortOrder cross-cutting capability paints on top of the stack**
+
+Given two or more cross-cutting L1 Capabilities  
+When the diagram renders the band  
+Then the capability with the lowest `bcm_SortOrder__c` is rendered last in the DOM and paints on top of the layered stack  
+
+> Tested by: bcm_CapabilityMap.test.js — "Lowest-SortOrder cross-cutting renders on top of layered band stack"
+
+**Scenario: Band labels are uppercased and bottom-left-aligned**
+
+Given a cross-cutting band chevron is rendered  
+When the label is drawn  
+Then the label text is the capability name in uppercase  
+And the label is anchored to the bottom-left of the chevron strip  
+
+> Tested by: bcm_CapabilityMap.test.js — "Band label is uppercased and left-aligned (no text-anchor)"
+
+**Scenario: Cross-cutting L1 is excluded from the regular column layout**
+
+Given an L1 Capability with `bcm_IsCrossCutting__c = true`  
+When the diagram renders  
+Then that L1 does not appear as a column chevron in the top L1 row  
+And no L2 or L3 descendant of that L1 is rendered anywhere on the diagram  
+
+> Tested by: bcm_CapabilityMap.test.js — "Cross-cutting L1 child (L2) is excluded from the diagram", "Non-cross-cutting L1 still renders as a regular column chevron"
+
+**Scenario: Clicking a cross-cutting band chevron opens the Detail Panel**
+
+Given the cross-cutting band is rendered  
+When the user clicks one of its chevrons  
+Then the Detail Panel opens populated with that capability via the existing `viewdetail` flow  
+
+> Tested by: bcm_CapabilityMap.test.js — "Click on band chevron triggers viewdetail Apex call"; diagram.spec.ts — "Clicking a cross-cutting band chevron opens the Detail Panel"
+
+**Scenario: Band stays pinned to the bottom during vertical pan**
+
+Given the diagram is taller than the viewport and the user pans vertically  
+When the L2 layer's translateY changes  
+Then the band layer's translateY remains 0 (mirrors the L1 top-row pinning)  
+
+> Deferred: visual invariant — band layer transform shares the L1-pin pattern (`translate(panX, 0)`); covered by the existing L1-pin test ("L1 chevron band stays at translateY=0 even when L2 panY is non-zero") which exercises the same mechanism
+
+---
+
 ## Feature: Hide From Diagram flag suppresses nodes
 
 **Scenario: Hidden capability is not rendered by default**
