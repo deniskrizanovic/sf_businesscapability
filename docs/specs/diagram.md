@@ -263,7 +263,7 @@ Then both layers move together and columns remain aligned
 
 ---
 
-yep## Feature: Cross-cutting band
+## Feature: Cross-cutting band
 
 **Scenario: Cross-cutting L1 capabilities render as a layered chevron band at the bottom**
 
