@@ -452,6 +452,8 @@ export default class BcmCapabilityMap extends LightningElement {
 
     handleToggleHidden() {
         this.showHidden = !this.showHidden;
+        this._panX = 0;
+        this._panY = 0;
         this._buildLayout(this._capabilities);
     }
 
