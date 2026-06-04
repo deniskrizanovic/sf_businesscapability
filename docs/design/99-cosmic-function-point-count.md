@@ -522,13 +522,13 @@ Object Tab defined in `06-app-structure.md`. List view default columns: Name, Co
 
 ### FP29 — View Capability Detail via Panel
 
-**Trigger:** Editor/Viewer clicks "View detail" in the context menu  
+**Trigger:** Editor/Viewer second-clicks a focused node in `bcm_CapabilityMap` (1st click focuses, 2nd opens panel)  
 **FUR source:** `docs/plans/2026-06-02-09:48-capability-detail-panel.md` — `getCapabilityDetail(capabilityId)`  
-Distinct from FP14 (standard Capability record page) — different triggering surface (`bcm_ContextMenu` LWC event vs Object Tab click) and different UI Exit (`bcm_CapabilityDetail` panel vs platform record page).
+Distinct from FP14 (standard Capability record page) — different triggering surface (2nd click on focused diagram node vs Object Tab click) and different UI Exit (`bcm_CapabilityDetail` panel vs platform record page).
 
 | # | Movement | Type | Data Group | Notes |
 |---|---|---|---|---|
-| 1 | Receive capability Id (viewdetail event) | E | Capability | Triggering entry — Id crosses software boundary from human user |
+| 1 | Receive capability Id (2nd-click viewdetail) | E | Capability | Triggering entry — Id crosses software boundary from human user |
 | 2 | Read Capability record | R | Capability | All fields incl. rich text |
 | 3 | Read CapabilityTags (sub-query) | R | CapabilityTag | Tags__r subquery — different object of interest per Rule 14 |
 | 4 | Read Tags (via CapabilityTag) | R | Tag | Name + Colour for swatches — different object of interest |

@@ -6,8 +6,7 @@
 |---|---|---|
 | `bcm_CapabilityMap` | Lightning App Page LWC | Container — owns data, layout, SVG viewport, zoom/pan, toolbar, all Apex interaction |
 | `bcm_CapabilityNode` | Child LWC | Renders a single capability node (chevron, box, or bullet) |
-| `bcm_ContextMenu` | Child LWC (presentational) | Left-click context menu; fires `viewdetail` and `hide` events for all levels (L1/L2/L3) |
-| `bcm_CapabilityDetail` | Child LWC (presentational) | Slide-out detail panel for the selected capability; read-only by default, inline edit (Save / Cancel) when `canEdit` is true; opened by `viewdetail` event from `bcm_ContextMenu` |
+| `bcm_CapabilityDetail` | Child LWC (presentational) | Slide-out detail panel for the selected capability; read-only by default, inline edit (Save / Cancel) when `canEdit` is true; opened directly by 2nd click on a focused node in `bcm_CapabilityMap` |
 | `bcm_ColourSwatch` | Child LWC (presentational) | Renders a single tag colour swatch on Tag record page |
 | `bcm_ImportButton` | Quick-action / utility LWC | Launches the JSON import flow from a Map record context |
 | `bcm_VisualisationButton` | Quick-action / utility LWC | Navigates the user to the Visualisation tab |
@@ -126,16 +125,6 @@ detailIsLoading     // boolean — spinner while getCapabilityDetail in flight
     </g>
   </svg>
 
-  <!-- Context menu -->
-  <c-bcm_-context-menu
-    if:true={contextMenuVisible}
-    x={contextMenuX}
-    y={contextMenuY}
-    node={contextMenuNode}
-    onclose={handleContextMenuClose}
-    onviewdetail={handleViewDetail}>
-  </c-bcm_-context-menu>
-
   <!-- Detail panel (read-only) -->
   <c-bcm_-capability-detail
     capability={detailCapability}
@@ -190,34 +179,6 @@ The component renders SVG fragments using `<template>` conditionals on `node.lev
 
 ---
 
-## bcm_ContextMenu
-
-### Responsibilities
-- Render a floating menu panel at a given (x, y) position relative to the SVG canvas
-- Show "View detail" action for all node levels (L1, L2, L3) — parent opens `bcm_CapabilityDetail` panel
-- Show editor-only actions (e.g. "Hide") when `canEdit` is true
-- Emit `viewdetail` event with `{ id, level, name }` payload when "View detail" is clicked
-- Emit `close` event when dismissed (click outside, Escape key)
-
-### Properties (Public `@api`)
-```js
-@api x;       // number, position
-@api y;       // number, position
-@api node;    // the capability node that was clicked { id, name, level }
-@api canEdit; // boolean — gates editor-only actions
-```
-
-### Events Emitted
-```js
-this.dispatchEvent(new CustomEvent('viewdetail'));  // no payload
-this.dispatchEvent(new CustomEvent('close'));
-```
-
-### Positioning
-The menu renders as an HTML `<div>` overlaid on the SVG using absolute positioning. Position is calculated from the SVG click coordinates transformed to page coordinates.
-
----
-
 ## bcm_CapabilityDetail
 
 ### Responsibilities
@@ -269,7 +230,7 @@ this.dispatchEvent(new CustomEvent('saved', { detail: { id, name, definition, st
 | Class | Methods | Called By |
 |---|---|---|
 | `bcm_MapController` | `getMaps()` | `bcm_CapabilityMap` |
-| `bcm_CapabilityController` | `getCapabilities(Id mapId)`, `getCapabilityDetail(Id capabilityId)`, `updateCapability(bcm_Capability__c capability)`, `hideCapability(Id capabilityId)` | `bcm_CapabilityMap` |
+| `bcm_CapabilityController` | `getCapabilities(Id mapId)`, `getCapabilityDetail(Id capabilityId)`, `updateCapability(bcm_Capability__c capability)` | `bcm_CapabilityMap` |
 | `bcm_TagController` | `getTags()` | `bcm_CapabilityMap` |
 | `bcm_DragDropController` | `reorderCapabilities(List<Id>)`, `reparentCapability(Id, Id, List<Id>, List<Id>)` | `bcm_CapabilityMap` |
 | `bcm_ImportController` | `importCapabilities(String json)` | `bcm_ImportButton` (Import flow) |
