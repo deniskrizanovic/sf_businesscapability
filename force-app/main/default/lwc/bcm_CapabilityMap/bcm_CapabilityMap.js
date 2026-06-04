@@ -4,7 +4,6 @@ import getMaps from '@salesforce/apex/bcm_MapController.getMaps';
 import getCapabilities from '@salesforce/apex/bcm_CapabilityController.getCapabilities';
 import getCapabilityDetail from '@salesforce/apex/bcm_CapabilityController.getCapabilityDetail';
 import getTags from '@salesforce/apex/bcm_TagController.getTags';
-import hideCapability from '@salesforce/apex/bcm_CapabilityController.hideCapability';
 import updateCapability from '@salesforce/apex/bcm_CapabilityController.updateCapability';
 
 // ── Layout constants ──────────────────────────────────────────────────────────
@@ -119,10 +118,6 @@ export default class BcmCapabilityMap extends LightningElement {
     @track _zoom                 = ZOOM_DEFAULT;
     @track _panX                 = 0;
     @track _panY                 = 0;
-    @track contextMenuVisible    = false;
-    @track contextMenuX          = 0;
-    @track contextMenuY          = 0;
-    @track contextMenuNode       = null;
     @track showHidden            = false;
     @track showCrossCutting      = false;
     @track focusedNodeId         = null;
@@ -502,7 +497,6 @@ export default class BcmCapabilityMap extends LightningElement {
     // ── Event handlers ────────────────────────────────────────────────────────
     handleMapChange(evt) {
         this.selectedMapId      = evt.detail.value;
-        this.contextMenuVisible = false;
         this.zoom = ZOOM_DEFAULT;
         this.panX = 0;
         this.panY = 0;
@@ -598,7 +592,6 @@ export default class BcmCapabilityMap extends LightningElement {
         if (evt.target.closest('.bcm-node, .bcm-band-node')) return;
         const hadFocus = this.focusedNodeId !== null;
         this.focusedNodeId      = null;
-        this.contextMenuVisible = false;
         this._keyNavMode = false;
         if (hadFocus) this._buildLayout(this._capabilities);
         this._isDragging = true;
@@ -620,120 +613,46 @@ export default class BcmCapabilityMap extends LightningElement {
 
     handleNodeClick(evt) {
         evt.stopPropagation();
-        // Check if click landed on an L3 bullet text element
         const targetLevel = evt.target.dataset?.nodeLevel;
         const targetId    = evt.target.dataset?.nodeId;
-        const targetName  = evt.target.dataset?.nodeName;
 
         const nodeId    = evt.currentTarget.dataset.nodeId;
         const nodeLevel = targetLevel || evt.currentTarget.dataset.nodeLevel;
-        const nodeName  = targetName  || evt.currentTarget.dataset.nodeName;
         if (!nodeId) return;
 
-        // Panel open -> clicking another node refreshes the panel directly.
+        // Resolve clicked id (L3 may sit inside a group)
+        const l3Group = evt.target.closest && evt.target.closest('[data-l3-group]');
+        const resolvedId = (nodeLevel === '3' && targetId)
+            ? targetId
+            : (l3Group ? l3Group.dataset.l3Group : nodeId);
+
+        // Panel open -> any click refreshes panel directly
         if (this.detailCapability || this.detailIsLoading) {
-            // Resolve L3 even when click lands on the group whitespace, not just the text.
-            const l3Group = evt.target.closest && evt.target.closest('[data-l3-group]');
-            const resolvedId = (nodeLevel === '3' && targetId)
-                ? targetId
-                : (l3Group ? l3Group.dataset.l3Group : nodeId);
             this.focusedNodeId = resolvedId;
             this._keyNavMode   = true;
-            this.contextMenuVisible = false;
             this._buildLayout(this._capabilities);
             this.handleViewDetail({ detail: { id: resolvedId } });
             return;
         }
 
-        // L3 bullet click — focus first, menu on second click (same as L1/L2)
-        if (nodeLevel === '3' && targetId) {
-            const l3 = (this._layoutL3Map || new Map()).get(targetId);
-            if (!l3) return;
-            const alreadyFocused = this.focusedNodeId === targetId;
-            this.focusedNodeId = targetId;
-            this._keyNavMode   = true;
-            this._buildLayout(this._capabilities);
-            if (!alreadyFocused) return;
-            if (this.contextMenuVisible && this.contextMenuNode?.id === targetId) {
-                this.contextMenuVisible = false;
-                return;
-            }
-            this.contextMenuX    = l3.anchorX * this.zoom + this.panX;
-            this.contextMenuY    = l3.anchorY * this.zoom + this.panY;
-            this.contextMenuNode = { id: targetId, name: targetName || l3.name, level: 3 };
-            this.contextMenuVisible = true;
-            return;
-        }
-
-        // Find node geometry in layout arrays
-        const l2Node = (this._layoutL2 || []).find(n => n.id === nodeId);
-        const l1Node = (this._layoutL1 || []).find(n => n.id === nodeId);
-
-        let svgRightX, svgMidY;
-        if (l2Node) {
-            svgRightX = l2Node.x + l2Node.width;
-            svgMidY   = l2Node.y + l2Node.height / 2;
-        } else if (l1Node) {
-            // Chevron tip is 3rd point
-            const pts = l1Node.points.split(' ').map(p => p.split(',').map(Number));
-            svgRightX = pts[2][0];
-            svgMidY   = pts[2][1];
-        } else {
-            // Fallback to click position
-            const alreadyFocusedFb = this.focusedNodeId === nodeId;
-            this.focusedNodeId = nodeId;
-            this._keyNavMode   = true;
-            this._buildLayout(this._capabilities);
-            if (alreadyFocusedFb) {
-                if (this.contextMenuVisible && this.contextMenuNode?.id === nodeId) {
-                    this.contextMenuVisible = false;
-                } else {
-                    const rect = this.template.querySelector('.bcm-canvas-container').getBoundingClientRect();
-                    this.contextMenuX    = evt.clientX - rect.left;
-                    this.contextMenuY    = evt.clientY - rect.top;
-                    this.contextMenuNode = { id: nodeId, name: nodeName || nodeId, level: l1Node ? 1 : 2 };
-                    this.contextMenuVisible = true;
-                }
-            }
-            return;
-        }
-
-        const alreadyFocused = this.focusedNodeId === nodeId;
-        this.focusedNodeId = nodeId;
+        // Panel closed: 1st click focuses, 2nd click on already-focused opens panel
+        const alreadyFocused = this.focusedNodeId === resolvedId;
+        this.focusedNodeId = resolvedId;
         this._keyNavMode   = true;
         this._buildLayout(this._capabilities);
-
         if (!alreadyFocused) return;
-
-        // Second click opens, third click (menu already visible) closes
-        if (this.contextMenuVisible && this.contextMenuNode?.id === nodeId) {
-            this.contextMenuVisible = false;
-            return;
-        }
-
-        const resolvedName = l1Node ? l1Node.name : l2Node.name;
-        const isL1 = !!l1Node;
-        this.contextMenuX    = svgRightX * this.zoom + this.panX;
-        this.contextMenuY    = svgMidY   * this.zoom + (isL1 ? 0 : this.panY);
-        this.contextMenuNode = { id: nodeId, name: resolvedName, level: isL1 ? 1 : 2 };
-        this.contextMenuVisible = true;
-    }
-
-    handleContextMenuClose() {
-        this.contextMenuVisible = false;
+        this.handleViewDetail({ detail: { id: resolvedId } });
     }
 
     handleBandClick(evt) {
         evt.stopPropagation();
         const id = evt.currentTarget.dataset.nodeId;
         if (!id) return;
-        this.contextMenuVisible = false;
         this.handleViewDetail({ detail: { id } });
     }
 
     handleViewDetail(evt) {
         const id = evt?.detail?.id;
-        this.contextMenuVisible = false;
         if (!id) return;
         const reqId = ++this._detailRequestSeq;
         this.detailIsLoading    = true;
@@ -816,22 +735,6 @@ export default class BcmCapabilityMap extends LightningElement {
         return chain;
     }
 
-    handleHide(evt) {
-        const id = evt?.detail?.id;
-        this.contextMenuVisible = false;
-        if (!id) return;
-        hideCapability({ capabilityId: id })
-            .then(() => {
-                this._capabilities = (this._capabilities || []).map(c =>
-                    c.Id === id ? { ...c, bcm_HideFromDiagram__c: true } : c
-                );
-                this._buildLayout(this._capabilities);
-            })
-            .catch(err => {
-                this.errorMessage = err?.body?.message || 'Failed to hide capability';
-            });
-    }
-
     handleKeyDown(evt) {
         const ARROW_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
         if (ARROW_KEYS.includes(evt.key)) evt.preventDefault();
@@ -853,7 +756,6 @@ export default class BcmCapabilityMap extends LightningElement {
     }
 
     _navigateFromKey(key) {
-        this.contextMenuVisible = false;
         const l1 = this._layoutL1 || [];
         const l2Map = new Map((this._layoutL2 || []).map(n => [n.id, n]));
 

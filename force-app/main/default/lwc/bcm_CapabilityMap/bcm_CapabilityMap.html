@@ -213,19 +213,6 @@
             </template>
         </svg>
 
-        <!-- Context menu overlay -->
-        <template if:true={contextMenuVisible}>
-            <c-bcm_-context-menu
-                anchor-x={contextMenuX}
-                anchor-y={contextMenuY}
-                node={contextMenuNode}
-                can-edit={canEdit}
-                onclose={handleContextMenuClose}
-                onviewdetail={handleViewDetail}
-                onhide={handleHide}>
-            </c-bcm_-context-menu>
-        </template>
-
         <!-- Detail panel overlay -->
         <c-bcm_-capability-detail
             capability={detailCapability}

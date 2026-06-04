@@ -67,9 +67,6 @@ async function openDetailPanelOnL1(page: Page) {
     const node = page.locator(`svg.bcm-canvas g.bcm-node[data-node-level="1"][data-node-name="${L1_NAME}"]`);
     await node.click();
     await node.click();
-    const menu = page.locator('.bcm-menu-card');
-    await expect(menu).toBeVisible();
-    await menu.getByText('View detail', { exact: true }).click();
     const panel = page.locator('.bcm-detail-panel[data-open="true"]');
     await expect(panel).toBeVisible({ timeout: 5000 });
     return panel;
@@ -80,9 +77,6 @@ async function openDetailPanelOnL2(page: Page) {
     const label = page.locator(`svg.bcm-canvas g.bcm-node[data-node-level="2"][data-node-name="${L2_NAME}"] > text`).first();
     await label.click();
     await label.click();
-    const menu = page.locator('.bcm-menu-card');
-    await expect(menu).toBeVisible();
-    await menu.getByText('View detail', { exact: true }).click();
     const panel = page.locator('.bcm-detail-panel[data-open="true"]');
     await expect(panel).toBeVisible({ timeout: 5000 });
     return panel;
@@ -93,9 +87,6 @@ async function openDetailPanelOnL3(page: Page) {
     const text = page.locator(`svg.bcm-canvas text[data-node-level="3"][data-node-name="${L3_NAME}"]`).first();
     await text.click();
     await text.click();
-    const menu = page.locator('.bcm-menu-card');
-    await expect(menu).toBeVisible();
-    await menu.getByText('View detail', { exact: true }).click();
     const panel = page.locator('.bcm-detail-panel[data-open="true"]');
     await expect(panel).toBeVisible({ timeout: 5000 });
     return panel;

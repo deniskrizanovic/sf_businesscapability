@@ -522,13 +522,13 @@ Object Tab defined in `06-app-structure.md`. List view default columns: Name, Co
 
 ### FP29 — View Capability Detail via Panel
 
-**Trigger:** Editor/Viewer clicks "View detail" in the context menu  
+**Trigger:** Editor/Viewer second-clicks a focused node in `bcm_CapabilityMap` (1st click focuses, 2nd opens panel)  
 **FUR source:** `docs/plans/2026-06-02-09:48-capability-detail-panel.md` — `getCapabilityDetail(capabilityId)`  
-Distinct from FP14 (standard Capability record page) — different triggering surface (`bcm_ContextMenu` LWC event vs Object Tab click) and different UI Exit (`bcm_CapabilityDetail` panel vs platform record page).
+Distinct from FP14 (standard Capability record page) — different triggering surface (2nd click on focused diagram node vs Object Tab click) and different UI Exit (`bcm_CapabilityDetail` panel vs platform record page).
 
 | # | Movement | Type | Data Group | Notes |
 |---|---|---|---|---|
-| 1 | Receive capability Id (viewdetail event) | E | Capability | Triggering entry — Id crosses software boundary from human user |
+| 1 | Receive capability Id (2nd-click viewdetail) | E | Capability | Triggering entry — Id crosses software boundary from human user |
 | 2 | Read Capability record | R | Capability | All fields incl. rich text |
 | 3 | Read CapabilityTags (sub-query) | R | CapabilityTag | Tags__r subquery — different object of interest per Rule 14 |
 | 4 | Read Tags (via CapabilityTag) | R | Tag | Name + Colour for swatches — different object of interest |
@@ -551,22 +551,6 @@ Distinct from FP18 (standard record edit form save) — different triggering sur
 | 3 | Send confirmation to UI | X | Capability | Panel shows saved values; diagram re-load triggered (FP2 re-trigger is a separate functional process, not counted here) |
 
 **FP30 size = 3 CFP**
-
----
-
-### FP31 — Hide Capability via Context Menu
-
-**Trigger:** Editor clicks "Hide" in the diagram context menu  
-**FUR source:** `docs/plans/2026-06-02-16:07-issue-4-context-menu-actions.md` — `hideCapability(capabilityId)`  
-Distinct from FP19 (delete Capability via standard form): no record removal, only `bcm_HideFromDiagram__c = true` flip; triggered from LWC overlay rather than platform delete action.
-
-| # | Movement | Type | Data Group | Notes |
-|---|---|---|---|---|
-| 1 | Receive Capability Id to hide | E | Capability | Triggering entry — Id crosses boundary from human Editor |
-| 2 | Write hidden flag on Capability record | W | Capability | UPDATE bcm_Capability__c.bcm_HideFromDiagram__c = true |
-| 3 | Send confirmation to UI | X | Capability | Diagram re-renders w/ node absent; no separate confirmation toast |
-
-**FP31 size = 3 CFP**
 
 ---
 
@@ -604,12 +588,11 @@ Distinct from FP19 (delete Capability via standard form): no record removal, onl
 | FP28 | Delete Tag | 1 | 1 | 1 | 1 | 4 |
 | FP29 | View Capability Detail via Panel | 1 | 1 | 3 | 0 | 5 |
 | FP30 | Edit Capability via Panel — Save | 1 | 1 | 0 | 1 | 3 |
-| FP31 | Hide Capability via Context Menu | 1 | 1 | 0 | 1 | 3 |
-| **Total** | | **31** | **31** | **36** | **24** | **122** |
+| **Total** | | **30** | **30** | **36** | **23** | **119** |
 
-**Total COSMIC Functional Size: 122 CFP**
+**Total COSMIC Functional Size: 119 CFP**
 
-> **Delivery status:** FP29 delivered in GH issue #22 (2026-06-02). FP30 delivered in GH issue #23 (2026-06-03).
+> **Delivery status:** FP29 delivered in GH issue #22 (2026-06-02). FP30 delivered in GH issue #23 (2026-06-03). FP31 (Hide Capability via Context Menu) removed in GH issue #32 (2026-06-03) — Hide UX subsumed by FP30 via panel edit mode.
 
 ---
 
@@ -627,6 +610,7 @@ Distinct from FP19 (delete Capability via standard form): no record removal, onl
 | `bcm_IsCrossCutting__c` field add + L1-only validation rule (GH #29) | New attribute on existing entity (`bcm_Capability__c`); no new functional process. Selector payload widens by one boolean — same data movement classification as the existing `getCapabilities` Read. Validation rule is a constraint on the existing Update/Insert process, not a new process. No new R; no new entity. |
 | Cross-cutting band rendering (GH #30) | Pure SVG re-layout of already-loaded capability data; the read of `bcm_IsCrossCutting__c` is part of the existing `getCapabilities` payload (FP2). No new Entry, Exit, Read, or Write. The click-to-open-detail action reuses FP29 (View Capability Detail via Panel) — same data movement, different invocation surface. |
 | Cross-cutting band toggle (GH #31) | UI-only client-state flag controlling DOM rendering of already-loaded capability data. No new Entry, Exit, Read, or Write — same payload as FP2 (`getCapabilities`). |
+| Hide via Context Menu removed (GH #32) | Former FP31 deleted with the `bcm_ContextMenu` LWC. Hide UX preserved via the Detail Panel edit flow — same `bcm_HideFromDiagram__c` flip is now part of FP30 (`updateCapability`). No new functional process; previously-counted FP31 (3 CFP) subtracted from the total. |
 
 ---
 
