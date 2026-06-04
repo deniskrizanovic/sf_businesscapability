@@ -78,6 +78,5 @@ A standalone Lightning App Page (full-width) hosting the `bcm_CapabilityMap` LWC
 ## LWC Components
 - `bcm_CapabilityMap` — container component; owns map selector, data loading, SVG viewport, zoom/pan via `<g transform>`, layout calculation, and all Apex interaction per ADR 0002
 - `bcm_CapabilityNode` — child component; renders a single Capability as chevron, box, or bullet depending on Level; owns drag handle and emits `nodedrop` and `nodeclick` events
-- `bcm_ContextMenu` — presentational component; renders on left-click of any node; fires `viewdetail` event (no payload) when "View detail" is selected
-- `bcm_CapabilityDetail` — presentational component; receives `capability`, `breadcrumb`, `canEdit`, and `isLoading` as `@api` props; renders Detail Panel; fires `close` and `saved` events to parent
+- `bcm_CapabilityDetail` — presentational component; receives `capability`, `breadcrumb`, `canEdit`, and `isLoading` as `@api` props; renders Detail Panel; fires `close` and `saved` events to parent. Opened directly by `bcm_CapabilityMap` on the second click of a focused node (no intermediate context menu)
 - `bcm_ImportUtility` — admin component; textarea for JSON paste, Import button, calls Apex upsert controller
