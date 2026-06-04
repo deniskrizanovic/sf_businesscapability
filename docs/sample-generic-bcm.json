@@ -1,0 +1,648 @@
+{
+  "mapName": "Generic Enterprise Capability Map",
+  "mapDescription": "<p>A generic business capability map covering core enterprise functions: customer engagement, product, operations, finance, people, technology, and corporate governance. Suitable as a starting template for most B2B/B2C organisations.</p>",
+  "capabilities": [
+    {
+      "externalId": "L1-CUSTOMER",
+      "name": "Customer Management",
+      "level": 1,
+      "sortOrder": 1,
+      "definition": "<p>Acquire, serve, and retain customers across all channels and lifecycle stages.</p>",
+      "strategySupport": "<p>Drives revenue growth and customer lifetime value.</p>",
+      "architecturalNuance": "<p>Typically anchored on a CRM platform with integrations to marketing automation, service, and commerce.</p>",
+      "children": [
+        {
+          "externalId": "L2-CUSTOMER-MARKETING",
+          "name": "Marketing",
+          "level": 2,
+          "sortOrder": 1,
+          "definition": "<p>Generate awareness and demand for products and services.</p>",
+          "children": [
+            {
+              "externalId": "L3-CUSTOMER-MARKETING-CAMPAIGN",
+              "name": "Campaign Management",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Plan, execute, and measure multi-channel marketing campaigns.</p>"
+            },
+            {
+              "externalId": "L3-CUSTOMER-MARKETING-BRAND",
+              "name": "Brand Management",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Steward brand identity, messaging, and assets.</p>"
+            },
+            {
+              "externalId": "L3-CUSTOMER-MARKETING-SEGMENT",
+              "name": "Customer Segmentation",
+              "level": 3,
+              "sortOrder": 3,
+              "definition": "<p>Group customers by behaviour, value, and need to target offers.</p>"
+            }
+          ]
+        },
+        {
+          "externalId": "L2-CUSTOMER-SALES",
+          "name": "Sales",
+          "level": 2,
+          "sortOrder": 2,
+          "definition": "<p>Convert leads into closed-won opportunities.</p>",
+          "children": [
+            {
+              "externalId": "L3-CUSTOMER-SALES-LEAD",
+              "name": "Lead Management",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Capture, qualify, and route leads to sales.</p>"
+            },
+            {
+              "externalId": "L3-CUSTOMER-SALES-OPP",
+              "name": "Opportunity Management",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Progress qualified deals through the sales pipeline to close.</p>"
+            },
+            {
+              "externalId": "L3-CUSTOMER-SALES-QUOTE",
+              "name": "Quote & Proposal",
+              "level": 3,
+              "sortOrder": 3,
+              "definition": "<p>Configure, price, and propose offers to prospective buyers.</p>"
+            }
+          ]
+        },
+        {
+          "externalId": "L2-CUSTOMER-SERVICE",
+          "name": "Service",
+          "level": 2,
+          "sortOrder": 3,
+          "definition": "<p>Resolve customer issues and deliver post-sale value.</p>",
+          "children": [
+            {
+              "externalId": "L3-CUSTOMER-SERVICE-CASE",
+              "name": "Case Management",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Log, route, and resolve customer enquiries and complaints.</p>"
+            },
+            {
+              "externalId": "L3-CUSTOMER-SERVICE-KB",
+              "name": "Knowledge Management",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Author and surface knowledge articles for self-service and agents.</p>"
+            },
+            {
+              "externalId": "L3-CUSTOMER-SERVICE-FIELD",
+              "name": "Field Service",
+              "level": 3,
+              "sortOrder": 3,
+              "definition": "<p>Dispatch and manage on-site work by technicians.</p>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "externalId": "L1-PRODUCT",
+      "name": "Product Management",
+      "level": 1,
+      "sortOrder": 2,
+      "definition": "<p>Conceive, design, build, and lifecycle-manage products and services.</p>",
+      "strategySupport": "<p>Aligns offerings to market needs and competitive position.</p>",
+      "children": [
+        {
+          "externalId": "L2-PRODUCT-STRATEGY",
+          "name": "Product Strategy",
+          "level": 2,
+          "sortOrder": 1,
+          "definition": "<p>Set product vision, roadmap, and portfolio mix.</p>",
+          "children": [
+            {
+              "externalId": "L3-PRODUCT-STRATEGY-ROADMAP",
+              "name": "Roadmap Planning",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Sequence product investments over time horizons.</p>"
+            },
+            {
+              "externalId": "L3-PRODUCT-STRATEGY-RESEARCH",
+              "name": "Market Research",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Investigate customer needs, competitors, and market trends.</p>"
+            }
+          ]
+        },
+        {
+          "externalId": "L2-PRODUCT-DEV",
+          "name": "Product Development",
+          "level": 2,
+          "sortOrder": 2,
+          "definition": "<p>Design, build, and release products to market.</p>",
+          "children": [
+            {
+              "externalId": "L3-PRODUCT-DEV-DESIGN",
+              "name": "Design",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Define UX, industrial, and service design.</p>"
+            },
+            {
+              "externalId": "L3-PRODUCT-DEV-ENG",
+              "name": "Engineering",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Build and test the product to specification.</p>"
+            },
+            {
+              "externalId": "L3-PRODUCT-DEV-RELEASE",
+              "name": "Release Management",
+              "level": 3,
+              "sortOrder": 3,
+              "definition": "<p>Coordinate go-to-market launches and version rollouts.</p>"
+            }
+          ]
+        },
+        {
+          "externalId": "L2-PRODUCT-LIFECYCLE",
+          "name": "Product Lifecycle",
+          "level": 2,
+          "sortOrder": 3,
+          "definition": "<p>Manage products from launch through retirement.</p>",
+          "children": [
+            {
+              "externalId": "L3-PRODUCT-LIFECYCLE-CATALOG",
+              "name": "Catalog Management",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Maintain product master data, SKUs, and bundles.</p>"
+            },
+            {
+              "externalId": "L3-PRODUCT-LIFECYCLE-PRICING",
+              "name": "Pricing Management",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Set list prices, discounts, and price book rules.</p>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "externalId": "L1-OPERATIONS",
+      "name": "Operations",
+      "level": 1,
+      "sortOrder": 3,
+      "definition": "<p>Plan and execute the supply, production, and delivery of goods and services.</p>",
+      "children": [
+        {
+          "externalId": "L2-OPERATIONS-SUPPLY",
+          "name": "Supply Chain",
+          "level": 2,
+          "sortOrder": 1,
+          "definition": "<p>Source, plan, and move materials and goods.</p>",
+          "children": [
+            {
+              "externalId": "L3-OPERATIONS-SUPPLY-PROCURE",
+              "name": "Procurement",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Source and contract suppliers; raise and pay POs.</p>"
+            },
+            {
+              "externalId": "L3-OPERATIONS-SUPPLY-INV",
+              "name": "Inventory Management",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Track on-hand stock, replenishment, and warehouse movements.</p>"
+            },
+            {
+              "externalId": "L3-OPERATIONS-SUPPLY-LOG",
+              "name": "Logistics",
+              "level": 3,
+              "sortOrder": 3,
+              "definition": "<p>Plan and execute inbound and outbound transport.</p>"
+            }
+          ]
+        },
+        {
+          "externalId": "L2-OPERATIONS-FULFILMENT",
+          "name": "Order Fulfilment",
+          "level": 2,
+          "sortOrder": 2,
+          "definition": "<p>Take orders and deliver them accurately and on time.</p>",
+          "children": [
+            {
+              "externalId": "L3-OPERATIONS-FULFILMENT-ORDER",
+              "name": "Order Management",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Capture, validate, and orchestrate orders to fulfilment.</p>"
+            },
+            {
+              "externalId": "L3-OPERATIONS-FULFILMENT-DELIVER",
+              "name": "Delivery",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Pick, pack, and ship to the customer.</p>"
+            }
+          ]
+        },
+        {
+          "externalId": "L2-OPERATIONS-QUALITY",
+          "name": "Quality Management",
+          "level": 2,
+          "sortOrder": 3,
+          "definition": "<p>Ensure outputs meet defined quality standards.</p>",
+          "children": [
+            {
+              "externalId": "L3-OPERATIONS-QUALITY-ASSURE",
+              "name": "Quality Assurance",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Define and audit quality processes and controls.</p>"
+            },
+            {
+              "externalId": "L3-OPERATIONS-QUALITY-IMPROVE",
+              "name": "Continuous Improvement",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Identify and implement process improvements.</p>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "externalId": "L1-FINANCE",
+      "name": "Finance",
+      "level": 1,
+      "sortOrder": 4,
+      "definition": "<p>Manage capital, revenue, costs, and reporting obligations.</p>",
+      "children": [
+        {
+          "externalId": "L2-FINANCE-ACCOUNTING",
+          "name": "Accounting",
+          "level": 2,
+          "sortOrder": 1,
+          "definition": "<p>Record and report financial transactions.</p>",
+          "children": [
+            {
+              "externalId": "L3-FINANCE-ACCOUNTING-GL",
+              "name": "General Ledger",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Maintain the chart of accounts and post journals.</p>"
+            },
+            {
+              "externalId": "L3-FINANCE-ACCOUNTING-AP",
+              "name": "Accounts Payable",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Process and pay supplier invoices.</p>"
+            },
+            {
+              "externalId": "L3-FINANCE-ACCOUNTING-AR",
+              "name": "Accounts Receivable",
+              "level": 3,
+              "sortOrder": 3,
+              "definition": "<p>Invoice customers and collect payments.</p>"
+            }
+          ]
+        },
+        {
+          "externalId": "L2-FINANCE-PLANNING",
+          "name": "Financial Planning",
+          "level": 2,
+          "sortOrder": 2,
+          "definition": "<p>Plan, budget, and forecast financial performance.</p>",
+          "children": [
+            {
+              "externalId": "L3-FINANCE-PLANNING-BUDGET",
+              "name": "Budgeting",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Set annual and multi-year operating and capital budgets.</p>"
+            },
+            {
+              "externalId": "L3-FINANCE-PLANNING-FORECAST",
+              "name": "Forecasting",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Project revenue, cost, and cash on a rolling basis.</p>"
+            }
+          ]
+        },
+        {
+          "externalId": "L2-FINANCE-TREASURY",
+          "name": "Treasury & Tax",
+          "level": 2,
+          "sortOrder": 3,
+          "definition": "<p>Manage cash, funding, FX, and tax obligations.</p>",
+          "children": [
+            {
+              "externalId": "L3-FINANCE-TREASURY-CASH",
+              "name": "Cash Management",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Optimise liquidity across bank accounts and entities.</p>"
+            },
+            {
+              "externalId": "L3-FINANCE-TREASURY-TAX",
+              "name": "Tax Compliance",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Calculate and file tax returns; manage audits.</p>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "externalId": "L1-PEOPLE",
+      "name": "People & Culture",
+      "level": 1,
+      "sortOrder": 5,
+      "definition": "<p>Attract, develop, reward, and retain a productive workforce.</p>",
+      "children": [
+        {
+          "externalId": "L2-PEOPLE-TALENT",
+          "name": "Talent Management",
+          "level": 2,
+          "sortOrder": 1,
+          "definition": "<p>Hire and grow the right people.</p>",
+          "children": [
+            {
+              "externalId": "L3-PEOPLE-TALENT-ACQUIRE",
+              "name": "Talent Acquisition",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Source, interview, and onboard new hires.</p>"
+            },
+            {
+              "externalId": "L3-PEOPLE-TALENT-LD",
+              "name": "Learning & Development",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Build skills through training, coaching, and certification.</p>"
+            },
+            {
+              "externalId": "L3-PEOPLE-TALENT-PERF",
+              "name": "Performance Management",
+              "level": 3,
+              "sortOrder": 3,
+              "definition": "<p>Set goals, review performance, and manage succession.</p>"
+            }
+          ]
+        },
+        {
+          "externalId": "L2-PEOPLE-REWARDS",
+          "name": "Rewards & HR Operations",
+          "level": 2,
+          "sortOrder": 2,
+          "definition": "<p>Pay, benefits, and day-to-day HR services.</p>",
+          "children": [
+            {
+              "externalId": "L3-PEOPLE-REWARDS-PAYROLL",
+              "name": "Payroll",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Calculate and pay employees accurately and on time.</p>"
+            },
+            {
+              "externalId": "L3-PEOPLE-REWARDS-BENEFITS",
+              "name": "Benefits Administration",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Manage health, retirement, and leave benefits.</p>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "externalId": "L1-TECHNOLOGY",
+      "name": "Technology",
+      "level": 1,
+      "sortOrder": 6,
+      "definition": "<p>Provide the digital platforms, data, and security that power the business.</p>",
+      "children": [
+        {
+          "externalId": "L2-TECH-APPS",
+          "name": "Application Management",
+          "level": 2,
+          "sortOrder": 1,
+          "definition": "<p>Deliver and operate business applications.</p>",
+          "children": [
+            {
+              "externalId": "L3-TECH-APPS-DELIVERY",
+              "name": "Software Delivery",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Build, integrate, and deploy software changes.</p>"
+            },
+            {
+              "externalId": "L3-TECH-APPS-SUPPORT",
+              "name": "Application Support",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Operate, monitor, and resolve incidents in production apps.</p>"
+            }
+          ]
+        },
+        {
+          "externalId": "L2-TECH-INFRA",
+          "name": "Infrastructure & Cloud",
+          "level": 2,
+          "sortOrder": 2,
+          "definition": "<p>Compute, network, and storage for all workloads.</p>",
+          "children": [
+            {
+              "externalId": "L3-TECH-INFRA-CLOUD",
+              "name": "Cloud Platform",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Provision and manage IaaS/PaaS environments.</p>"
+            },
+            {
+              "externalId": "L3-TECH-INFRA-NET",
+              "name": "Network Services",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Operate connectivity, DNS, and edge services.</p>"
+            },
+            {
+              "externalId": "L3-TECH-INFRA-DEVICE",
+              "name": "End-User Computing",
+              "level": 3,
+              "sortOrder": 3,
+              "definition": "<p>Provide laptops, collaboration tools, and access for staff.</p>"
+            }
+          ]
+        },
+        {
+          "externalId": "L2-TECH-DATA",
+          "name": "Data & Analytics",
+          "level": 2,
+          "sortOrder": 3,
+          "definition": "<p>Collect, govern, and analyse data for decisions.</p>",
+          "children": [
+            {
+              "externalId": "L3-TECH-DATA-GOV",
+              "name": "Data Governance",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Define data ownership, quality rules, and lineage.</p>"
+            },
+            {
+              "externalId": "L3-TECH-DATA-BI",
+              "name": "Business Intelligence",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Report and visualise performance metrics.</p>"
+            },
+            {
+              "externalId": "L3-TECH-DATA-AI",
+              "name": "AI & Machine Learning",
+              "level": 3,
+              "sortOrder": 3,
+              "definition": "<p>Develop and operate predictive and generative AI models.</p>"
+            }
+          ]
+        },
+        {
+          "externalId": "L2-TECH-SECURITY",
+          "name": "Cybersecurity",
+          "level": 2,
+          "sortOrder": 4,
+          "definition": "<p>Protect information, identities, and systems.</p>",
+          "children": [
+            {
+              "externalId": "L3-TECH-SECURITY-IAM",
+              "name": "Identity & Access Management",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Authenticate users and authorise access to resources.</p>"
+            },
+            {
+              "externalId": "L3-TECH-SECURITY-OPS",
+              "name": "Security Operations",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Detect and respond to cyber threats.</p>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "externalId": "L1-CORPORATE",
+      "name": "Corporate Services",
+      "level": 1,
+      "sortOrder": 7,
+      "definition": "<p>Strategy, governance, legal, and enterprise-wide enabling functions.</p>",
+      "children": [
+        {
+          "externalId": "L2-CORPORATE-STRATEGY",
+          "name": "Strategy & Planning",
+          "level": 2,
+          "sortOrder": 1,
+          "definition": "<p>Set enterprise direction and measure execution.</p>",
+          "children": [
+            {
+              "externalId": "L3-CORPORATE-STRATEGY-PLAN",
+              "name": "Enterprise Strategy",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Define mission, vision, and multi-year strategic plan.</p>"
+            },
+            {
+              "externalId": "L3-CORPORATE-STRATEGY-PORTFOLIO",
+              "name": "Portfolio Management",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Prioritise and govern the portfolio of programs and projects.</p>"
+            }
+          ]
+        },
+        {
+          "externalId": "L2-CORPORATE-GRC",
+          "name": "Governance, Risk & Compliance",
+          "level": 2,
+          "sortOrder": 2,
+          "definition": "<p>Manage enterprise risk and meet regulatory obligations.</p>",
+          "children": [
+            {
+              "externalId": "L3-CORPORATE-GRC-RISK",
+              "name": "Risk Management",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Identify, assess, and mitigate enterprise risks.</p>"
+            },
+            {
+              "externalId": "L3-CORPORATE-GRC-COMPLY",
+              "name": "Compliance",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Ensure adherence to laws, regulations, and policies.</p>"
+            },
+            {
+              "externalId": "L3-CORPORATE-GRC-AUDIT",
+              "name": "Internal Audit",
+              "level": 3,
+              "sortOrder": 3,
+              "definition": "<p>Independently assess controls and assurance.</p>"
+            }
+          ]
+        },
+        {
+          "externalId": "L2-CORPORATE-LEGAL",
+          "name": "Legal",
+          "level": 2,
+          "sortOrder": 3,
+          "definition": "<p>Provide legal advice and manage contracts and disputes.</p>",
+          "children": [
+            {
+              "externalId": "L3-CORPORATE-LEGAL-CONTRACT",
+              "name": "Contract Management",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Draft, negotiate, and steward contracts through their lifecycle.</p>"
+            },
+            {
+              "externalId": "L3-CORPORATE-LEGAL-DISPUTE",
+              "name": "Dispute Resolution",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Manage litigation, arbitration, and regulatory matters.</p>"
+            }
+          ]
+        },
+        {
+          "externalId": "L2-CORPORATE-COMMS",
+          "name": "Communications",
+          "level": 2,
+          "sortOrder": 4,
+          "definition": "<p>Internal and external messaging and stakeholder engagement.</p>",
+          "children": [
+            {
+              "externalId": "L3-CORPORATE-COMMS-INTERNAL",
+              "name": "Internal Communications",
+              "level": 3,
+              "sortOrder": 1,
+              "definition": "<p>Inform and engage employees.</p>"
+            },
+            {
+              "externalId": "L3-CORPORATE-COMMS-PR",
+              "name": "Public Relations",
+              "level": 3,
+              "sortOrder": 2,
+              "definition": "<p>Manage external media and reputation.</p>"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
