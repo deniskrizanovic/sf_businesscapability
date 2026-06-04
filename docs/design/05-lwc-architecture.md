@@ -230,7 +230,7 @@ this.dispatchEvent(new CustomEvent('saved', { detail: { id, name, definition, st
 | Class | Methods | Called By |
 |---|---|---|
 | `bcm_MapController` | `getMaps()` | `bcm_CapabilityMap` |
-| `bcm_CapabilityController` | `getCapabilities(Id mapId)`, `getCapabilityDetail(Id capabilityId)`, `updateCapability(bcm_Capability__c capability)` | `bcm_CapabilityMap` |
+| `bcm_CapabilityController` | `getCapabilities(Id mapId)`, `getCapabilityDetail(Id capabilityId)`, `updateCapability(bcm_Capability__c capability)`, `hideCapability(Id capabilityId)` | `bcm_CapabilityMap` (note: `hideCapability` retained for Apex coverage; no current LWC consumer — Hide UX flows through `updateCapability`) |
 | `bcm_TagController` | `getTags()` | `bcm_CapabilityMap` |
 | `bcm_DragDropController` | `reorderCapabilities(List<Id>)`, `reparentCapability(Id, Id, List<Id>, List<Id>)` | `bcm_CapabilityMap` |
 | `bcm_ImportController` | `importCapabilities(String json)` | `bcm_ImportButton` (Import flow) |
