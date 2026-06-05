@@ -546,6 +546,16 @@ And the diagram refreshes without that capability (Show Hidden toggle off)
 
 > Tested by: bcm_CapabilityServiceTest.updateCapability_persists_hideFromDiagram; bcm_CapabilityControllerTest.updateCapability_persists; capability-detail.spec.ts — "Save persists name change and refreshes diagram"
 
+**Scenario: Detail Panel renders fully within the LWC bounds even when the diagram is small**
+
+Given a Map containing a single L1 capability with one L2 child  
+When the user opens the Detail Panel via second-click  
+Then the panel's right edge does not extend past the LWC right edge  
+And the panel's bottom edge does not extend past the LWC bottom edge  
+And in edit mode the Save and Cancel buttons are visible without scrolling on a normal-height viewport  
+
+> Tested by: capability-detail.spec.ts — "Panel stays inside LWC bounds and Save/Cancel are visible in edit mode"; bcm_CapabilityMap.test.js — "Detail panel is anchored outside the canvas container"
+
 ---
 
 ## Feature: Toolbar zoom buttons
