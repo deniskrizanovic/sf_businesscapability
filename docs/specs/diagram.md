@@ -170,7 +170,7 @@ Given a Map is loaded and at least one Capability has a Tag applied
 When the user selects that Tag in the "Colour by Tag" dropdown  
 Then all Level 2 capabilities carrying that Tag have their box fill changed to the Tag's colour  
 
-> Deferred: tag highlight fill is computed in _getTagFill JS; requires seeding a CapabilityTag junction in Playwright which adds significant setup complexity; behaviour verified manually
+> Tested by: bcm_CapabilityMap.test.js — "L2 box fill matches selected tag colour when capability carries the tag"
 
 **Scenario: Capabilities without the selected tag remain white**
 
@@ -178,7 +178,7 @@ Given a Tag is selected in the dropdown
 When the diagram renders the highlight  
 Then Level 2 capabilities not carrying that Tag remain white  
 
-> Deferred: same as above — paired with tag highlight scenario
+> Tested by: bcm_CapabilityMap.test.js — "L2 box stays white when capability does not carry the selected tag"
 
 **Scenario: Selecting None clears all highlights**
 
@@ -186,7 +186,33 @@ Given a Tag is currently selected and capabilities are highlighted
 When the user selects "None" in the Tag dropdown  
 Then all capability boxes return to their default white fill  
 
-> Tested by: diagram.spec.ts — "Selecting None in tag dropdown does not crash the diagram"
+> Tested by: diagram.spec.ts — "Selecting None in tag dropdown does not crash the diagram"; bcm_CapabilityMap.test.js — "Selecting None clears L2 fill and L3 tag rect"
+
+**Scenario: L3 bullet renders a tinted background rect when its capability carries the selected tag**
+
+Given a Map is loaded and at least one Level 3 Capability has a Tag applied  
+When the user selects that Tag in the "Colour by Tag" dropdown  
+Then the L3 bullet group displays a background rectangle filled with the Tag's colour behind the bullet text  
+
+> Tested by: bcm_CapabilityMap.test.js — "L3 bullet group renders tag rect with selected tag colour"
+
+**Scenario: Focused L3 suppresses the tag rect**
+
+Given an L3 bullet carries the currently selected tag  
+And that L3 bullet is focused  
+When the diagram renders  
+Then the focus rect is shown  
+And the tag rect is not rendered  
+
+> Tested by: bcm_CapabilityMap.test.js — "L3 tag rect is suppressed when the L3 is focused"
+
+**Scenario: L1 chevrons remain unaffected by tag selection**
+
+Given a Map with at least one Level 1 Capability carrying the selected Tag  
+When the user selects that Tag in the dropdown  
+Then the L1 chevron fill remains the default dark grey  
+
+> Deferred: L1 fill is hard-coded in _buildLayout (lines 309–310) and never reads tag data — invariant by code construction
 
 ---
 

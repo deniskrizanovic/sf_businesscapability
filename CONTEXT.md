@@ -18,7 +18,7 @@ Level determines how a Capability is rendered in the diagram:
 ## Tag
 A named label that can be applied to any Capability to support categorisation and visualisation. Tags have no hierarchy. A Capability may carry multiple Tags. Each Tag carries a stored hex colour (`bcm_Colour__c`, e.g. `#FF5733`) set by an admin on the tag record.
 
-The diagram toolbar has a single-tag combobox. Selecting a Tag highlights all Capabilities carrying that Tag using the Tag's stored colour. Selecting "None" clears the highlight.
+The diagram toolbar has a single-tag combobox. Selecting a Tag highlights matching Capabilities using the Tag's stored colour: Level 2 boxes take the colour as their full fill; Level 3 bullets render a tinted background rectangle behind their text (suppressed when the L3 is focused — focus styling wins). Level 1 chevrons are unaffected by tag selection. Selecting "None" clears the highlight.
 
 Tags replace status flags and freeform colour choices. The `[NEW]` and `[MODIFIED]` markers in the source data are Tags. Tags are org-wide — not scoped to a single Map.
 

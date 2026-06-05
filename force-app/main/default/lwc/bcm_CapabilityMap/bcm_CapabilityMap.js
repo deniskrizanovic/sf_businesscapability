@@ -348,6 +348,8 @@ export default class BcmCapabilityMap extends LightningElement {
                     const allLines = wrapText(l3.Name, maxBulletFirst, FONT_SIZE_L3, 5);
                     const l3Focused = l3.Id === this.focusedNodeId;
                     const l3Dashed  = l3._hidden && this.showHidden;
+                    const l3TagFill = this._getTagFill(l3.Id, l3.Tags__r);
+                    const showTagRect = !l3Focused && l3TagFill !== '#FFFFFF';
                     const fontWeight = l3Focused ? 'bold' : 'normal';
                     const fontStyle  = l3Dashed ? 'italic' : 'normal';
                     const fillColour = l3Dashed ? '#999' : '#222';
@@ -377,6 +379,13 @@ export default class BcmCapabilityMap extends LightningElement {
                             y     : focusRectStartY,
                             width : COLUMN_WIDTH - BOX_PADDING * 2 - 8,
                             height: allLines.length * LINE_HEIGHT - 2,
+                        } : null,
+                        tagRect : showTagRect ? {
+                            x     : bulletBaseX - 4,
+                            y     : focusRectStartY,
+                            width : COLUMN_WIDTH - BOX_PADDING * 2 - 8,
+                            height: allLines.length * LINE_HEIGHT - 2,
+                            fill  : l3TagFill,
                         } : null,
                     });
                 }
