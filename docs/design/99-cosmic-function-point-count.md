@@ -611,6 +611,7 @@ Distinct from FP18 (standard record edit form save) — different triggering sur
 | Cross-cutting band rendering (GH #30) | Pure SVG re-layout of already-loaded capability data; the read of `bcm_IsCrossCutting__c` is part of the existing `getCapabilities` payload (FP2). No new Entry, Exit, Read, or Write. The click-to-open-detail action reuses FP29 (View Capability Detail via Panel) — same data movement, different invocation surface. |
 | Cross-cutting band toggle (GH #31) | UI-only client-state flag controlling DOM rendering of already-loaded capability data. No new Entry, Exit, Read, or Write — same payload as FP2 (`getCapabilities`). |
 | Hide via Context Menu removed (GH #32) | Former FP31 deleted with the `bcm_ContextMenu` LWC. Hide UX preserved via the Detail Panel edit flow — same `bcm_HideFromDiagram__c` flip is now part of FP30 (`updateCapability`). No new functional process; previously-counted FP31 (3 CFP) subtracted from the total. |
+| Detail panel anchored to LWC root (GH #41, 2026-06-04) | Pure CSS/HTML layout restructure. Panel is moved out of the SVG-sized canvas container into a host-anchored wrapper so it never visually clips on small diagrams. No new Entry, Exit, Read, or Write — same data movement as FP29 / FP30. |
 
 ---
 

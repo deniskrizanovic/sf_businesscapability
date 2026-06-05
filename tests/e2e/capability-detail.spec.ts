@@ -261,6 +261,49 @@ test.describe('Detail panel — edit + save — editor project', () => {
     });
 });
 
+// ── GH #41 layout — editor project ────────────────────────────────────────────
+
+test.describe('Detail panel — layout — editor project', () => {
+    test('Panel stays inside LWC bounds and Save/Cancel are visible in edit mode', async ({ page }) => {
+        await openDiagram(page);
+        await selectMap(page);
+        const panel = await openDetailPanelOnL2(page);
+
+        const root = page.locator('c-bcm_-capability-map').first();
+        // Wait for slide-in CSS transition (250ms) to settle: parse translateX from the matrix
+        // (whitespace-/format-agnostic — getComputedStyle never returns "none" for transform: translateX(0))
+        await expect.poll(async () =>
+            panel.evaluate((p: HTMLElement) => {
+                const m = new DOMMatrixReadOnly(getComputedStyle(p).transform);
+                return Math.round(m.m41);
+            }),
+            { timeout: 2000 }
+        ).toBe(0);
+
+        const rootBox  = await root.boundingBox();
+        const panelBox = await panel.boundingBox();
+        expect(rootBox).not.toBeNull();
+        expect(panelBox).not.toBeNull();
+        expect(panelBox!.x + panelBox!.width).toBeLessThanOrEqual(rootBox!.x + rootBox!.width + 1);
+        expect(panelBox!.y + panelBox!.height).toBeLessThanOrEqual(rootBox!.y + rootBox!.height + 1);
+
+        await panel.locator('.bcm-detail-edit button').click();
+        const saveBtn = panel.locator('.bcm-detail-save');
+        const cancelBtn = panel.locator('.bcm-detail-cancel');
+        await expect(saveBtn).toBeVisible();
+        await expect(cancelBtn).toBeVisible();
+
+        // Save/Cancel must be geometrically inside the LWC body (no internal-scroll hiding them)
+        const rootBoxAfter = await root.boundingBox();
+        const saveBox = await saveBtn.boundingBox();
+        const cancelBox = await cancelBtn.boundingBox();
+        expect(saveBox).not.toBeNull();
+        expect(cancelBox).not.toBeNull();
+        expect(saveBox!.y + saveBox!.height).toBeLessThanOrEqual(rootBoxAfter!.y + rootBoxAfter!.height + 1);
+        expect(cancelBox!.y + cancelBox!.height).toBeLessThanOrEqual(rootBoxAfter!.y + rootBoxAfter!.height + 1);
+    });
+});
+
 // ── FP30 viewer regression — viewer project ───────────────────────────────────
 
 test.describe('Detail panel — viewer no-edit — viewer project', () => {
