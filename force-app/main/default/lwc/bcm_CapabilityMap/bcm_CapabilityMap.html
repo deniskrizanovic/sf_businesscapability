@@ -1,4 +1,5 @@
 <template>
+    <div class="bcm-root">
     <!-- Toolbar -->
     <div class="bcm-toolbar slds-grid slds-grid_align-spread slds-p-around_x-small slds-border_bottom">
         <div class="slds-grid slds-grid_vertical-align-center slds-gutters_x-small">
@@ -212,16 +213,17 @@
                 </g>
             </template>
         </svg>
+    </div>
 
-        <!-- Detail panel overlay -->
-        <c-bcm_-capability-detail
-            capability={detailCapability}
-            breadcrumb={detailBreadcrumb}
-            is-loading={detailIsLoading}
-            error-message={detailErrorMessage}
-            can-edit={canEdit}
-            onclose={handleDetailClose}
-            onsaved={handleDetailSaved}>
-        </c-bcm_-capability-detail>
+    <!-- Detail panel overlay — anchored to .bcm-root so it never clips on small diagrams -->
+    <c-bcm_-capability-detail
+        capability={detailCapability}
+        breadcrumb={detailBreadcrumb}
+        is-loading={detailIsLoading}
+        error-message={detailErrorMessage}
+        can-edit={canEdit}
+        onclose={handleDetailClose}
+        onsaved={handleDetailSaved}>
+    </c-bcm_-capability-detail>
     </div>
 </template>

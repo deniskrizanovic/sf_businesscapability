@@ -1,17 +1,23 @@
 .bcm-detail-panel {
     position: absolute;
     top: 0;
+    bottom: 0;
     right: 0;
     width: 400px;
-    max-height: 100%;
     transform: translateX(100%);
     transition: transform 250ms ease;
     z-index: 100;
     background: #fff;
     box-shadow: -4px 0 16px rgba(0, 0, 0, 0.12);
-    overflow-y: auto;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+}
+
+.bcm-detail-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .bcm-detail-panel[data-open="true"] {
@@ -20,6 +26,7 @@
 
 .bcm-detail-header {
     background: #fafafa;
+    flex: 0 0 auto;
 }
 
 .bcm-detail-breadcrumb {
@@ -85,4 +92,5 @@
 
 .bcm-detail-footer {
     background: #fafafa;
+    flex: 0 0 auto;
 }
