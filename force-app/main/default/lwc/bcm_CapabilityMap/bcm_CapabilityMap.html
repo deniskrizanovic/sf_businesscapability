@@ -141,6 +141,17 @@
                                         class="bcm-l3-focus-rect">
                                     </rect>
                                 </template>
+                                <template if:true={group.tagRect}>
+                                    <rect
+                                        x={group.tagRect.x}
+                                        y={group.tagRect.y}
+                                        width={group.tagRect.width}
+                                        height={group.tagRect.height}
+                                        rx="3"
+                                        fill={group.tagRect.fill}
+                                        class="bcm-l3-tag-rect">
+                                    </rect>
+                                </template>
                                 <template for:each={group.lines} for:item="line" for:index="lineIdx">
                                     <text
                                         key={line.key}

@@ -1148,3 +1148,107 @@ describe('BcmCapabilityMap cross-cutting toggle', () => {
         expect(element.shadowRoot.querySelectorAll('.bcm-band-node').length).toBe(0);
     });
 });
+
+describe('BcmCapabilityMap tag colour highlight', () => {
+    let element;
+
+    const TAG_RED   = { Id: 'tag-1', Name: 'NEW',     bcm_Colour__c: '#FF5733' };
+    const TAG_BLUE  = { Id: 'tag-2', Name: 'CHANGED', bcm_Colour__c: '#3366FF' };
+
+    const TAGGED_CAPS = [
+        { Id: 'L1-A', Name: 'Capability A', bcm_Parent__c: null, bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false },
+        { Id: 'L2-A1', Name: 'Sub-Cap A1', bcm_Parent__c: 'L1-A', bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false,
+          Tags__r: [{ bcm_Tag__c: 'tag-1', bcm_Tag__r: { Name: 'NEW', bcm_Colour__c: '#FF5733' } }] },
+        { Id: 'L2-A2', Name: 'Sub-Cap A2', bcm_Parent__c: 'L1-A', bcm_SortOrder__c: 2, bcm_HideFromDiagram__c: false,
+          Tags__r: [] },
+        { Id: 'L3-A1a', Name: 'Detail A1a', bcm_Parent__c: 'L2-A1', bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false,
+          Tags__r: [{ bcm_Tag__c: 'tag-1', bcm_Tag__r: { Name: 'NEW', bcm_Colour__c: '#FF5733' } }] },
+        { Id: 'L3-A1b', Name: 'Detail A1b', bcm_Parent__c: 'L2-A1', bcm_SortOrder__c: 2, bcm_HideFromDiagram__c: false,
+          Tags__r: [] },
+    ];
+
+    function getTagCombobox() {
+        return element.shadowRoot.querySelectorAll('lightning-combobox')[1];
+    }
+
+    function getL2Rect(el, l2Id) {
+        return el.shadowRoot.querySelector(`[data-node-id="${l2Id}"][data-node-level="2"] > rect`);
+    }
+
+    function getTagRects(el) {
+        return el.shadowRoot.querySelectorAll('rect.bcm-l3-tag-rect');
+    }
+
+    function getFocusRects(el) {
+        return el.shadowRoot.querySelectorAll('rect.bcm-l3-focus-rect');
+    }
+
+    beforeEach(async () => {
+        mockCapabilitiesImpl = jest.fn().mockResolvedValue(TAGGED_CAPS);
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [TAG_RED, TAG_BLUE], error: undefined });
+        await flushPromises();
+        await seedLayout(element);
+    });
+
+    afterEach(() => {
+        while (document.body.firstChild) document.body.removeChild(document.body.firstChild);
+    });
+
+    it('L2 box fill matches selected tag colour when capability carries the tag', async () => {
+        getTagCombobox().dispatchEvent(new CustomEvent('change', { detail: { value: 'tag-1' } }));
+        await flushPromises();
+
+        expect(getL2Rect(element, 'L2-A1').getAttribute('fill')).toBe('#FF5733');
+    });
+
+    it('L2 box stays white when capability does not carry the selected tag', async () => {
+        getTagCombobox().dispatchEvent(new CustomEvent('change', { detail: { value: 'tag-1' } }));
+        await flushPromises();
+
+        expect(getL2Rect(element, 'L2-A2').getAttribute('fill')).toBe('#FFFFFF');
+    });
+
+    it('L3 bullet group renders tag rect with selected tag colour', async () => {
+        expect(getTagRects(element).length).toBe(0);
+
+        getTagCombobox().dispatchEvent(new CustomEvent('change', { detail: { value: 'tag-1' } }));
+        await flushPromises();
+
+        const tagRects = getTagRects(element);
+        expect(tagRects.length).toBe(1);
+        expect(tagRects[0].getAttribute('fill')).toBe('#FF5733');
+
+        // Width matches the focus rect geometry (COLUMN_WIDTH - BOX_PADDING*2 - 8 = 220 - 24 - 8 = 188)
+        expect(parseFloat(tagRects[0].getAttribute('width'))).toBe(188);
+    });
+
+    it('L3 tag rect is suppressed when the L3 is focused', async () => {
+        getTagCombobox().dispatchEvent(new CustomEvent('change', { detail: { value: 'tag-1' } }));
+        await flushPromises();
+        expect(getTagRects(element).length).toBe(1);
+
+        // Focus the tagged L3 (L3-A1a)
+        const l3a = getL3TextNode(element, 'L3-A1a');
+        l3a.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+
+        expect(getTagRects(element).length).toBe(0);
+        expect(getFocusRects(element).length).toBe(1);
+    });
+
+    it('Selecting None clears L2 fill and L3 tag rect', async () => {
+        getTagCombobox().dispatchEvent(new CustomEvent('change', { detail: { value: 'tag-1' } }));
+        await flushPromises();
+        expect(getL2Rect(element, 'L2-A1').getAttribute('fill')).toBe('#FF5733');
+        expect(getTagRects(element).length).toBe(1);
+
+        getTagCombobox().dispatchEvent(new CustomEvent('change', { detail: { value: '' } }));
+        await flushPromises();
+
+        expect(getL2Rect(element, 'L2-A1').getAttribute('fill')).toBe('#FFFFFF');
+        expect(getTagRects(element).length).toBe(0);
+    });
+});

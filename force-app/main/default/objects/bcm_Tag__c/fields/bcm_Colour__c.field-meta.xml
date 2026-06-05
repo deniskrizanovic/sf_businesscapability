@@ -3,7 +3,7 @@
     <fullName>bcm_Colour__c</fullName>
     <label>Colour</label>
     <description>The display colour used to highlight Capabilities tagged with this Tag on the Business Capability Map diagram.</description>
-    <inlineHelpText>Choose a colour from the list. This colour will be used to visually highlight all Capabilities assigned this Tag on the diagram.</inlineHelpText>
+    <inlineHelpText>Hex colour applied as the highlight fill on Level 2 boxes and as a background tint behind Level 3 bullets when this tag is selected in the diagram. Use light/pastel shades — the bullet and box text colours are not auto-adjusted for contrast.</inlineHelpText>
     <type>Picklist</type>
     <required>true</required>
     <valueSet>
@@ -11,52 +11,52 @@
         <valueSetDefinition>
             <sorted>false</sorted>
             <value>
-                <fullName>#3A86FF</fullName>
+                <fullName>#A8C7FF</fullName>
                 <default>false</default>
                 <label>Blue</label>
             </value>
             <value>
-                <fullName>#2DC653</fullName>
+                <fullName>#B8E0C8</fullName>
                 <default>false</default>
                 <label>Green</label>
             </value>
             <value>
-                <fullName>#E63946</fullName>
+                <fullName>#F8B4B4</fullName>
                 <default>false</default>
                 <label>Red</label>
             </value>
             <value>
-                <fullName>#7B2FBE</fullName>
+                <fullName>#D8C4EC</fullName>
                 <default>false</default>
                 <label>Purple</label>
             </value>
             <value>
-                <fullName>#FB5607</fullName>
+                <fullName>#FFD4A8</fullName>
                 <default>false</default>
                 <label>Orange</label>
             </value>
             <value>
-                <fullName>#0096C7</fullName>
+                <fullName>#B8DCDC</fullName>
                 <default>false</default>
                 <label>Teal</label>
             </value>
             <value>
-                <fullName>#FF006E</fullName>
+                <fullName>#FFC8DC</fullName>
                 <default>false</default>
                 <label>Pink</label>
             </value>
             <value>
-                <fullName>#FFBE0B</fullName>
+                <fullName>#FFE4A8</fullName>
                 <default>false</default>
                 <label>Amber</label>
             </value>
             <value>
-                <fullName>#4361EE</fullName>
+                <fullName>#C4C8F0</fullName>
                 <default>false</default>
                 <label>Indigo</label>
             </value>
             <value>
-                <fullName>#06A77D</fullName>
+                <fullName>#B8E0C0</fullName>
                 <default>false</default>
                 <label>Emerald</label>
             </value>
