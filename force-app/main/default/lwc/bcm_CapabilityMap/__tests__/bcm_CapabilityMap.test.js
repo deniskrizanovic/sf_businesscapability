@@ -699,6 +699,34 @@ describe('BcmCapabilityMap second-click → detail panel', () => {
     });
 });
 
+describe('BcmCapabilityMap detail panel anchoring (GH #41)', () => {
+    let element;
+
+    beforeEach(async () => {
+        mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [], error: undefined });
+        await flushPromises();
+        await seedLayout(element);
+    });
+
+    afterEach(() => {
+        while (document.body.firstChild) {
+            document.body.removeChild(document.body.firstChild);
+        }
+    });
+
+    it('Detail panel is anchored outside the canvas container', () => {
+        const panel = element.shadowRoot.querySelector('c-bcm_-capability-detail');
+        const canvasContainer = element.shadowRoot.querySelector('.bcm-canvas-container');
+        expect(panel).not.toBeNull();
+        expect(canvasContainer).not.toBeNull();
+        expect(canvasContainer.contains(panel)).toBe(false);
+    });
+});
+
 describe('BcmCapabilityMap detail panel — saved flow', () => {
     let element;
 
