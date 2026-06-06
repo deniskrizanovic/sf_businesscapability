@@ -109,6 +109,13 @@ async function selectMap(page: import('@playwright/test').Page) {
 }
 
 async function waitForDragDropSettled(page: import('@playwright/test').Page) {
+    // Wait for the save to *begin* (short timeout — no-op gestures never set true; swallow).
+    try {
+        await page.locator('.bcm-canvas-container[data-bcm-saving="true"]').waitFor({ state: 'attached', timeout: 2000 });
+    } catch (_) {
+        // No-op gesture — saving never flipped to true. Proceed.
+    }
+    // Then wait for the save to complete.
     await page.locator('.bcm-canvas-container[data-bcm-saving="false"]').waitFor({ state: 'attached', timeout: 15000 });
 }
 
