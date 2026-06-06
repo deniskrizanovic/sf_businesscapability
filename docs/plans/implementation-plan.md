@@ -22,14 +22,14 @@
 
 | Step | Description                                                                                         | FPs Unlocked                                             | CFP | Cumul. | % Done | Status | Completed  |
 | ---- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --- | ------ | ------ | ------ | ---------- |
-| 1    | `bcm_Map__c` — object, fields, permission sets, Maps tab, app                                      | FP7–12 (Map CRUD)                                       | 18  | 18     | 16%    | `[x]`  | 2026-05-25 |
-| 2    | `bcm_Capability__c` — object, fields, trigger, validation rules, Capabilities tab, Map record page | FP13, FP15–19 (Capability list + CRUD)                  | 21  | 39     | 35%    | `[x]`  | 2026-05-26 |
-| 3    | `bcm_Tag__c` — object, fields, validation rule, Tags tab                                           | FP22–28 (Tag CRUD + detail)                             | 23  | 62     | 56%    | `[x]`  | 2026-05-27 |
-| 4    | `bcm_CapabilityTag__c` — junction object, permission additions                                     | FP14, FP20–21 (Capability detail w/tags, tag junctions) | 15  | 77     | 69%    | `[x]`  | 2026-05-28 |
-| 5    | App structure — Custom Permission, FlexiPage stubs, Import tab                                     | —                                                       | 0   | 77     | 69%    | `[x]`  | 2026-05-30 |
-| 6    | Import —`bcm_ImportController` Apex + `bcm_Import_Flow` Screen Flow                                | FP4 (Import JSON)                                        | 11  | 88     | 79%    | `[x]`  | 2026-05-30 |
-| 7    | Diagram —`bcm_CapabilityMap` LWC (read-only)                                                       | FP1–3 (Map / Capability / Tag diagram load)             | 11  | 99     | 89%    | `[ ]`  | —         |
-| 8    | Drag-drop —`bcm_DragDropController` Apex + LWC interactions                                        | FP5–6 (Reorder + Reparent)                              | 12  | 111    | 100%   | `[ ]`  | —         |
+| 1    | `bcm_Map__c` — object, fields, permission sets, Maps tab, app                                      | FP7–12 (Map CRUD)                                       | 18  | 18     | 15%    | `[x]`  | 2026-05-25 |
+| 2    | `bcm_Capability__c` — object, fields, trigger, validation rules, Capabilities tab, Map record page | FP13, FP15–19 (Capability list + CRUD)                  | 21  | 39     | 33%    | `[x]`  | 2026-05-26 |
+| 3    | `bcm_Tag__c` — object, fields, validation rule, Tags tab                                           | FP22–28 (Tag CRUD + detail)                             | 23  | 62     | 52%    | `[x]`  | 2026-05-27 |
+| 4    | `bcm_CapabilityTag__c` — junction object, permission additions                                     | FP14, FP20–21 (Capability detail w/tags, tag junctions) | 15  | 77     | 65%    | `[x]`  | 2026-05-28 |
+| 5    | App structure — Custom Permission, FlexiPage stubs, Import tab                                     | —                                                       | 0   | 77     | 65%    | `[x]`  | 2026-05-30 |
+| 6    | Import —`bcm_ImportController` Apex + `bcm_Import_Flow` Screen Flow                                | FP4 (Import JSON)                                        | 11  | 88     | 74%    | `[x]`  | 2026-05-30 |
+| 7    | Diagram —`bcm_CapabilityMap` LWC (read-only) + Detail Panel + cross-cutting band                   | FP1–3, FP29–30 (Diagram + Detail Panel)                 | 19  | 107    | 90%    | `[x]`  | 2026-06-05 |
+| 8    | Drag-drop —`bcm_DragDropController` Apex + LWC interactions                                        | FP5–6 (Reorder + Reparent)                              | 12  | 119    | 100%   | `[ ]`  | —         |
 
 ---
 
@@ -369,24 +369,56 @@
 
 **Manual inspection checklist:**
 
-- [ ]  Deploy succeeds with no errors
-- [ ]  All Apex test classes pass with ≥75% coverage
-- [ ]  Open a Map record → click Visualisation button → modal shows map selector combobox
-- [ ]  Select the imported map → diagram renders with correct L1/L2/L3 structure
-- [ ]  All L1 chevrons visible with correct labels
-- [ ]  L2 boxes stacked within correct columns
-- [ ]  L3 bullets listed inside correct L2 boxes
-- [ ]  Mouse wheel zoom works (in and out)
-- [ ]  Click-drag on background pans the diagram
-- [ ]  Select a tag in the Tag combobox → capabilities with that tag highlight in tag colour
-- [ ]  Select "None" → highlights clear
-- [ ]  Left-click a node → context menu appears with placeholder text
-- [ ]  No drag handles visible (drag-drop not yet built)
-- [ ]  `npx playwright test tests/e2e/diagram.spec.ts` passes with zero failures
+- [x]  Deploy succeeds with no errors
+- [x]  All Apex test classes pass with ≥75% coverage
+- [x]  Open a Map record → click Visualisation button → modal shows map selector combobox
+- [x]  Select the imported map → diagram renders with correct L1/L2/L3 structure
+- [x]  All L1 chevrons visible with correct labels
+- [x]  L2 boxes stacked within correct columns
+- [x]  L3 bullets listed inside correct L2 boxes
+- [x]  Mouse wheel zoom works (in and out)
+- [x]  Click-drag on background pans the diagram
+- [x]  Select a tag in the Tag combobox → capabilities with that tag highlight in tag colour
+- [x]  Select "None" → highlights clear
+- [x]  Left-click a node → context menu appears with placeholder text
+- [x]  No drag handles visible (drag-drop not yet built)
+- [x]  `npx playwright test tests/e2e/diagram.spec.ts` passes with zero failures
 
-**Step complete:** `[ ]`
+**Adjustments shipped post-plan (closing 2026-06-05):**
 
-> See also: `docs/plans/2026-05-31-06:19-step7-adjustments.md` (visualisation tab variant — promotes diagram to app nav tab, removes quick-action button)
+- Detail Panel slide-in (GH #22, #23) — replaces context-menu placeholder; FP29 + FP30 in `99-cosmic-function-point-count.md`
+- `bcm_IsCrossCutting__c` field + L1 validation (GH #29)
+- Cross-cutting band — full-width layered chevron stack at canvas bottom (GH #30)
+- Cross-cutting toolbar toggle, hidden-by-default, resets on map switch (GH #31)
+- Context menu removed; first-click focus / second-click panel UX (GH #32)
+- `bcm_HideFromDiagram__c` field + Show Hidden toggle + dashed-border render
+- Keyboard navigation — Arrow keys (pan + node nav), Escape clears focus
+- Fit-to-window + Reset view toolbar buttons; zoom/pan reset on map switch
+- sessionStorage map-id persistence with stale-id fallback (GH #26)
+- Free vertical pan — `panY ≤ 0` clamp removed (GH #35)
+- Canvas focus outline suppressed (GH #34)
+- Detail panel anchored to LWC root, not canvas container (GH #41)
+- L3 bullet tag colourisation — tinted background rect when carrying selected tag (GH #46)
+
+**Step complete:** `[x]` — deployed to `home-denispoc` 2026-05-30; final scope closed 2026-06-05
+
+> See also:
+> - [step7-diagram-lwc](2026-05-30-18:30-step7-diagram-lwc.md) — original step plan
+> - [step7-adjustments](2026-05-31-06:19-step7-adjustments.md) — visualisation tab variant
+> - [step7-visualiser-adjustments](2026-05-31-12:22-step7-visualiser-adjustments.md) — wrap/pin/hide/keyboard
+> - [step7-status](2026-05-31-step7-status.md) — execution status, 21/21 e2e pass
+> - [capability-detail-panel](2026-06-02-09:48-capability-detail-panel.md) — Detail Panel feature (GH #22/#23)
+> - [issue-26 persist selected map](2026-06-03-09:33-issue-26-persist-selected-map.md)
+> - [issue-29 isCrossCutting flag](2026-06-03-14:57-issue-29-iscrosscutting-flag.md)
+> - [issue-30 cross-cutting band](2026-06-03-16:52-issue-30-cross-cutting-band.md)
+> - [cc-band layered fullwidth](2026-06-03-17:30-cc-band-layered-fullwidth.md)
+> - [issue-31 cc toggle](2026-06-03-19:41-issue-31-cc-toggle.md)
+> - [issue-32 remove context menu](2026-06-03-20:16-issue-32-remove-context-menu.md)
+> - [issue-34 suppress canvas focus outline](2026-06-03-12:49-issue-34-suppress-canvas-focus-outline.md)
+> - [issue-35 remove svg viewport boundary](2026-06-03-13:52-issue-35-remove-svg-viewport-boundary.md)
+> - [issue-41 detail panel clipping](2026-06-04-17:41-issue-41-detail-panel-clipping.md)
+> - [l3 tag colourisation](2026-06-05-16:11-l3-tag-colourisation.md)
+> - this closeout: [step7-closeout](2026-06-06-11:24-step7-closeout.md)
 
 ---
 

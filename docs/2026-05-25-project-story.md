@@ -109,3 +109,17 @@ The foundation is unusually solid for a pre-build state. The data model is speci
 The target org is `home-denispoc`. The first thing to be deployed is a single custom object with one field and two permission sets.
 
 The rest follows from there.
+
+---
+
+## Step 7 Closes — 2026-06-05
+
+The diagram landed in stages. The first deploy on 30 May 2026 carried the bones — three Apex controllers, a single LWC rendering chevrons, boxes and bullets, a tag highlight combobox, a context menu stub. By the time the Playwright suite went green at 21/21 on 31 May the read-only slice was demonstrably done.
+
+Then the scope opened. Through early June a sequence of GitHub issues reshaped the diagram from a viewer into a modest editor. The Detail Panel arrived (#22, #23) and absorbed the editing UX that the original plan had left to platform record pages. The context menu — explicitly scoped as a stub for step 7 — was deleted entirely (#32) once the panel made it redundant. A new field, `bcm_IsCrossCutting__c`, surfaced (#29); cross-cutting capabilities pulled out of the column layout into a layered chevron band at the canvas bottom (#30), with a toolbar toggle to show or hide it (#31). A second new field, `bcm_HideFromDiagram__c`, added a way to suppress capabilities from view, with a Show Hidden toggle that revealed them in dashed outline.
+
+Smaller work piled on. Map selection started persisting across reloads via sessionStorage (#26). The vertical-pan clamp came off (#35), the canvas focus outline was suppressed (#34), the detail panel anchored to the LWC root rather than the SVG container so it could not clip on small diagrams (#41). Keyboard navigation appeared. Fit-to-window and Reset view buttons. L3 bullets gained tag colourisation (#46) the day before close.
+
+Through all of it, the COSMIC count held: every UI re-layout, every CSS clamp removal, every in-memory state mutation classified as an excluded process. Only two new functional processes earned new FPs — Detail Panel open (FP29, 5 CFP) and Detail Panel save (FP30, 3 CFP). One was removed (FP31, the context-menu hide path, subsumed into FP30). The total settled at 119 CFP, against the original 111.
+
+Step 7 closed on 5 June 2026. Step 8 — drag-drop — remains.

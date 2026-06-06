@@ -612,6 +612,12 @@ Distinct from FP18 (standard record edit form save) — different triggering sur
 | Cross-cutting band toggle (GH #31) | UI-only client-state flag controlling DOM rendering of already-loaded capability data. No new Entry, Exit, Read, or Write — same payload as FP2 (`getCapabilities`). |
 | Hide via Context Menu removed (GH #32) | Former FP31 deleted with the `bcm_ContextMenu` LWC. Hide UX preserved via the Detail Panel edit flow — same `bcm_HideFromDiagram__c` flip is now part of FP30 (`updateCapability`). No new functional process; previously-counted FP31 (3 CFP) subtracted from the total. |
 | Detail panel anchored to LWC root (GH #41, 2026-06-04) | Pure CSS/HTML layout restructure. Panel is moved out of the SVG-sized canvas container into a host-anchored wrapper so it never visually clips on small diagrams. No new Entry, Exit, Read, or Write — same data movement as FP29 / FP30. |
+| `bcm_HideFromDiagram__c` field add | Same class as `bcm_IsCrossCutting__c` — new boolean on existing `bcm_Capability__c`; widens FP2 selector payload, no new functional process. |
+| L3 tag colourisation (GH #46) | Pure SVG re-render of already-loaded `bcm_CapabilityTags__r` data; no new Entry/Exit/Read/Write. Same class as L2 highlight. |
+| Keyboard navigation | In-memory focus + pan state on loaded data; no movement crosses boundary. Same class as zoom/pan. |
+| Fit-to-window / Reset view | In-memory zoom + pan state mutation; same class as zoom/pan. |
+
+> **Step 7 closeout (2026-06-06):** All step-7 deltas accounted for. Total stays at 119 CFP — FP29 + FP30 already counted, FP31 already removed; the four rows above are exclusions (zero CFP). Step 7 row in implementation tracker: FP1 + FP2 + FP3 + FP29 + FP30 = 19 CFP.
 
 ---
 
