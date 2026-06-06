@@ -56,3 +56,47 @@
 g[data-l3-group]:hover text[data-node-level="3"] {
     fill: #0070D2 !important;
 }
+
+/* Drag handles — hidden until parent node is hovered */
+.bcm-drag-handle {
+    cursor: grab;
+    opacity: 0;
+    user-select: none;
+    pointer-events: auto;
+}
+
+.bcm-l1:hover .bcm-drag-handle,
+.bcm-l2:hover .bcm-drag-handle {
+    opacity: 1;
+}
+
+.bcm-l3-drag-handle {
+    cursor: grab;
+    pointer-events: auto;
+}
+
+/* L3 row: swap bullet glyph "•" → "⠿" on hover. Achieved by the L3 handle
+   rect overlaying the bullet position; the rect is transparent until hover. */
+.bcm-l3-group:hover .bcm-l3-drag-handle {
+    fill: rgba(255, 255, 255, 0.001);
+}
+
+/* Cursor while dragging */
+:host(.bcm-dragging) .bcm-canvas,
+:host(.bcm-dragging) .bcm-drag-handle,
+:host(.bcm-dragging) .bcm-l3-drag-handle {
+    cursor: grabbing;
+}
+
+.bcm-ghost {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.bcm-node--being-dragged {
+    opacity: 0.3;
+}
+
+.bcm-drop-indicator {
+    pointer-events: none;
+}

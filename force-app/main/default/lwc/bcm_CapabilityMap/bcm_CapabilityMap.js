@@ -1,10 +1,14 @@
 import { LightningElement, api, track, wire } from 'lwc';
+import { refreshApex } from '@salesforce/apex';
 import hasPermission from '@salesforce/customPermission/bcm_CanEdit';
 import getMaps from '@salesforce/apex/bcm_MapController.getMaps';
 import getCapabilities from '@salesforce/apex/bcm_CapabilityController.getCapabilities';
 import getCapabilityDetail from '@salesforce/apex/bcm_CapabilityController.getCapabilityDetail';
 import getTags from '@salesforce/apex/bcm_TagController.getTags';
 import updateCapability from '@salesforce/apex/bcm_CapabilityController.updateCapability';
+import reorderCapabilities from '@salesforce/apex/bcm_DragDropController.reorderCapabilities';
+import reparentCapability from '@salesforce/apex/bcm_DragDropController.reparentCapability';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 const COLUMN_WIDTH      = 220;
@@ -95,7 +99,25 @@ export default class BcmCapabilityMap extends LightningElement {
             return;
         }
         this.selectedMapId = persistedId;
-        this._loadCapabilities();
+    }
+
+    @wire(getCapabilities, { mapId: '$selectedMapId' })
+    wiredCapabilities(result) {
+        this._wiredCaps = result;
+        if (!this.selectedMapId) {
+            this._capabilities = [];
+            this.isLoading = false;
+            return;
+        }
+        if (result.data) {
+            this._capabilities = result.data;
+            this._buildLayout(result.data);
+            this.errorMessage = null;
+            this.isLoading = false;
+        } else if (result.error) {
+            this.errorMessage = result.error?.body?.message || 'Failed to load capabilities';
+            this.isLoading = false;
+        }
     }
 
     @wire(getTags)
@@ -130,7 +152,23 @@ export default class BcmCapabilityMap extends LightningElement {
     @track detailErrorMessage    = null;
     _detailRequestSeq            = 0;
 
+    // ── Drag-drop state ───────────────────────────────────────────────────────
+    @track isDragging        = false;
+    @track isSavingDragDrop  = false;
+    @track ghost             = null;
+    @track dropIndicator     = null;
+    _draggedNodeId      = null;
+    _draggedNodeLevel   = null;
+    _ghostOffsetX       = 0;
+    _ghostOffsetY       = 0;
+    _dropTargetInfo     = null;
+    _preDragSnapshot    = null;
+    _dragMoveBound      = null;
+    _dragUpBound        = null;
+    _dragKeyDownBound   = null;
+
     _capabilities   = [];
+    _wiredCaps      = null;
     _tagColourMap   = new Map();
     _keyNavMode     = false;
     _isDragging     = false;
@@ -151,6 +189,10 @@ export default class BcmCapabilityMap extends LightningElement {
 
     get canEdit() {
         return hasPermission;
+    }
+
+    get savingAttr() {
+        return this.isSavingDragDrop ? 'true' : 'false';
     }
 
     get showHiddenVariant() {
@@ -311,6 +353,8 @@ export default class BcmCapabilityMap extends LightningElement {
                 strokeWidth : l1Focused ? '3' : '1',
                 strokeDash  : l1Dashed ? '4 2' : '',
                 points,
+                handleX     : x + 8,
+                handleY     : y + h / 2 + 4,
                 labelLines: textLines.map((text, i) => ({
                     key : l1.Id + '-label-' + i,
                     text,
@@ -387,6 +431,10 @@ export default class BcmCapabilityMap extends LightningElement {
                             height: allLines.length * LINE_HEIGHT - 2,
                             fill  : l3TagFill,
                         } : null,
+                        handleHitX: bulletBaseX - 8,
+                        handleHitY: focusRectStartY,
+                        handleHitW: 14,
+                        handleHitH: LINE_HEIGHT,
                     });
                 }
 
@@ -411,6 +459,8 @@ export default class BcmCapabilityMap extends LightningElement {
                     strokeColour: l2Focused ? '#0070D2' : '#CCCCCC',
                     strokeWidth : l2Focused ? '3' : '1',
                     strokeDash  : l2Dashed ? '4 2' : '',
+                    handleX     : colX + 4,
+                    handleY     : boxY + 12,
                     labelLines : l2Lines.map((text, i) => ({
                         key  : l2.Id + '-label-' + i,
                         text,
@@ -514,8 +564,10 @@ export default class BcmCapabilityMap extends LightningElement {
             safeSessionSet(SESSION_KEY_SELECTED_MAP, this.selectedMapId);
         } else {
             safeSessionRemove(SESSION_KEY_SELECTED_MAP);
+            this._capabilities = [];
+            this._buildLayout([]);
         }
-        this._loadCapabilities();
+        this.isLoading = !!this.selectedMapId;
     }
 
     handleTagChange(evt) {
@@ -534,21 +586,9 @@ export default class BcmCapabilityMap extends LightningElement {
         this.showCrossCutting = !this.showCrossCutting;
     }
 
-    _loadCapabilities() {
-        if (!this.selectedMapId) return;
-        this.isLoading    = true;
-        this.errorMessage = null;
-        getCapabilities({ mapId: this.selectedMapId })
-            .then(data => {
-                this._capabilities = data;
-                this._buildLayout(data);
-            })
-            .catch(err => {
-                this.errorMessage = err?.body?.message || 'Failed to load capabilities';
-            })
-            .finally(() => {
-                this.isLoading = false;
-            });
+    _refreshCapabilities() {
+        if (!this._wiredCaps) return Promise.resolve();
+        return refreshApex(this._wiredCaps);
     }
 
     handleZoomIn() {
@@ -582,6 +622,10 @@ export default class BcmCapabilityMap extends LightningElement {
     }
 
     handleWheel(evt) {
+        if (this.isDragging) {
+            evt.preventDefault();
+            return;
+        }
         evt.preventDefault();
         const delta    = evt.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP;
         const newZoom  = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN,
@@ -597,7 +641,429 @@ export default class BcmCapabilityMap extends LightningElement {
         this.zoom    = newZoom;
     }
 
+    get ghostTransform() {
+        if (!this.ghost) return '';
+        return `translate(${this.ghost.x}, ${this.ghost.y})`;
+    }
+
+    // ── Drag-drop ─────────────────────────────────────────────────────────────
+
+    handleHandleMouseDown(evt) {
+        if (!this.canEdit || this.isSavingDragDrop) return;
+        evt.stopPropagation();
+        evt.preventDefault();
+
+        const nodeId    = evt.currentTarget.dataset.nodeId;
+        const nodeLevel = parseInt(evt.currentTarget.dataset.nodeLevel, 10);
+        if (!nodeId || !nodeLevel) return;
+
+        const layoutNode = this._findLayoutNode(nodeId, nodeLevel);
+        if (!layoutNode) return;
+
+        const viewportPoint = this._clientToViewport(evt.clientX, evt.clientY);
+        const ghost = this._buildGhostFromLayoutNode(layoutNode, nodeLevel);
+        if (!ghost) return;
+
+        this._draggedNodeId    = nodeId;
+        this._draggedNodeLevel = nodeLevel;
+        this._ghostOffsetX     = viewportPoint.x - ghost.originX;
+        this._ghostOffsetY     = viewportPoint.y - ghost.originY;
+        ghost.x                = ghost.originX;
+        ghost.y                = ghost.originY;
+        this.ghost             = ghost;
+        this.isDragging        = true;
+        this.dropIndicator     = null;
+        this._preDragSnapshot  = JSON.parse(JSON.stringify(this._capabilities));
+
+        this._dragMoveBound    = this._handleDragMouseMove.bind(this);
+        this._dragUpBound      = this._handleDragMouseUp.bind(this);
+        this._dragKeyDownBound = this._handleDragKeyDown.bind(this);
+        window.addEventListener('mousemove', this._dragMoveBound);
+        window.addEventListener('mouseup',   this._dragUpBound);
+        window.addEventListener('keydown',   this._dragKeyDownBound);
+    }
+
+    _handleDragMouseMove(evt) {
+        if (!this.isDragging) return;
+        const point = this._clientToViewport(evt.clientX, evt.clientY);
+        this.ghost = {
+            ...this.ghost,
+            x: point.x - this._ghostOffsetX,
+            y: point.y - this._ghostOffsetY,
+        };
+        this._dropTargetInfo = this._hitTest(point.x, point.y, this._draggedNodeLevel);
+        this.dropIndicator = this._buildDropIndicator(this._dropTargetInfo);
+    }
+
+    _handleDragMouseUp() {
+        if (!this.isDragging) return;
+        this._detachDragListeners();
+        const target = this._dropTargetInfo;
+        const movedId = this._draggedNodeId;
+        const level = this._draggedNodeLevel;
+
+        const cleanup = () => {
+            this.isDragging    = false;
+            this.ghost         = null;
+            this.dropIndicator = null;
+            this._dropTargetInfo  = null;
+            this._draggedNodeId   = null;
+            this._draggedNodeLevel= null;
+        };
+
+        if (!target) {
+            this._preDragSnapshot = null;
+            cleanup();
+            return;
+        }
+
+        const moved = this._capabilities.find(c => c.Id === movedId);
+        if (!moved) {
+            this._preDragSnapshot = null;
+            cleanup();
+            return;
+        }
+
+        const oldParentId = moved.bcm_Parent__c || null;
+        const newParentId = target.parentId;
+
+        // Compute new sibling order from snapshot
+        const oldSiblings = this._capabilities
+            .filter(c => (c.bcm_Parent__c || null) === oldParentId && c.Id !== movedId)
+            .sort((a, b) => (a.bcm_SortOrder__c || 0) - (b.bcm_SortOrder__c || 0))
+            .map(c => c.Id);
+
+        const sameParent = oldParentId === newParentId;
+        let newSiblings = this._capabilities
+            .filter(c => (c.bcm_Parent__c || null) === newParentId && c.Id !== movedId)
+            .sort((a, b) => (a.bcm_SortOrder__c || 0) - (b.bcm_SortOrder__c || 0))
+            .map(c => c.Id);
+        const insertAt = Math.max(0, Math.min(target.position, newSiblings.length));
+        newSiblings = [
+            ...newSiblings.slice(0, insertAt),
+            movedId,
+            ...newSiblings.slice(insertAt),
+        ];
+
+        // No-op detection
+        if (sameParent) {
+            const oldOrderWithMoved = this._capabilities
+                .filter(c => (c.bcm_Parent__c || null) === oldParentId)
+                .sort((a, b) => (a.bcm_SortOrder__c || 0) - (b.bcm_SortOrder__c || 0))
+                .map(c => c.Id);
+            if (this._arraysEqual(oldOrderWithMoved, newSiblings)) {
+                this._preDragSnapshot = null;
+                cleanup();
+                return;
+            }
+        }
+
+        // Optimistic update
+        this._applyOptimisticReorder(movedId, newParentId, level, newSiblings, oldSiblings);
+        this._buildLayout(this._capabilities);
+        if (this.detailCapability) {
+            this.detailBreadcrumb = this._buildBreadcrumb(this.detailCapability.Id);
+        }
+        this.isSavingDragDrop = true;
+        cleanup();
+
+        this._dispatchSaveApex(movedId, newParentId, sameParent, newSiblings, oldSiblings);
+    }
+
+    _dispatchSaveApex(movedId, newParentId, sameParent, newSiblings, oldSiblings) {
+        const apexCall = sameParent
+            ? reorderCapabilities({ orderedIds: newSiblings })
+            : reparentCapability({
+                capabilityId : movedId,
+                newParentId  : newParentId,
+                newSiblingIds: newSiblings,
+                oldSiblingIds: oldSiblings,
+            });
+
+        return apexCall
+            .then(() => this._refreshCapabilities())
+            .then(() => {
+                this.isSavingDragDrop = false;
+                this._preDragSnapshot = null;
+            })
+            .catch(err => {
+                this._capabilities = this._preDragSnapshot;
+                this._buildLayout(this._capabilities);
+                if (this.detailCapability) {
+                    this.detailBreadcrumb = this._buildBreadcrumb(this.detailCapability.Id);
+                }
+                this.isSavingDragDrop = false;
+                this._preDragSnapshot = null;
+                this.dispatchEvent(new ShowToastEvent({
+                    title  : 'Drag-drop save failed',
+                    message: 'Failed to save changes. Your changes have been reverted.',
+                    variant: 'error',
+                    mode   : 'dismissable',
+                }));
+                // eslint-disable-next-line no-console
+                console.warn('bcm drag-drop save failed', err);
+            });
+    }
+
+    _handleDragKeyDown(evt) {
+        if (!this.isDragging) return;
+        if (evt.key === 'Escape') {
+            evt.preventDefault();
+            this._detachDragListeners();
+            this._preDragSnapshot = null;
+            this.isDragging       = false;
+            this.ghost            = null;
+            this.dropIndicator    = null;
+            this._dropTargetInfo  = null;
+            this._draggedNodeId   = null;
+            this._draggedNodeLevel= null;
+        }
+    }
+
+    _detachDragListeners() {
+        if (this._dragMoveBound)    window.removeEventListener('mousemove', this._dragMoveBound);
+        if (this._dragUpBound)      window.removeEventListener('mouseup',   this._dragUpBound);
+        if (this._dragKeyDownBound) window.removeEventListener('keydown',   this._dragKeyDownBound);
+        this._dragMoveBound    = null;
+        this._dragUpBound      = null;
+        this._dragKeyDownBound = null;
+    }
+
+    _findLayoutNode(nodeId, level) {
+        if (level === 1) return (this._layoutL1 || []).find(n => n.id === nodeId);
+        if (level === 2) return (this._layoutL2 || []).find(n => n.id === nodeId);
+        if (level === 3) {
+            for (const l2 of (this._layoutL2 || [])) {
+                const g = l2.bulletGroups.find(g2 => g2.l3Id === nodeId);
+                if (g) return { l2, group: g };
+            }
+        }
+        return null;
+    }
+
+    _buildGhostFromLayoutNode(layoutNode, level) {
+        if (level === 1) {
+            return {
+                isL1: true, isL2: false, isL3: false,
+                points: layoutNode.points
+                    .split(' ')
+                    .map(p => {
+                        const [px, py] = p.split(',').map(Number);
+                        return `${px - layoutNode.handleX + 8},${py - (layoutNode.handleY - 4) + 0}`;
+                    })
+                    .join(' '),
+                width: COLUMN_WIDTH,
+                height: CHEVRON_HEIGHT,
+                originX: layoutNode.handleX - 8,
+                originY: layoutNode.handleY - CHEVRON_HEIGHT / 2 - 4,
+                label: layoutNode.name,
+                labelX: 12,
+                labelY: 24,
+                labelFill: '#FFFFFF',
+            };
+        }
+        if (level === 2) {
+            return {
+                isL1: false, isL2: true, isL3: false,
+                width  : layoutNode.width,
+                height : layoutNode.height,
+                originX: layoutNode.x,
+                originY: layoutNode.y,
+                label  : layoutNode.name,
+                labelX : 12,
+                labelY : 20,
+                labelFill: '#222222',
+            };
+        }
+        // L3
+        const { l2, group } = layoutNode;
+        return {
+            isL1: false, isL2: false, isL3: true,
+            width  : COLUMN_WIDTH - BOX_PADDING * 2 - 8,
+            height : group.lines.length * LINE_HEIGHT,
+            originX: group.handleHitX,
+            originY: group.handleHitY,
+            label  : group.l3Name,
+            labelX : 12,
+            labelY : 14,
+            labelFill: '#222222',
+        };
+    }
+
+    _clientToViewport(clientX, clientY) {
+        const svg = this.template.querySelector('svg.bcm-canvas');
+        if (!svg) return { x: 0, y: 0 };
+        const rect = svg.getBoundingClientRect();
+        const localX = clientX - rect.left;
+        const localY = clientY - rect.top;
+        return {
+            x: (localX - this.panX) / this.zoom,
+            y: (localY - this.panY) / this.zoom,
+        };
+    }
+
+    _hitTest(viewportX, viewportY, level) {
+        if (level === 1) {
+            const cols = this._layoutL1 || [];
+            if (!cols.length) return null;
+            // Use geometric column center as gap anchor — independent of label wrap.
+            const colCenter = (colIdx) =>
+                DIAGRAM_PADDING + colIdx * (COLUMN_WIDTH + COLUMN_GAP) + COLUMN_WIDTH / 2;
+            for (let i = 0; i <= cols.length; i++) {
+                const leftX  = i === 0 ? -Infinity : colCenter(cols[i - 1].colIdx);
+                const rightX = i === cols.length ? Infinity : colCenter(cols[i].colIdx);
+                if (viewportX >= leftX && viewportX < rightX) {
+                    return { parentId: null, position: i, level: 1 };
+                }
+            }
+            return null;
+        }
+
+        if (level === 2) {
+            const cols = this._layoutL1 || [];
+            for (const l1 of cols) {
+                const colX = DIAGRAM_PADDING + l1.colIdx * (COLUMN_WIDTH + COLUMN_GAP);
+                if (viewportX < colX || viewportX > colX + COLUMN_WIDTH) continue;
+                const l2sInCol = (this._layoutL2 || []).filter(n => n.colIdx === l1.colIdx);
+                if (!l2sInCol.length) {
+                    return { parentId: l1.id, position: 0, level: 2 };
+                }
+                let pos = 0;
+                for (let i = 0; i < l2sInCol.length; i++) {
+                    const mid = l2sInCol[i].y + l2sInCol[i].height / 2;
+                    if (viewportY < mid) {
+                        pos = i;
+                        return { parentId: l1.id, position: pos, level: 2 };
+                    }
+                }
+                return { parentId: l1.id, position: l2sInCol.length, level: 2 };
+            }
+            return null;
+        }
+
+        if (level === 3) {
+            for (const l2 of (this._layoutL2 || [])) {
+                if (viewportX < l2.x || viewportX > l2.x + l2.width) continue;
+                if (viewportY < l2.y || viewportY > l2.y + l2.height) continue;
+                const groups = l2.bulletGroups || [];
+                if (!groups.length) {
+                    return { parentId: l2.id, position: 0, level: 3 };
+                }
+                for (let i = 0; i < groups.length; i++) {
+                    const firstLine = groups[i].lines[0];
+                    const mid = firstLine.y;
+                    if (viewportY < mid) {
+                        return { parentId: l2.id, position: i, level: 3 };
+                    }
+                }
+                return { parentId: l2.id, position: groups.length, level: 3 };
+            }
+            return null;
+        }
+        return null;
+    }
+
+    _buildDropIndicator(target) {
+        if (!target) return null;
+        if (target.level === 1) {
+            const cols = this._layoutL1 || [];
+            const x = target.position === 0
+                ? DIAGRAM_PADDING - 4
+                : (cols[target.position - 1]
+                    ? cols[target.position - 1].handleX - 8 + COLUMN_WIDTH + COLUMN_GAP / 2
+                    : DIAGRAM_PADDING);
+            const y1 = DIAGRAM_PADDING - 4;
+            const y2 = DIAGRAM_PADDING + CHEVRON_HEIGHT + 4;
+            return { x1: x, y1, x2: x, y2 };
+        }
+        if (target.level === 2) {
+            const l2sInCol = (this._layoutL2 || []).filter(n => {
+                const l1 = (this._layoutL1 || []).find(c => c.id === target.parentId);
+                return l1 && n.colIdx === l1.colIdx;
+            });
+            const l1 = (this._layoutL1 || []).find(c => c.id === target.parentId);
+            if (!l1) return null;
+            const colX = DIAGRAM_PADDING + l1.colIdx * (COLUMN_WIDTH + COLUMN_GAP);
+            let y;
+            if (l2sInCol.length === 0) {
+                y = DIAGRAM_PADDING + CHEVRON_HEIGHT + BOX_GAP - 2;
+            } else if (target.position >= l2sInCol.length) {
+                const last = l2sInCol[l2sInCol.length - 1];
+                y = last.y + last.height + 2;
+            } else {
+                y = l2sInCol[target.position].y - 2;
+            }
+            return { x1: colX, y1: y, x2: colX + COLUMN_WIDTH, y2: y };
+        }
+        if (target.level === 3) {
+            const l2 = (this._layoutL2 || []).find(n => n.id === target.parentId);
+            if (!l2) return null;
+            const groups = l2.bulletGroups || [];
+            let y;
+            if (groups.length === 0) {
+                y = l2.y + 30;
+            } else if (target.position >= groups.length) {
+                const last = groups[groups.length - 1];
+                const lastLine = last.lines[last.lines.length - 1];
+                y = lastLine.y + LINE_HEIGHT / 2;
+            } else {
+                y = groups[target.position].lines[0].y - LINE_HEIGHT / 2;
+            }
+            return { x1: l2.x + BOX_PADDING, y1: y, x2: l2.x + l2.width - BOX_PADDING, y2: y };
+        }
+        return null;
+    }
+
+    _arraysEqual(a, b) {
+        if (a.length !== b.length) return false;
+        for (let i = 0; i < a.length; i++) {
+            if (a[i] !== b[i]) return false;
+        }
+        return true;
+    }
+
+    _applyOptimisticReorder(movedId, newParentId, newLevel, newSiblings, oldSiblings) {
+        const byId = new Map();
+        this._capabilities.forEach(c => byId.set(c.Id, JSON.parse(JSON.stringify(c))));
+
+        const moved = byId.get(movedId);
+        if (moved) {
+            moved.bcm_Parent__c = newParentId;
+            moved.bcm_Level__c  = newLevel;
+        }
+        newSiblings.forEach((id, i) => {
+            const c = byId.get(id);
+            if (c) c.bcm_SortOrder__c = i + 1;
+        });
+        oldSiblings.forEach((id, i) => {
+            const c = byId.get(id);
+            if (c) c.bcm_SortOrder__c = i + 1;
+        });
+
+        // Cascade level recalc to descendants
+        const childrenByParent = new Map();
+        for (const c of byId.values()) {
+            const p = c.bcm_Parent__c || null;
+            if (!childrenByParent.has(p)) childrenByParent.set(p, []);
+            childrenByParent.get(p).push(c);
+        }
+        const queue = [movedId];
+        while (queue.length) {
+            const pid = queue.shift();
+            const parent = byId.get(pid);
+            const children = childrenByParent.get(pid) || [];
+            for (const child of children) {
+                child.bcm_Level__c = (parent.bcm_Level__c || 0) + 1;
+                queue.push(child.Id);
+            }
+        }
+
+        this._capabilities = Array.from(byId.values());
+    }
+
+
     handleSvgMouseDown(evt) {
+        if (this.isDragging) return;
         if (evt.target.closest('.bcm-node, .bcm-band-node')) return;
         const hadFocus = this.focusedNodeId !== null;
         this.focusedNodeId      = null;
@@ -711,6 +1177,7 @@ export default class BcmCapabilityMap extends LightningElement {
                         : c
                 );
                 this._buildLayout(this._capabilities);
+                this._refreshCapabilities();
                 return getCapabilityDetail({ capabilityId: payload.id });
             })
             .then(rec => {
@@ -745,6 +1212,7 @@ export default class BcmCapabilityMap extends LightningElement {
     }
 
     handleKeyDown(evt) {
+        if (this.isDragging) return;
         const ARROW_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
         if (ARROW_KEYS.includes(evt.key)) evt.preventDefault();
         const PAN_STEP = 50;
