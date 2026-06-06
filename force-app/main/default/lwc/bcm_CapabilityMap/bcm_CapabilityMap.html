@@ -9,6 +9,7 @@
                     placeholder="Select a map…"
                     options={mapOptions}
                     value={selectedMapId}
+                    disabled={isSavingDragDrop}
                     onchange={handleMapChange}>
                 </lightning-combobox>
             </div>
@@ -101,7 +102,7 @@
             <g transform={viewportTransform}>
                 <!-- L2 Boxes -->
                 <template for:each={l2Nodes} for:item="node">
-                    <g key={node.id} onclick={handleNodeClick} data-node-id={node.id} data-node-name={node.name} data-node-level="2" data-focused={node.isFocused} class="bcm-node">
+                    <g key={node.id} onclick={handleNodeClick} data-node-id={node.id} data-node-name={node.name} data-node-level="2" data-focused={node.isFocused} class="bcm-node bcm-l2">
                         <rect
                             x={node.x}
                             y={node.y}
@@ -113,6 +114,20 @@
                             stroke-width={node.strokeWidth}
                             stroke-dasharray={node.strokeDash}>
                         </rect>
+                        <template if:true={canEdit}>
+                            <text
+                                class="bcm-drag-handle"
+                                data-bcm-drag-handle="true"
+                                data-node-id={node.id}
+                                data-node-level="2"
+                                x={node.handleX}
+                                y={node.handleY}
+                                font-size="14"
+                                fill="#666666"
+                                onmousedown={handleHandleMouseDown}>
+                                ⠿
+                            </text>
+                        </template>
                         <template for:each={node.labelLines} for:item="line">
                             <text
                                 key={line.key}
@@ -127,7 +142,7 @@
                         </template>
                         <!-- L3 bullets -->
                         <template for:each={node.bulletGroups} for:item="group">
-                            <g key={group.key} data-l3-group={group.l3Id} style="cursor:pointer">
+                            <g key={group.key} class="bcm-l3-group" data-l3-group={group.l3Id} style="cursor:pointer">
                                 <template if:true={group.focusRect}>
                                     <rect
                                         x={group.focusRect.x}
@@ -169,6 +184,20 @@
                                         {line.text}
                                     </text>
                                 </template>
+                                <template if:true={canEdit}>
+                                    <rect
+                                        class="bcm-l3-drag-handle"
+                                        data-bcm-drag-handle="true"
+                                        data-node-id={group.l3Id}
+                                        data-node-level="3"
+                                        x={group.handleHitX}
+                                        y={group.handleHitY}
+                                        width={group.handleHitW}
+                                        height={group.handleHitH}
+                                        fill="transparent"
+                                        onmousedown={handleHandleMouseDown}>
+                                    </rect>
+                                </template>
                             </g>
                         </template>
                     </g>
@@ -178,7 +207,7 @@
             <!-- L1 layer: pans horizontally only, not vertically — drawn last so always on top -->
             <g transform={l1Transform}>
                 <template for:each={l1Nodes} for:item="node">
-                    <g key={node.id} onclick={handleNodeClick} data-node-id={node.id} data-node-name={node.name} data-node-level="1" data-focused={node.isFocused} class="bcm-node">
+                    <g key={node.id} onclick={handleNodeClick} data-node-id={node.id} data-node-name={node.name} data-node-level="1" data-focused={node.isFocused} class="bcm-node bcm-l1">
                         <polygon points={node.points} fill={node.fill} stroke={node.strokeColour} stroke-width={node.strokeWidth} stroke-dasharray={node.strokeDash}></polygon>
                         <template for:each={node.labelLines} for:item="line">
                             <text
@@ -193,9 +222,55 @@
                                 {line.text}
                             </text>
                         </template>
+                        <template if:true={canEdit}>
+                            <text
+                                class="bcm-drag-handle"
+                                data-bcm-drag-handle="true"
+                                data-node-id={node.id}
+                                data-node-level="1"
+                                x={node.handleX}
+                                y={node.handleY}
+                                font-size="14"
+                                fill="#FFFFFF"
+                                onmousedown={handleHandleMouseDown}>
+                                ⠿
+                            </text>
+                        </template>
                     </g>
                 </template>
             </g>
+
+            <!-- Drag drop indicator (in zoomed viewport coords) -->
+            <template if:true={dropIndicator}>
+                <g transform={viewportTransform}>
+                    <line
+                        class="bcm-drop-indicator"
+                        data-bcm-drop-indicator="true"
+                        x1={dropIndicator.x1}
+                        y1={dropIndicator.y1}
+                        x2={dropIndicator.x2}
+                        y2={dropIndicator.y2}
+                        stroke="#0070d2"
+                        stroke-width="2">
+                    </line>
+                </g>
+            </template>
+
+            <!-- Drag ghost (in zoomed viewport coords) -->
+            <template if:true={ghost}>
+                <g class="bcm-ghost" data-bcm-ghost="true" transform={ghostTransform}>
+                    <template if:true={ghost.isL1}>
+                        <polygon points={ghost.points} fill="#4A4A4A" stroke="#333333" stroke-width="1"></polygon>
+                    </template>
+                    <template if:true={ghost.isL2}>
+                        <rect x="0" y="0" width={ghost.width} height={ghost.height} rx="6" fill="#FFFFFF" stroke="#0070D2" stroke-width="1"></rect>
+                    </template>
+                    <template if:true={ghost.isL3}>
+                        <rect x="0" y="0" width={ghost.width} height={ghost.height} rx="3" fill="#E8F4FF" stroke="#0070D2" stroke-width="1"></rect>
+                    </template>
+                    <text x={ghost.labelX} y={ghost.labelY} font-size="12" fill={ghost.labelFill}>{ghost.label}</text>
+                </g>
+            </template>
 
             <!-- Cross-cutting band: pans horizontally with L1 layer; pinned vertically (no panY).
                  Full-width layered chevrons — sortOrder 1 paints last → on top. -->

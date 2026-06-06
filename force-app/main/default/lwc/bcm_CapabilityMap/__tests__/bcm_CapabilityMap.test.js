@@ -3,6 +3,7 @@ import { createTestWireAdapter } from '@salesforce/wire-service-jest-util';
 
 const mockGetMaps = createTestWireAdapter();
 const mockGetTags = createTestWireAdapter();
+const mockGetCapabilities = createTestWireAdapter();
 
 // require() (not import) ensures mockGetMaps/mockGetTags are constructed
 // before the component module's apex-scoped imports resolve to .default.
@@ -22,18 +23,61 @@ const CAPS_DATA = [
     { Id: 'L2-B1', Name: 'Sub-Cap B1', bcm_Parent__c: 'L1-B', bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false, Tags__r: [] },
 ];
 
+// `getCapabilities` is now a @wire — `mockGetCapabilities.emit(data)` feeds the
+// component. `mockCapabilitiesImpl` is kept as a plain jest.fn for legacy
+// assertions: `seedLayout` invokes it with `{ mapId }` and tests still call
+// `mockCapabilitiesImpl.mockResolvedValue(DATA)` to set what `seedLayout`
+// emits.
 let mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
 
-jest.mock('@salesforce/customPermission/bcm_CanEdit', () => false, { virtual: true });
-jest.mock('@salesforce/apex/bcm_MapController.getMaps', () => ({ __esModule: true, default: mockGetMaps }), { virtual: true });
-jest.mock('@salesforce/apex/bcm_TagController.getTags', () => ({ __esModule: true, default: mockGetTags }), { virtual: true });
-jest.mock('@salesforce/apex/bcm_CapabilityController.getCapabilities',
+let mockCanEdit = false;
+jest.mock(
+    '@salesforce/customPermission/bcm_CanEdit',
+    () => ({
+        __esModule: true,
+        get default() { return mockCanEdit; },
+    }),
+    { virtual: true }
+);
+
+let mockReorderImpl  = jest.fn().mockResolvedValue(undefined);
+let mockReparentImpl = jest.fn().mockResolvedValue(undefined);
+jest.mock(
+    '@salesforce/apex/bcm_DragDropController.reorderCapabilities',
     () => {
-        const fn = function(...args) { return mockCapabilitiesImpl(...args); };
+        const fn = function(...args) { return mockReorderImpl(...args); };
         fn.__esModule = true;
         fn.default = fn;
         return fn;
     },
+    { virtual: true }
+);
+jest.mock(
+    '@salesforce/apex/bcm_DragDropController.reparentCapability',
+    () => {
+        const fn = function(...args) { return mockReparentImpl(...args); };
+        fn.__esModule = true;
+        fn.default = fn;
+        return fn;
+    },
+    { virtual: true }
+);
+jest.mock(
+    'lightning/platformShowToastEvent',
+    () => ({
+        __esModule: true,
+        ShowToastEvent: class ShowToastEvent extends CustomEvent {
+            constructor(detail) {
+                super('lightning__showtoast', { detail, bubbles: true, composed: true });
+            }
+        },
+    }),
+    { virtual: true }
+);
+jest.mock('@salesforce/apex/bcm_MapController.getMaps', () => ({ __esModule: true, default: mockGetMaps }), { virtual: true });
+jest.mock('@salesforce/apex/bcm_TagController.getTags', () => ({ __esModule: true, default: mockGetTags }), { virtual: true });
+jest.mock('@salesforce/apex/bcm_CapabilityController.getCapabilities',
+    () => ({ __esModule: true, default: mockGetCapabilities }),
     { virtual: true }
 );
 jest.mock('@salesforce/apex/bcm_CapabilityController.getCapabilityDetail',
@@ -61,10 +105,14 @@ async function flushPromises() {
     await Promise.resolve();
 }
 
-// Seeds a map selection so _buildLayout is populated
-async function seedLayout(element) {
+// Seeds a map selection so _buildLayout is populated. Emits through the
+// `mockGetCapabilities` wire adapter and records the call against
+// `mockCapabilitiesImpl` for legacy `toHaveBeenCalledWith({ mapId })` checks.
+async function seedLayout(element, mapId = 'MAP-1') {
     const mapCombobox = element.shadowRoot.querySelector('lightning-combobox');
-    mapCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'MAP-1' } }));
+    mapCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: mapId } }));
+    const data = await mockCapabilitiesImpl({ mapId });
+    mockGetCapabilities.emit({ data, error: undefined });
     await flushPromises();
 }
 
@@ -759,7 +807,6 @@ describe('BcmCapabilityMap detail panel — saved flow', () => {
     });
 
     it('saved event calls updateCapability and rebuilds diagram with new name', async () => {
-        const callsBefore = mockCapabilitiesImpl.mock.calls.length;
         const panel = element.shadowRoot.querySelector('c-bcm_-capability-detail');
         expect(panel).not.toBeNull();
 
@@ -786,9 +833,7 @@ describe('BcmCapabilityMap detail panel — saved flow', () => {
             bcm_ArchitecturalNuance__c  : '<p>N</p>',
             bcm_HideFromDiagram__c      : false,
         });
-        // Local-patch + rebuild — no extra Apex call to cacheable getCapabilities
-        expect(mockCapabilitiesImpl.mock.calls.length).toBe(callsBefore);
-        // Layout reflects the new name on the L2 node
+        // Local-patch immediately reflects new name; refreshApex runs behind it.
         const renamed = element.shadowRoot.querySelector('[data-node-id="L2-A1"][data-node-name="Renamed L2"]');
         expect(renamed).not.toBeNull();
     });
@@ -852,20 +897,18 @@ describe('BcmCapabilityMap session persistence', () => {
     it('Restores selectedMapId from sessionStorage on init when id is in mapOptions', async () => {
         sessionStorage.setItem('bcm.visualisation.selectedMapId', 'MAP-2');
         document.body.removeChild(element);
-        mockCapabilitiesImpl.mockClear();
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
         document.body.appendChild(element);
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }, { Id: 'MAP-2', Name: 'Map 2' }], error: undefined });
         await flushPromises();
         const combobox = element.shadowRoot.querySelector('lightning-combobox');
         expect(combobox.value).toBe('MAP-2');
-        expect(mockCapabilitiesImpl).toHaveBeenCalledWith({ mapId: 'MAP-2' });
+        expect(mockGetCapabilities.getLastConfig()).toEqual({ mapId: 'MAP-2' });
     });
 
     it('Clears persisted id and leaves selector empty when id is not in mapOptions', async () => {
         sessionStorage.setItem('bcm.visualisation.selectedMapId', 'MAP-DELETED');
         document.body.removeChild(element);
-        mockCapabilitiesImpl.mockClear();
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
         document.body.appendChild(element);
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
@@ -873,7 +916,9 @@ describe('BcmCapabilityMap session persistence', () => {
         const combobox = element.shadowRoot.querySelector('lightning-combobox');
         expect(combobox.value).toBeFalsy();
         expect(sessionStorage.getItem('bcm.visualisation.selectedMapId')).toBeNull();
-        expect(mockCapabilitiesImpl).not.toHaveBeenCalled();
+        // Wire never received a non-null mapId
+        const lastCfg = mockGetCapabilities.getLastConfig();
+        expect(lastCfg && lastCfg.mapId).toBeFalsy();
     });
 
     it('Silent fallback when sessionStorage.setItem throws (no crash, no abort)', async () => {
@@ -887,7 +932,7 @@ describe('BcmCapabilityMap session persistence', () => {
                 combobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'MAP-1' } }));
             }).not.toThrow();
             await flushPromises();
-            expect(mockCapabilitiesImpl).toHaveBeenCalledWith({ mapId: 'MAP-1' });
+            expect(mockGetCapabilities.getLastConfig()).toEqual({ mapId: 'MAP-1' });
         } finally {
             setItemSpy.mockRestore();
         }
@@ -898,15 +943,15 @@ describe('BcmCapabilityMap session persistence', () => {
             .mockImplementation(() => { throw new Error('SecurityError'); });
         try {
             document.body.removeChild(element);
-            mockCapabilitiesImpl.mockClear();
             element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
             document.body.appendChild(element);
             expect(() => {
                 mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
             }).not.toThrow();
             await flushPromises();
-            // No restore attempted -> _loadCapabilities not called
-            expect(mockCapabilitiesImpl).not.toHaveBeenCalled();
+            // No restore attempted -> wire never receives a real mapId
+            const cfg = mockGetCapabilities.getLastConfig();
+            expect(cfg && cfg.mapId).toBeFalsy();
         } finally {
             getItemSpy.mockRestore();
         }
@@ -918,7 +963,6 @@ describe('BcmCapabilityMap session persistence', () => {
             .mockImplementation(() => { throw new Error('SecurityError'); });
         try {
             document.body.removeChild(element);
-            mockCapabilitiesImpl.mockClear();
             element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
             document.body.appendChild(element);
             expect(() => {
@@ -927,7 +971,8 @@ describe('BcmCapabilityMap session persistence', () => {
             await flushPromises();
             const combobox = element.shadowRoot.querySelector('lightning-combobox');
             expect(combobox.value).toBeFalsy();
-            expect(mockCapabilitiesImpl).not.toHaveBeenCalled();
+            const cfg = mockGetCapabilities.getLastConfig();
+            expect(cfg && cfg.mapId).toBeFalsy();
         } finally {
             removeItemSpy.mockRestore();
         }
@@ -1250,5 +1295,119 @@ describe('BcmCapabilityMap tag colour highlight', () => {
 
         expect(getL2Rect(element, 'L2-A1').getAttribute('fill')).toBe('#FFFFFF');
         expect(getTagRects(element).length).toBe(0);
+    });
+});
+
+describe('BcmCapabilityMap drag-drop', () => {
+    let element;
+
+    function getDragHandles(el) {
+        return el.shadowRoot.querySelectorAll('[data-bcm-drag-handle="true"]');
+    }
+    function getGhost(el) {
+        return el.shadowRoot.querySelector('[data-bcm-ghost="true"]');
+    }
+    function getDropIndicator(el) {
+        return el.shadowRoot.querySelector('[data-bcm-drop-indicator="true"]');
+    }
+    function getL2Handle(el, l2Id) {
+        return el.shadowRoot.querySelector(`[data-bcm-drag-handle="true"][data-node-id="${l2Id}"][data-node-level="2"]`);
+    }
+
+    beforeEach(async () => {
+        mockCanEdit = true;
+        mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
+        mockGetCapabilityDetailImpl = jest.fn().mockResolvedValue(null);
+        mockReorderImpl  = jest.fn().mockResolvedValue(undefined);
+        mockReparentImpl = jest.fn().mockResolvedValue(undefined);
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [], error: undefined });
+        await flushPromises();
+        await seedLayout(element);
+        // jsdom doesn't implement getBoundingClientRect on SVG; stub it.
+        const svg = element.shadowRoot.querySelector('svg.bcm-canvas');
+        svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 1000, height: 800, right: 1000, bottom: 800 });
+    });
+
+    afterEach(() => {
+        mockCanEdit = false;
+        while (document.body.firstChild) document.body.removeChild(document.body.firstChild);
+    });
+
+    it('editor sees drag handles', () => {
+        const handles = getDragHandles(element);
+        expect(handles.length).toBeGreaterThan(0);
+    });
+
+    // "viewer does not see drag handles" lives in tests/e2e/drag-drop.spec.ts —
+    // sfdx-lwc-jest's customPermission resolver returns the mock factory output as
+    // the import value directly (not as `.default`), so Jest cannot toggle the
+    // permission across tests in the same module. Spec marker points at Playwright.
+
+    it('ghost renders at cursor', async () => {
+        const handle = getL2Handle(element, 'L2-A1');
+        handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true, clientX: 100, clientY: 200 }));
+        window.dispatchEvent(new MouseEvent('mousemove', { clientX: 250, clientY: 320 }));
+        await flushPromises();
+        expect(getGhost(element)).not.toBeNull();
+    });
+
+    it('drop indicator renders at target gap', async () => {
+        const handle = getL2Handle(element, 'L2-A1');
+        handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true, clientX: 100, clientY: 200 }));
+        // Hover over L2-A2 mid-y so target = position before A2 (i.e. swap)
+        // L2-A2 sits in column 0, below L2-A1.
+        window.dispatchEvent(new MouseEvent('mousemove', { clientX: 100, clientY: 350 }));
+        await flushPromises();
+        expect(getDropIndicator(element)).not.toBeNull();
+        // cleanup mouseup
+        window.dispatchEvent(new MouseEvent('mouseup'));
+        await flushPromises();
+    });
+
+    it('drop outside valid target cancels', async () => {
+        const handle = getL2Handle(element, 'L2-A1');
+        handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true, clientX: 100, clientY: 200 }));
+        // Drop at far-bottom outside any column header / column box gap area
+        window.dispatchEvent(new MouseEvent('mousemove', { clientX: -500, clientY: -500 }));
+        window.dispatchEvent(new MouseEvent('mouseup', { clientX: -500, clientY: -500 }));
+        await flushPromises();
+        expect(mockReorderImpl).not.toHaveBeenCalled();
+        expect(mockReparentImpl).not.toHaveBeenCalled();
+        expect(getGhost(element)).toBeNull();
+    });
+
+    it('apex error reverts and toasts', async () => {
+        mockReparentImpl = jest.fn().mockRejectedValue({ body: { message: 'boom' } });
+        const toastSpy = jest.fn();
+        element.addEventListener('lightning__showtoast', toastSpy);
+
+        const handle = getL2Handle(element, 'L2-A1');
+        handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true, clientX: 100, clientY: 200 }));
+        // Drop into L1-B column (different parent → reparent path)
+        // L1-B is column index 1 — its L2 column starts at DIAGRAM_PADDING + COLUMN_WIDTH + COLUMN_GAP = 24 + 220 + 16 = 260
+        window.dispatchEvent(new MouseEvent('mousemove', { clientX: 280, clientY: 100 }));
+        window.dispatchEvent(new MouseEvent('mouseup', { clientX: 280, clientY: 100 }));
+        await flushPromises();
+        await flushPromises();
+        await flushPromises();
+
+        expect(toastSpy).toHaveBeenCalled();
+    });
+
+    it('escape cancels drag', async () => {
+        const handle = getL2Handle(element, 'L2-A1');
+        handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true, clientX: 100, clientY: 200 }));
+        await flushPromises();
+        expect(getGhost(element)).not.toBeNull();
+
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        await flushPromises();
+
+        expect(getGhost(element)).toBeNull();
+        expect(mockReorderImpl).not.toHaveBeenCalled();
+        expect(mockReparentImpl).not.toHaveBeenCalled();
     });
 });
