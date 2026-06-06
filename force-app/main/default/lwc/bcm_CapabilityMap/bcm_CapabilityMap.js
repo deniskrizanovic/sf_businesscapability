@@ -159,8 +159,6 @@ export default class BcmCapabilityMap extends LightningElement {
     @track dropIndicator     = null;
     _draggedNodeId      = null;
     _draggedNodeLevel   = null;
-    _ghostX             = 0;
-    _ghostY             = 0;
     _ghostOffsetX       = 0;
     _ghostOffsetY       = 0;
     _dropTargetInfo     = null;
@@ -643,7 +641,7 @@ export default class BcmCapabilityMap extends LightningElement {
 
     get ghostTransform() {
         if (!this.ghost) return '';
-        return `translate(${this._ghostX}, ${this._ghostY})`;
+        return `translate(${this.ghost.x}, ${this.ghost.y})`;
     }
 
     // ── Drag-drop ─────────────────────────────────────────────────────────────
@@ -668,8 +666,8 @@ export default class BcmCapabilityMap extends LightningElement {
         this._draggedNodeLevel = nodeLevel;
         this._ghostOffsetX     = viewportPoint.x - ghost.originX;
         this._ghostOffsetY     = viewportPoint.y - ghost.originY;
-        this._ghostX           = ghost.originX;
-        this._ghostY           = ghost.originY;
+        ghost.x                = ghost.originX;
+        ghost.y                = ghost.originY;
         this.ghost             = ghost;
         this.isDragging        = true;
         this.dropIndicator     = null;
@@ -686,10 +684,11 @@ export default class BcmCapabilityMap extends LightningElement {
     _handleDragMouseMove(evt) {
         if (!this.isDragging) return;
         const point = this._clientToViewport(evt.clientX, evt.clientY);
-        this._ghostX = point.x - this._ghostOffsetX;
-        this._ghostY = point.y - this._ghostOffsetY;
-        // Force ghost reactive read
-        this.ghost = { ...this.ghost };
+        this.ghost = {
+            ...this.ghost,
+            x: point.x - this._ghostOffsetX,
+            y: point.y - this._ghostOffsetY,
+        };
         this._dropTargetInfo = this._hitTest(point.x, point.y, this._draggedNodeLevel);
         this.dropIndicator = this._buildDropIndicator(this._dropTargetInfo);
     }
