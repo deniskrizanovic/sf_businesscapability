@@ -193,6 +193,10 @@ export default class BcmCapabilityMap extends LightningElement {
         return hasPermission;
     }
 
+    get savingAttr() {
+        return this.isSavingDragDrop ? 'true' : 'false';
+    }
+
     get showHiddenVariant() {
         return this.showHidden ? 'brand' : 'border';
     }
