@@ -564,6 +564,8 @@ export default class BcmCapabilityMap extends LightningElement {
             safeSessionSet(SESSION_KEY_SELECTED_MAP, this.selectedMapId);
         } else {
             safeSessionRemove(SESSION_KEY_SELECTED_MAP);
+            this._capabilities = [];
+            this._buildLayout([]);
         }
         this.isLoading = !!this.selectedMapId;
     }

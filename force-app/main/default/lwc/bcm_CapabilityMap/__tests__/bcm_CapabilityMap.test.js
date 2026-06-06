@@ -203,6 +203,25 @@ describe('BcmCapabilityMap zoom/pan state machine', () => {
         expect(element.panX).toBe(0);
         expect(element.panY).toBe(0);
     });
+
+    it('clears diagram when map combobox is unselected', async () => {
+        // Seed map + capabilities so layout populated
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        await flushPromises();
+        await seedLayout(element);
+        expect(element.shadowRoot.querySelectorAll('.bcm-node[data-node-level="1"]').length)
+            .toBeGreaterThan(0);
+
+        // User clears the combobox
+        mapCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: '' } }));
+        await flushPromises();
+
+        // Diagram emptied — no L1 column nodes remain
+        expect(element.shadowRoot.querySelectorAll('.bcm-node[data-node-level="1"]').length)
+            .toBe(0);
+        expect(element.shadowRoot.querySelectorAll('.bcm-node[data-node-level="2"]').length)
+            .toBe(0);
+    });
 });
 
 function getPanel(element) {
