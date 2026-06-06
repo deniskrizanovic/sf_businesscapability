@@ -108,6 +108,36 @@ async function selectMap(page: import('@playwright/test').Page) {
     await page.locator('.bcm-canvas polygon').first().waitFor({ state: 'visible', timeout: 20000 });
 }
 
+async function waitForDragDropSettled(page: import('@playwright/test').Page) {
+    await page.locator('.bcm-canvas-container[data-bcm-saving="false"]').waitFor({ state: 'attached', timeout: 15000 });
+}
+
+function parseDragDropOrder(orgAlias: string, mapName: string, parentName: string): string {
+    const apex = `
+List<bcm_Capability__c> caps = [
+    SELECT Name, bcm_SortOrder__c
+    FROM bcm_Capability__c
+    WHERE bcm_Map__r.Name = '${mapName}'
+      AND bcm_Level__c = 2
+      AND bcm_Parent__r.Name = '${parentName}'
+    ORDER BY bcm_SortOrder__c ASC
+];
+String result = '';
+for (bcm_Capability__c c : caps) result += c.Name + '|';
+System.debug('DRAG_DROP_RESULT:' + result);
+`.trim();
+    const apexFile = path.resolve(`tests/e2e/.dd_order_${RUN_ID}_${Date.now()}.apex`);
+    fs.writeFileSync(apexFile, apex, 'utf-8');
+    try {
+        const out = execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], { encoding: 'utf-8' });
+        const match = out.match(/DRAG_DROP_RESULT:([^\n]*)/);
+        if (!match) throw new Error('DRAG_DROP_RESULT marker not found in apex output');
+        return match[1].trim();
+    } finally {
+        fs.unlinkSync(apexFile);
+    }
+}
+
 function runApex(orgAlias: string, body: string) {
     const apexFile = path.resolve(`tests/e2e/.dd_${RUN_ID}_${Date.now()}.apex`);
     fs.writeFileSync(apexFile, body, 'utf-8');
@@ -168,6 +198,11 @@ test.describe('Drag-drop seed — editor project', () => {
         await openDiagram(page);
         await selectMap(page);
 
+        // Baseline: capture order BEFORE the drag
+        const orderBefore = parseDragDropOrder(orgAlias, MAP_NAME, L1A_NAME);
+        expect(orderBefore).toContain(L2A1_NAME);
+        expect(orderBefore).toContain(L2A2_NAME);
+
         // Locate L2A1 + L2A2 handles
         const l2a1 = page.locator(`[data-bcm-drag-handle="true"][data-node-level="2"]`).nth(0);
         const l2a2 = page.locator(`[data-bcm-drag-handle="true"][data-node-level="2"]`).nth(1);
@@ -186,34 +221,14 @@ test.describe('Drag-drop seed — editor project', () => {
         }
         await page.mouse.up();
 
-        // Wait for the optimistic re-layout + Apex round-trip
-        await page.waitForTimeout(1500);
+        // Wait for the optimistic re-layout + Apex round-trip to settle
+        await waitForDragDropSettled(page);
 
-        // Reload and verify persisted order via SortOrder
-        const verifyApex = `
-List<bcm_Capability__c> caps = [
-    SELECT Name, bcm_SortOrder__c
-    FROM bcm_Capability__c
-    WHERE bcm_Map__r.Name = '${MAP_NAME}'
-      AND bcm_Level__c = 2
-      AND bcm_Parent__r.Name = '${L1A_NAME}'
-    ORDER BY bcm_SortOrder__c ASC
-];
-String result = '';
-for (bcm_Capability__c c : caps) result += c.Name + '|';
-System.debug('DRAG_DROP_RESULT:' + result);
-`.trim();
-        const apexFile = path.resolve(`tests/e2e/.dd_verify_${RUN_ID}.apex`);
-        fs.writeFileSync(apexFile, verifyApex, 'utf-8');
-        try {
-            const out = execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], { encoding: 'utf-8' });
-            // Sanity check: the captured order line names both L2s. The exact swap depends on
-            // hit-test threshold; assert *some* persisted ordering rather than strict swap.
-            expect(out).toContain(L2A1_NAME);
-            expect(out).toContain(L2A2_NAME);
-        } finally {
-            fs.unlinkSync(apexFile);
-        }
+        // Verify the order CHANGED — gesture must have swapped L2A1 ↔ L2A2
+        const orderAfter = parseDragDropOrder(orgAlias, MAP_NAME, L1A_NAME);
+        expect(orderAfter).not.toBe(orderBefore);
+        expect(orderAfter).toContain(L2A1_NAME);
+        expect(orderAfter).toContain(L2A2_NAME);
     });
 
     // ── L2 reparent across columns (outcome-only) ─────────────────────────────
