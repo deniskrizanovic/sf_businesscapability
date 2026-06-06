@@ -765,6 +765,10 @@ export default class BcmCapabilityMap extends LightningElement {
         this.isSavingDragDrop = true;
         cleanup();
 
+        this._dispatchSaveApex(movedId, newParentId, sameParent, newSiblings, oldSiblings);
+    }
+
+    _dispatchSaveApex(movedId, newParentId, sameParent, newSiblings, oldSiblings) {
         const apexCall = sameParent
             ? reorderCapabilities({ orderedIds: newSiblings })
             : reparentCapability({
@@ -774,7 +778,7 @@ export default class BcmCapabilityMap extends LightningElement {
                 oldSiblingIds: oldSiblings,
             });
 
-        apexCall
+        return apexCall
             .then(() => this._refreshCapabilities())
             .then(() => {
                 this.isSavingDragDrop = false;
