@@ -5,7 +5,7 @@ private class bcm_CapabilityTagTest {
     static void setupTestData() {
         bcm_Map__c m = TestDataFactory.createMap('Test Map', true);
         bcm_Capability__c cap = TestDataFactory.createCapability(m.Id, null, null, null, true);
-        TestDataFactory.createTag('Blue Tag', '#3A86FF', true);
+        TestDataFactory.createTag('Blue Tag', '#A8C7FF', true);
     }
 
     // ─── Editor can create a junction record ─────────────────────────────────
@@ -22,7 +22,7 @@ private class bcm_CapabilityTagTest {
         System.runAs(editor) {
             bcm_Map__c m = TestDataFactory.createMap('Editor Map', true);
             bcm_Capability__c cap = TestDataFactory.createCapability(m.Id, null, null, null, true);
-            bcm_Tag__c tag = TestDataFactory.createTag('Editor Tag', '#3A86FF', true);
+            bcm_Tag__c tag = TestDataFactory.createTag('Editor Tag', '#A8C7FF', true);
             junction = TestDataFactory.createCapabilityTag(cap.Id, tag.Id, false);
             insert junction;
         }
@@ -103,7 +103,7 @@ private class bcm_CapabilityTagTest {
         System.runAs(editor) {
             bcm_Map__c m = TestDataFactory.createMap('Editor Map', true);
             bcm_Capability__c cap = TestDataFactory.createCapability(m.Id, null, null, null, true);
-            bcm_Tag__c tag = TestDataFactory.createTag('Editor Tag', '#3A86FF', true);
+            bcm_Tag__c tag = TestDataFactory.createTag('Editor Tag', '#A8C7FF', true);
             bcm_CapabilityTag__c junction = TestDataFactory.createCapabilityTag(cap.Id, tag.Id, true);
             junctionId = junction.Id;
             delete junction;

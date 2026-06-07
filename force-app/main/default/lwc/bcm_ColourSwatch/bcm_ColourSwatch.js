@@ -2,16 +2,16 @@ import { LightningElement, api, wire, track } from 'lwc';
 import { getRecord } from 'lightning/uiRecordApi';
 
 const COLOUR_LABELS = {
-    '#3A86FF': 'Blue',
-    '#2DC653': 'Green',
-    '#E63946': 'Red',
-    '#7B2FBE': 'Purple',
-    '#FB5607': 'Orange',
-    '#0096C7': 'Teal',
-    '#FF006E': 'Pink',
-    '#FFBE0B': 'Amber',
-    '#4361EE': 'Indigo',
-    '#06A77D': 'Emerald'
+    '#A8C7FF': 'Blue',
+    '#B8E0C8': 'Green',
+    '#F8B4B4': 'Red',
+    '#D8C4EC': 'Purple',
+    '#FFD4A8': 'Orange',
+    '#B8DCDC': 'Teal',
+    '#FFC8DC': 'Pink',
+    '#FFE4A8': 'Amber',
+    '#C4C8F0': 'Indigo',
+    '#B8E0C0': 'Emerald'
 };
 
 export default class BcmColourSwatch extends LightningElement {

@@ -7,7 +7,7 @@ private class bcm_TagValidationTest {
     @IsTest
     static void colour_validBlue_succeeds() {
         // Given
-        bcm_Tag__c tag = TestDataFactory.createTag('Blue Tag', '#3A86FF', false);
+        bcm_Tag__c tag = TestDataFactory.createTag('Blue Tag', '#A8C7FF', false);
 
         // When
         Test.startTest();
@@ -16,14 +16,14 @@ private class bcm_TagValidationTest {
 
         // Then
         bcm_Tag__c saved = [SELECT bcm_Colour__c FROM bcm_Tag__c WHERE Id = :tag.Id];
-        Assert.areEqual('#3A86FF', saved.bcm_Colour__c, 'Colour should be persisted as #3A86FF');
+        Assert.areEqual('#A8C7FF', saved.bcm_Colour__c, 'Colour should be persisted as #A8C7FF');
     }
 
     // @spec tag-object.md · "Tag colour picklist enforces allowed values" · "Second valid picklist value saves successfully"
     @IsTest
     static void colour_validEmerald_succeeds() {
         // Given
-        bcm_Tag__c tag = TestDataFactory.createTag('Emerald Tag', '#06A77D', false);
+        bcm_Tag__c tag = TestDataFactory.createTag('Emerald Tag', '#B8E0C0', false);
 
         // When
         Test.startTest();
@@ -32,7 +32,7 @@ private class bcm_TagValidationTest {
 
         // Then
         bcm_Tag__c saved = [SELECT bcm_Colour__c FROM bcm_Tag__c WHERE Id = :tag.Id];
-        Assert.areEqual('#06A77D', saved.bcm_Colour__c, 'Colour should be persisted as #06A77D');
+        Assert.areEqual('#B8E0C0', saved.bcm_Colour__c, 'Colour should be persisted as #B8E0C0');
     }
 
     // ─── Invalid / blank colour values are rejected ───────────────────────────
@@ -102,7 +102,7 @@ private class bcm_TagValidationTest {
     static void editor_canInsertValidTag() {
         // Given
         User editor = TestDataFactory.createUserWithPermSet('bcm_Editor');
-        bcm_Tag__c tag = TestDataFactory.createTag('Editor Tag', '#3A86FF', false);
+        bcm_Tag__c tag = TestDataFactory.createTag('Editor Tag', '#A8C7FF', false);
 
         // When
         Test.startTest();

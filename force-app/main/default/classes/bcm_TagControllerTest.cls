@@ -6,8 +6,8 @@ private class bcm_TagControllerTest {
 
     @TestSetup
     static void setupTestData() {
-        TestDataFactory.createTag('Zebra Tag', '#3A86FF', true);
-        TestDataFactory.createTag('Alpha Tag', '#2DC653', true);
+        TestDataFactory.createTag('Zebra Tag', '#A8C7FF', true);
+        TestDataFactory.createTag('Alpha Tag', '#B8E0C8', true);
     }
 
     @IsTest
@@ -54,8 +54,8 @@ private class bcm_TagControllerTest {
         List<bcm_Tag__c> result = bcm_TagController.getTags();
         Test.stopTest();
 
-        // Then — Alpha Tag has colour #FFFFFF
-        Assert.areEqual('#2DC653', result[0].bcm_Colour__c, 'Colour field should be populated');
+        // Then — Alpha Tag has Green colour
+        Assert.areEqual('#B8E0C8', result[0].bcm_Colour__c, 'Colour field should be populated');
     }
 
     @IsTest

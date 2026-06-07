@@ -15,7 +15,7 @@ private class bcm_CapabilityControllerTest {
         TestDataFactory.createCapability(mapA.Id, l2.Id, 3, 1, true);
 
         // Tag + junction for Map A L2 node
-        bcm_Tag__c tag = TestDataFactory.createTag('Red Tag', '#E63946', true);
+        bcm_Tag__c tag = TestDataFactory.createTag('Red Tag', '#F8B4B4', true);
         TestDataFactory.createCapabilityTag(l2.Id, tag.Id, true);
 
         // Map B: standalone L1 (no children)
@@ -70,7 +70,7 @@ private class bcm_CapabilityControllerTest {
         }
         Assert.isNotNull(l2, 'L2 capability should be in result');
         Assert.areEqual(1, l2.Tags__r.size(), 'L2 should have 1 CapabilityTag junction');
-        Assert.areEqual('#E63946', l2.Tags__r[0].bcm_Tag__r.bcm_Colour__c,
+        Assert.areEqual('#F8B4B4', l2.Tags__r[0].bcm_Tag__r.bcm_Colour__c,
             'Tag colour should match inserted value');
     }
 
@@ -156,7 +156,7 @@ private class bcm_CapabilityControllerTest {
         update l2;
 
         // Seed own tag junction so assertion is independent of @TestSetup
-        bcm_Tag__c localTag = TestDataFactory.createTag('Detail Test Tag', '#E63946', true);
+        bcm_Tag__c localTag = TestDataFactory.createTag('Detail Test Tag', '#F8B4B4', true);
         TestDataFactory.createCapabilityTag(l2.Id, localTag.Id, true);
 
         // When
