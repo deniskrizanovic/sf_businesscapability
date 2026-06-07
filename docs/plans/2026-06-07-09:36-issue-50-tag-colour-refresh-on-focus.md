@@ -323,3 +323,24 @@ Then highlighted nodes recolour to the new value
 - **Why `_buildLayout` on every wiredTags emission:** Cheap, deterministic, one code path. Diffing colour maps to skip a no-op rebuild adds complexity without measurable gain.
 - **Why clear `selectedTagId` on deletion:** Avoids stale combobox label; matches "None" fallback behaviour the user already expects.
 - **Risks:** None substantive. The added refresh is bounded (LDS-cached) and the deleted-tag guard is defensive.
+
+---
+
+## Post-merge fix (2026-06-07)
+
+**Problem:** Manual verification on scratch org showed the dropdown still appeared stale because the original change only refreshed `_wiredTags`. Tag-capability *junctions* live in `bcm_CapabilityController.getCapabilities` (the `Tags__r` subquery), so editing a junction in another tab did not propagate even after focus.
+
+**Fix:** `handleTagFocus` now also refreshes `_wiredCaps`:
+
+```js
+handleTagFocus() {
+    if (this._wiredTags) refreshApex(this._wiredTags);
+    if (this._wiredCaps) refreshApex(this._wiredCaps);
+}
+```
+
+**Test additions** (`bcm_CapabilityMap.test.js`, "tag combobox refresh on focus" describe):
+- "Focusing the tag combobox refreshes both getTags and getCapabilities wires" — asserts `refreshApex` called twice.
+- "Focus refreshes capabilities so junction edits propagate to node fills" — emits a re-fetched `getCapabilities` payload with `Tags__r: []` and asserts the L2 fill returns to white.
+
+**Spec update:** `docs/specs/diagram.md` — replaced the original "Focusing the dropdown calls refreshApex on the getTags wire" scenario with one that covers both wires, and added a "Junction edits propagate to node fills after focus" scenario.
