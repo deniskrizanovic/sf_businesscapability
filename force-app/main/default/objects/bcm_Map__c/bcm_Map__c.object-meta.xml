@@ -177,6 +177,6 @@
         <listViewButtons>JSON_Import</listViewButtons>
         <searchResultsCustomButtons>JSON_Import</searchResultsCustomButtons>
     </searchLayouts>
-    <sharingModel>Read</sharingModel>
+    <sharingModel>ReadWrite</sharingModel>
     <visibility>Public</visibility>
 </CustomObject>

@@ -6,7 +6,7 @@
         <label>Capability Name</label>
         <type>Text</type>
     </nameField>
-    <sharingModel>Read</sharingModel>
+    <sharingModel>ReadWrite</sharingModel>
     <deploymentStatus>Deployed</deploymentStatus>
     <visibility>Public</visibility>
     <description>Represents a business capability in the capability map hierarchy.</description>

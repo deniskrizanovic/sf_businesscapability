@@ -37,6 +37,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>bcm_Capability__c.bcm_SortOrder__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>bcm_Capability__c.bcm_StrategySupport__c</field>
         <readable>true</readable>
     </fieldPermissions>
