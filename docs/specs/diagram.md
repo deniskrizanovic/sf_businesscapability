@@ -218,13 +218,22 @@ Then the L1 chevron fill remains the default dark grey
 
 ## Feature: Tag dropdown refreshes on focus
 
-**Scenario: Focusing the dropdown calls refreshApex on the getTags wire**
+**Scenario: Focusing the dropdown refreshes both getTags and getCapabilities wires**
 
 Given the Map has loaded and the "Colour by Tag" combobox is visible  
 When the user focuses the combobox  
-Then `refreshApex` is called against the `getTags` wired result  
+Then `refreshApex` is called against both the `getTags` and `getCapabilities` wired results so tag-list edits AND capability-tag junction edits propagate  
 
-> Tested by: bcm_CapabilityMap.test.js — "Focusing the tag combobox calls refreshApex on the getTags wire"
+> Tested by: bcm_CapabilityMap.test.js — "Focusing the tag combobox refreshes both getTags and getCapabilities wires"
+
+**Scenario: Junction edits propagate to node fills after focus**
+
+Given the user has selected a tag and an L2 capability is highlighted because its junction matches that tag  
+And the junction was removed in another tab  
+When the user focuses the combobox and `getCapabilities` re-emits  
+Then the L2 fill returns to white because the capability no longer carries the tag  
+
+> Tested by: bcm_CapabilityMap.test.js — "Focus refreshes capabilities so junction edits propagate to node fills"
 
 **Scenario: Edited tag colour propagates to the dropdown after focus refresh**
 

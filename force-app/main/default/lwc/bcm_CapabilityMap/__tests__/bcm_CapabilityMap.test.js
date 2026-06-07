@@ -1471,9 +1471,34 @@ describe('BcmCapabilityMap tag combobox refresh on focus', () => {
         }
     });
 
-    it('Focusing the tag combobox calls refreshApex on the getTags wire', () => {
+    it('Focusing the tag combobox refreshes both getTags and getCapabilities wires', async () => {
+        await seedLayout(element);
+        refreshApex.mockClear();
         getTagCombobox().dispatchEvent(new CustomEvent('focus'));
-        expect(refreshApex).toHaveBeenCalledTimes(1);
+        expect(refreshApex).toHaveBeenCalledTimes(2);
+    });
+
+    it('Focus refreshes capabilities so junction edits propagate to node fills', async () => {
+        await seedLayout(element);
+        getTagCombobox().dispatchEvent(new CustomEvent('change', { detail: { value: 'TAG-1' } }));
+        await flushPromises();
+        expect(getL2Rect(element, 'L2-A1').getAttribute('fill')).toBe('#FF0000');
+
+        getTagCombobox().dispatchEvent(new CustomEvent('focus'));
+        await flushPromises();
+
+        // Simulate the wire re-emitting capabilities with the junction removed
+        // (mirrors a user un-tagging the L2 in another tab).
+        mockGetCapabilities.emit({
+            data: [
+                { Id: 'L1-A', Name: 'Capability A', bcm_Parent__c: null, bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false },
+                { Id: 'L2-A1', Name: 'Sub-Cap A1', bcm_Parent__c: 'L1-A', bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false, Tags__r: [] },
+            ],
+            error: undefined,
+        });
+        await flushPromises();
+
+        expect(getL2Rect(element, 'L2-A1').getAttribute('fill')).toBe('#FFFFFF');
     });
 
     it('Second wire emission with a new colour updates tagOptions colour entry', async () => {

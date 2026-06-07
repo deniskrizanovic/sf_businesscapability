@@ -580,8 +580,8 @@ export default class BcmCapabilityMap extends LightningElement {
     }
 
     handleTagFocus() {
-        if (!this._wiredTags) return;
-        refreshApex(this._wiredTags);
+        if (this._wiredTags) refreshApex(this._wiredTags);
+        if (this._wiredCaps) refreshApex(this._wiredCaps);
     }
 
     handleTagChange(evt) {
