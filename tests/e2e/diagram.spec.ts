@@ -2,90 +2,8 @@ import { test, expect } from '@playwright/test';
 import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import { RUN_ID, setupAutoDismiss } from './fixtures/helpers';
-
-// ── Seed data ─────────────────────────────────────────────────────────────────
-const MAP_NAME = `E2E Diagram Map ${RUN_ID}`;
-
-const SAMPLE_JSON = JSON.stringify({
-    mapName: MAP_NAME,
-    mapDescription: '<p>Seeded for diagram e2e tests</p>',
-    capabilities: [
-        {
-            externalId: `diag-l1a-${RUN_ID}`,
-            name: `Domain Alpha ${RUN_ID}`,
-            level: 1,
-            sortOrder: 1,
-            definition: '',
-            strategySupport: '',
-            architecturalNuance: '',
-            children: [
-                {
-                    externalId: `diag-l2a-${RUN_ID}`,
-                    name: `Group Alpha One ${RUN_ID}`,
-                    level: 2,
-                    sortOrder: 1,
-                    definition: '',
-                    strategySupport: '',
-                    architecturalNuance: '',
-                    children: [
-                        {
-                            externalId: `diag-l3a-${RUN_ID}`,
-                            name: `Capability Alpha One One ${RUN_ID}`,
-                            level: 3,
-                            sortOrder: 1,
-                            definition: '',
-                            strategySupport: '',
-                            architecturalNuance: '',
-                            children: [],
-                        },
-                    ],
-                },
-            ],
-        },
-        {
-            externalId: `diag-l1b-${RUN_ID}`,
-            name: `Domain Beta ${RUN_ID}`,
-            level: 1,
-            sortOrder: 2,
-            definition: '',
-            strategySupport: '',
-            architecturalNuance: '',
-            children: [
-                {
-                    externalId: `diag-l2b-${RUN_ID}`,
-                    name: `Group Beta One ${RUN_ID}`,
-                    level: 2,
-                    sortOrder: 1,
-                    definition: '',
-                    strategySupport: '',
-                    architecturalNuance: '',
-                    children: [],
-                },
-            ],
-        },
-        {
-            externalId: `diag-l1cc-${RUN_ID}`,
-            name: `Cross-cutting Foo ${RUN_ID}`,
-            level: 1,
-            sortOrder: 3,
-            definition: '',
-            strategySupport: '',
-            architecturalNuance: '',
-            children: [],
-        },
-        {
-            externalId: `diag-l1cc2-${RUN_ID}`,
-            name: `Cross-cutting Bar ${RUN_ID}`,
-            level: 1,
-            sortOrder: 4,
-            definition: '',
-            strategySupport: '',
-            architecturalNuance: '',
-            children: [],
-        },
-    ],
-});
+import { RUN_ID, setupAutoDismiss, selectMap } from './fixtures/helpers';
+import { MAP_NAME } from './diagram.seed';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -95,57 +13,14 @@ async function openDiagram(page: import('@playwright/test').Page) {
     await page.locator('.bcm-canvas').waitFor({ state: 'visible', timeout: 20000 });
 }
 
-async function selectMapFromCombobox(page: import('@playwright/test').Page) {
-    await page.getByRole('combobox', { name: 'Map' }).first().click();
-    await page.getByRole('option', { name: MAP_NAME }).click({ timeout: 15000 });
-    await page.locator('.bcm-canvas polygon').first().waitFor({ state: 'visible', timeout: 20000 });
-}
-
 async function getViewportTransform(page: import('@playwright/test').Page): Promise<string | null> {
     // The L1 g (first child of svg) carries l1Transform which includes scale(zoom) — sufficient for zoom checks
     return page.locator('svg.bcm-canvas > g').first().getAttribute('transform').catch(() => null);
 }
 
 // ── Map selector — editor project ─────────────────────────────────────────────
-// This suite seeds the shared map used by all later suites.
 
 test.describe('Map selector — editor project', () => {
-    test.beforeAll(async ({ browser }) => {
-        test.setTimeout(180000);
-        const ctx  = await browser.newContext({ storageState: 'tests/e2e/.auth/editor.json' });
-        const page = await ctx.newPage();
-        await setupAutoDismiss(page);
-
-        // Import map + capabilities via list-view JSON Import button (lives in an iframe)
-        const flow = page.frameLocator('iframe');
-        await page.goto('/lightning/o/bcm_Map__c/list?filterName=All');
-        await page.getByRole('button', { name: 'JSON Import', exact: true }).click();
-        await flow.getByLabel('Paste JSON').waitFor({ state: 'visible', timeout: 40000 });
-        await flow.getByLabel('Paste JSON').fill(SAMPLE_JSON);
-        await flow.getByRole('button', { name: 'Import', exact: true }).click();
-        await flow.getByText(/Successfully imported \d+ capabilities/).waitFor({ timeout: 90000 });
-        await flow.getByRole('button', { name: 'Close', exact: true }).click();
-
-        // Flip the cross-cutting flag on Cross-cutting Foo via Apex (Import service does not yet expose it)
-        const orgAlias = process.env.SF_ORG_ALIAS;
-        if (!orgAlias) throw new Error('SF_ORG_ALIAS not set');
-        const apex = `
-List<bcm_Capability__c> cc = [SELECT Id FROM bcm_Capability__c
-                              WHERE Name IN ('Cross-cutting Foo ${RUN_ID}', 'Cross-cutting Bar ${RUN_ID}')];
-for (bcm_Capability__c c : cc) c.bcm_IsCrossCutting__c = true;
-update cc;
-`.trim();
-        const apexFile = path.resolve(`tests/e2e/.cc_${RUN_ID}.apex`);
-        fs.writeFileSync(apexFile, apex, 'utf-8');
-        try {
-            execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], { stdio: 'inherit' });
-        } finally {
-            fs.unlinkSync(apexFile);
-        }
-
-        await ctx.close();
-    });
-
     test('Map combobox is present in diagram toolbar', async ({ page }) => {
         await openDiagram(page);
         await expect(page.getByRole('combobox', { name: 'Map' }).first()).toBeVisible();
@@ -159,7 +34,7 @@ update cc;
 
     test('Selected map persists across page reload within same session', async ({ page }) => {
         await openDiagram(page);
-        await selectMapFromCombobox(page);
+        await selectMap(page, MAP_NAME);
         // Reload reuses tab — sessionStorage retained
         await page.reload();
         await page.locator('.bcm-canvas').waitFor({ state: 'visible', timeout: 20000 });
@@ -179,28 +54,28 @@ update cc;
 test.describe('Diagram structure — editor project', () => {
     test('L1 domains render as polygon chevrons after map selection', async ({ page }) => {
         await openDiagram(page);
-        await selectMapFromCombobox(page);
+        await selectMap(page, MAP_NAME);
         const count = await page.locator('.bcm-canvas polygon').count();
         expect(count).toBeGreaterThan(0);
     });
 
     test('L2 boxes render as rect elements after map selection', async ({ page }) => {
         await openDiagram(page);
-        await selectMapFromCombobox(page);
+        await selectMap(page, MAP_NAME);
         const count = await page.locator('.bcm-canvas rect').count();
         expect(count).toBeGreaterThan(0);
     });
 
     test('L3 bullets render as text elements after map selection', async ({ page }) => {
         await openDiagram(page);
-        await selectMapFromCombobox(page);
+        await selectMap(page, MAP_NAME);
         const bullets = page.locator('svg.bcm-canvas text').filter({ hasText: '•' });
         await expect(bullets.first()).toBeVisible({ timeout: 10000 });
     });
 
     test('Cross-cutting L1 renders as band chevron at bottom; non-cross-cutting still in column', async ({ page }) => {
         await openDiagram(page);
-        await selectMapFromCombobox(page);
+        await selectMap(page, MAP_NAME);
         await page.locator('lightning-button-icon[data-id="cross-cutting-toggle"]').click();
 
         const ccName = `Cross-cutting Foo ${RUN_ID}`;
@@ -223,7 +98,7 @@ test.describe('Diagram structure — editor project', () => {
 
     test('Cross-cutting band layered stack: lowest sortOrder paints last (DOM-last) and chevrons span full width', async ({ page }) => {
         await openDiagram(page);
-        await selectMapFromCombobox(page);
+        await selectMap(page, MAP_NAME);
         await page.locator('lightning-button-icon[data-id="cross-cutting-toggle"]').click();
 
         const bandNodes = page.locator('g.bcm-band-node');
@@ -241,7 +116,7 @@ test.describe('Diagram structure — editor project', () => {
 
     test('Clicking a cross-cutting band chevron opens the Detail Panel', async ({ page }) => {
         await openDiagram(page);
-        await selectMapFromCombobox(page);
+        await selectMap(page, MAP_NAME);
         await page.locator('lightning-button-icon[data-id="cross-cutting-toggle"]').click();
 
         const ccName = `Cross-cutting Foo ${RUN_ID}`;
@@ -251,7 +126,7 @@ test.describe('Diagram structure — editor project', () => {
 
     test('Cross-cutting toggle: hidden by default, shows on click, hides on second click', async ({ page }) => {
         await openDiagram(page);
-        await selectMapFromCombobox(page);
+        await selectMap(page, MAP_NAME);
 
         const ccName = `Cross-cutting Foo ${RUN_ID}`;
         const ccBand = page.locator(`g.bcm-band-node[data-node-name="${ccName}"]`);
@@ -302,7 +177,7 @@ test.describe('Zoom & pan — editor project', () => {
 
     test('ArrowRight pan -> L2 transform translateX increases (no clip on right)', async ({ page }) => {
         await openDiagram(page);
-        await selectMapFromCombobox(page);
+        await selectMap(page, MAP_NAME);
         const svg = page.locator('svg.bcm-canvas');
         await svg.focus();
 
@@ -318,7 +193,7 @@ test.describe('Zoom & pan — editor project', () => {
 
     test('ArrowDown pan -> L2 transform translateY decreases (free vertical pan, no clamp)', async ({ page }) => {
         await openDiagram(page);
-        await selectMapFromCombobox(page);
+        await selectMap(page, MAP_NAME);
         const svg = page.locator('svg.bcm-canvas');
         await svg.focus();
 
@@ -331,7 +206,7 @@ test.describe('Zoom & pan — editor project', () => {
 
     test('ArrowUp from origin -> positive panY (was previously clamped to 0)', async ({ page }) => {
         await openDiagram(page);
-        await selectMapFromCombobox(page);
+        await selectMap(page, MAP_NAME);
         const svg = page.locator('svg.bcm-canvas');
         await svg.focus();
 
@@ -345,7 +220,7 @@ test.describe('Zoom & pan — editor project', () => {
 
     test('Zoom in then ArrowRight -> L2 transform shows scale>1 AND translateX moved', async ({ page }) => {
         await openDiagram(page);
-        await selectMapFromCombobox(page);
+        await selectMap(page, MAP_NAME);
         await page.getByTitle('Zoom In').click();
         await page.getByTitle('Zoom In').click();
 
@@ -362,7 +237,7 @@ test.describe('Zoom & pan — editor project', () => {
 
     test('L1 chevron band stays at translateY=0 even when L2 panY is non-zero', async ({ page }) => {
         await openDiagram(page);
-        await selectMapFromCombobox(page);
+        await selectMap(page, MAP_NAME);
         const svg = page.locator('svg.bcm-canvas');
         await svg.focus();
 
@@ -386,8 +261,11 @@ test.describe('Tag highlight — editor project', () => {
 
     test('Selecting None in tag dropdown does not crash the diagram', async ({ page }) => {
         await openDiagram(page);
-        await page.getByRole('combobox', { name: 'Colour by Tag' }).first().click();
-        await page.getByRole('option', { name: 'None' }).click();
+        const tagFilter = page.getByRole('combobox', { name: 'Colour by Tag' }).first();
+        await expect(async () => {
+            await tagFilter.click();
+            await page.getByRole('option', { name: 'None' }).click({ timeout: 1500 });
+        }).toPass({ timeout: 20000, intervals: [500, 1000, 1500] });
         await expect(page.locator('.bcm-canvas')).toBeVisible();
     });
 });
@@ -422,7 +300,7 @@ test.describe('Show Hidden toggle — editor project', () => {
 
     test('Diagram still renders after toggling Show Hidden on and off', async ({ page }) => {
         await openDiagram(page);
-        await selectMapFromCombobox(page);
+        await selectMap(page, MAP_NAME);
         await page.getByTitle('Show Hidden').click();
         await page.getByTitle('Show Hidden').click();
         const count = await page.locator('.bcm-canvas polygon').count();
@@ -457,7 +335,7 @@ test.describe('Keyboard navigation — editor project', () => {
 
     test('Clicking a node sets focus and ArrowRight moves to next column', async ({ page }) => {
         await openDiagram(page);
-        await selectMapFromCombobox(page);
+        await selectMap(page, MAP_NAME);
         const firstNode = page.locator('.bcm-canvas .bcm-node').first();
         await firstNode.click();
         const svg = page.locator('svg.bcm-canvas');

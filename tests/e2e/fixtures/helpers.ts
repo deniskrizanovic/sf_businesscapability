@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { getRunId } from './run-id';
 
 export const APP_PATH = '/lightning/app/bcm_BusinessCapabilityMap';
@@ -78,4 +79,33 @@ export function recordIdFromUrl(url: string): string {
     const match = url.match(/\/([a-zA-Z0-9]{15,18})\/view/);
     if (!match) throw new Error(`Could not extract record ID from URL: ${url}`);
     return match[1];
+}
+
+/**
+ * Open the diagram's Map combobox and click the option matching `mapName`.
+ *
+ * Hardens three known flakes:
+ *  - Late-mounting onboarding overlays close the dropdown ~300ms after open;
+ *    retry the open + click until the option click sticks.
+ *  - Strict-mode violation when two Maps share a Name (parallel-seeding race);
+ *    fail with a clear diagnostic citing duplicate seed before clicking.
+ *  - Canvas isn't rendered until SVG polygons paint; wait for first polygon.
+ */
+export async function selectMap(page: Page, mapName: string): Promise<void> {
+    const combo = page.getByRole('combobox', { name: 'Map' }).first();
+    const option = page.getByRole('option', { name: mapName });
+
+    await expect(async () => {
+        await combo.click();
+        const count = await option.count();
+        if (count > 1) {
+            throw new Error(
+                `selectMap: ${count} Map options match "${mapName}" — duplicate seed. ` +
+                `Check globalSetup ran exactly once and externalIds in seeds.ts are unique.`,
+            );
+        }
+        await option.click({ timeout: 1500 });
+    }).toPass({ timeout: 20000, intervals: [500, 1000, 1500] });
+
+    await page.locator('.bcm-canvas polygon').first().waitFor({ state: 'visible', timeout: 20000 });
 }

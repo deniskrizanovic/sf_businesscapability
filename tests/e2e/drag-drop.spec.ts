@@ -2,97 +2,10 @@ import { test, expect } from '@playwright/test';
 import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import { RUN_ID, setupAutoDismiss } from './fixtures/helpers';
-
-// ── Seed data ─────────────────────────────────────────────────────────────────
-const MAP_NAME = `E2E DragDrop Map ${RUN_ID}`;
-const L1A_NAME = `Domain DD Alpha ${RUN_ID}`;
-const L1B_NAME = `Domain DD Beta ${RUN_ID}`;
-const L2A1_NAME = `Group Alpha One ${RUN_ID}`;
-const L2A2_NAME = `Group Alpha Two ${RUN_ID}`;
-const L2B1_NAME = `Group Beta One ${RUN_ID}`;
-const L3A1A_NAME = `Cap Alpha One A ${RUN_ID}`;
-const L3A1B_NAME = `Cap Alpha One B ${RUN_ID}`;
-
-const SAMPLE_JSON = JSON.stringify({
-    mapName: MAP_NAME,
-    mapDescription: '<p>Seeded for drag-drop e2e tests</p>',
-    capabilities: [
-        {
-            externalId: `dd-l1a-${RUN_ID}`,
-            name: L1A_NAME,
-            level: 1,
-            sortOrder: 1,
-            definition: '',
-            strategySupport: '',
-            architecturalNuance: '',
-            children: [
-                {
-                    externalId: `dd-l2a1-${RUN_ID}`,
-                    name: L2A1_NAME,
-                    level: 2,
-                    sortOrder: 1,
-                    definition: '',
-                    strategySupport: '',
-                    architecturalNuance: '',
-                    children: [
-                        {
-                            externalId: `dd-l3a1a-${RUN_ID}`,
-                            name: L3A1A_NAME,
-                            level: 3,
-                            sortOrder: 1,
-                            definition: '',
-                            strategySupport: '',
-                            architecturalNuance: '',
-                            children: [],
-                        },
-                        {
-                            externalId: `dd-l3a1b-${RUN_ID}`,
-                            name: L3A1B_NAME,
-                            level: 3,
-                            sortOrder: 2,
-                            definition: '',
-                            strategySupport: '',
-                            architecturalNuance: '',
-                            children: [],
-                        },
-                    ],
-                },
-                {
-                    externalId: `dd-l2a2-${RUN_ID}`,
-                    name: L2A2_NAME,
-                    level: 2,
-                    sortOrder: 2,
-                    definition: '',
-                    strategySupport: '',
-                    architecturalNuance: '',
-                    children: [],
-                },
-            ],
-        },
-        {
-            externalId: `dd-l1b-${RUN_ID}`,
-            name: L1B_NAME,
-            level: 1,
-            sortOrder: 2,
-            definition: '',
-            strategySupport: '',
-            architecturalNuance: '',
-            children: [
-                {
-                    externalId: `dd-l2b1-${RUN_ID}`,
-                    name: L2B1_NAME,
-                    level: 2,
-                    sortOrder: 1,
-                    definition: '',
-                    strategySupport: '',
-                    architecturalNuance: '',
-                    children: [],
-                },
-            ],
-        },
-    ],
-});
+import { RUN_ID, setupAutoDismiss, selectMap } from './fixtures/helpers';
+import {
+    MAP_NAME, L1A_NAME, L1B_NAME, L2A1_NAME, L2A2_NAME, L3A1A_NAME, L3A1B_NAME,
+} from './drag-drop.seed';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -100,19 +13,6 @@ async function openDiagram(page: import('@playwright/test').Page) {
     await setupAutoDismiss(page);
     await page.goto('/lightning/n/bcm_Visualisation');
     await page.locator('.bcm-canvas').waitFor({ state: 'visible', timeout: 20000 });
-}
-
-async function selectMap(page: import('@playwright/test').Page) {
-    // Late-mounting onboarding overlays can force the combobox dropdown shut ~300ms after it
-    // opens, before getByRole('option').click() completes. Retry the open + select until the
-    // option click sticks.
-    const combo = page.getByRole('combobox', { name: 'Map' }).first();
-    const option = page.getByRole('option', { name: MAP_NAME });
-    await expect(async () => {
-        await combo.click();
-        await option.click({ timeout: 1500 });
-    }).toPass({ timeout: 20000, intervals: [500, 1000, 1500] });
-    await page.locator('.bcm-canvas polygon').first().waitFor({ state: 'visible', timeout: 20000 });
 }
 
 async function waitForDragDropSettled(page: import('@playwright/test').Page) {
@@ -174,27 +74,9 @@ function getOrgAlias(): string {
 // ── Drag-drop seed (shared by editor + viewer projects) ───────────────────────
 
 test.describe('Drag-drop seed — editor project', () => {
-    test.beforeAll(async ({ browser }) => {
-        test.setTimeout(180000);
-        const ctx  = await browser.newContext({ storageState: 'tests/e2e/.auth/editor.json' });
-        const page = await ctx.newPage();
-        await setupAutoDismiss(page);
-
-        const flow = page.frameLocator('iframe');
-        await page.goto('/lightning/o/bcm_Map__c/list?filterName=All');
-        await page.getByRole('button', { name: 'JSON Import', exact: true }).click();
-        await flow.getByLabel('Paste JSON').waitFor({ state: 'visible', timeout: 40000 });
-        await flow.getByLabel('Paste JSON').fill(SAMPLE_JSON);
-        await flow.getByRole('button', { name: 'Import', exact: true }).click();
-        await flow.getByText(/Successfully imported \d+ capabilities/).waitFor({ timeout: 90000 });
-        await flow.getByRole('button', { name: 'Close', exact: true }).click();
-
-        await ctx.close();
-    });
-
     test('seed exists', async ({ page }) => {
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         await expect(page.locator(`[data-node-name="${L1A_NAME}"]`).first()).toBeAttached();
     });
 
@@ -202,7 +84,7 @@ test.describe('Drag-drop seed — editor project', () => {
 
     test('editor sees drag handles', async ({ page }) => {
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         const handles = page.locator('[data-bcm-drag-handle="true"]');
         const count = await handles.count();
         expect(count).toBeGreaterThan(0);
@@ -213,7 +95,7 @@ test.describe('Drag-drop seed — editor project', () => {
     test('L2 reorder within column (gesture)', async ({ page }) => {
         const orgAlias = getOrgAlias();
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
 
         // Baseline: capture order BEFORE the drag
         const orderBefore = parseDragDropOrder(orgAlias, MAP_NAME, L1A_NAME);
@@ -261,7 +143,7 @@ update l2;
 `.trim());
 
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         // L2A2 should now appear under L1B column area — verify presence
         await expect(page.locator(`[data-node-name="${L2A2_NAME}"]`).first()).toBeAttached();
     });
@@ -279,7 +161,7 @@ update new List<bcm_Capability__c>{ a, b };
 `.trim());
 
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         // Both L1s still visible after reorder
         await expect(page.locator(`[data-node-name="${L1A_NAME}"]`).first()).toBeAttached();
         await expect(page.locator(`[data-node-name="${L1B_NAME}"]`).first()).toBeAttached();
@@ -298,7 +180,7 @@ update new List<bcm_Capability__c>{ a, b };
 `.trim());
 
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         // L3 names render in <text data-node-id ...> (no name attr); query by data-node-id of the cap
         await expect(page.locator('text[data-node-level="3"]').first()).toBeAttached();
     });
@@ -316,39 +198,17 @@ update l3;
 `.trim());
 
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         await expect(page.locator('text[data-node-level="3"]').first()).toBeAttached();
     });
 });
 
 // ── Viewer project ────────────────────────────────────────────────────────────
-// Seeded independently (editor + viewer projects run in parallel — can't depend
-// on the editor describe's beforeAll having completed first).
 
 test.describe('Drag-drop — viewer project', () => {
-    test.beforeAll(async ({ browser }) => {
-        test.setTimeout(180000);
-        const ctx  = await browser.newContext({ storageState: 'tests/e2e/.auth/editor.json' });
-        const page = await ctx.newPage();
-        await setupAutoDismiss(page);
-
-        // Map may already exist (editor describe's seed); JSON Import upserts so re-running is safe.
-        const flow = page.frameLocator('iframe');
-        await page.goto('/lightning/o/bcm_Map__c/list?filterName=All');
-        await page.getByRole('button', { name: 'JSON Import', exact: true }).click();
-        await flow.getByLabel('Paste JSON').waitFor({ state: 'visible', timeout: 40000 });
-        await flow.getByLabel('Paste JSON').fill(SAMPLE_JSON);
-        await flow.getByRole('button', { name: 'Import', exact: true }).click();
-        await flow.getByText(/Successfully imported \d+ capabilities/).waitFor({ timeout: 90000 });
-        await flow.getByRole('button', { name: 'Close', exact: true }).click();
-        await ctx.close();
-    });
-
     test('viewer does not see drag handles', async ({ page }) => {
         await openDiagram(page);
-        await page.getByRole('combobox', { name: 'Map' }).first().click();
-        await page.getByRole('option', { name: MAP_NAME }).click({ timeout: 15000 });
-        await page.locator('.bcm-canvas polygon').first().waitFor({ state: 'visible', timeout: 20000 });
+        await selectMap(page, MAP_NAME);
         const count = await page.locator('[data-bcm-drag-handle="true"]').count();
         expect(count).toBe(0);
     });
