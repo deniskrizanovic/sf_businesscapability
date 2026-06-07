@@ -103,8 +103,15 @@ async function openDiagram(page: import('@playwright/test').Page) {
 }
 
 async function selectMap(page: import('@playwright/test').Page) {
-    await page.getByRole('combobox', { name: 'Map' }).first().click();
-    await page.getByRole('option', { name: MAP_NAME }).click({ timeout: 15000 });
+    // Late-mounting onboarding overlays can force the combobox dropdown shut ~300ms after it
+    // opens, before getByRole('option').click() completes. Retry the open + select until the
+    // option click sticks.
+    const combo = page.getByRole('combobox', { name: 'Map' }).first();
+    const option = page.getByRole('option', { name: MAP_NAME });
+    await expect(async () => {
+        await combo.click();
+        await option.click({ timeout: 1500 });
+    }).toPass({ timeout: 20000, intervals: [500, 1000, 1500] });
     await page.locator('.bcm-canvas polygon').first().waitFor({ state: 'visible', timeout: 20000 });
 }
 
@@ -137,9 +144,12 @@ System.debug('DRAG_DROP_RESULT:' + result);
     fs.writeFileSync(apexFile, apex, 'utf-8');
     try {
         const out = execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], { encoding: 'utf-8' });
-        const match = out.match(/DRAG_DROP_RESULT:([^\n]*)/);
+        // sf echoes the Apex source first, which also contains 'DRAG_DROP_RESULT:' — anchor on
+        // the USER_DEBUG log marker to skip the echoed System.debug call line.
+        const match = out.match(/USER_DEBUG\|[^|]*\|DEBUG\|DRAG_DROP_RESULT:([^\n]*)/);
         if (!match) throw new Error('DRAG_DROP_RESULT marker not found in apex output');
-        return match[1].trim();
+        // Apex debug log HTML-encodes some chars (e.g. '|' becomes '&#124;').
+        return match[1].replace(/&#124;/g, '|').trim();
     } finally {
         fs.unlinkSync(apexFile);
     }
