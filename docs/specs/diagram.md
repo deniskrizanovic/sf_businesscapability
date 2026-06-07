@@ -216,6 +216,53 @@ Then the L1 chevron fill remains the default dark grey
 
 ---
 
+## Feature: Tag dropdown refreshes on focus
+
+**Scenario: Focusing the dropdown calls refreshApex on the getTags wire**
+
+Given the Map has loaded and the "Colour by Tag" combobox is visible  
+When the user focuses the combobox  
+Then `refreshApex` is called against the `getTags` wired result  
+
+> Tested by: bcm_CapabilityMap.test.js — "Focusing the tag combobox calls refreshApex on the getTags wire"
+
+**Scenario: Edited tag colour propagates to the dropdown after focus refresh**
+
+Given a tag's `bcm_Colour__c` was changed in another tab since the page loaded  
+When the user focuses the "Colour by Tag" combobox  
+Then the wire re-emits and `tagOptions` reflects the new colour value  
+
+> Tested by: bcm_CapabilityMap.test.js — "Second wire emission with a new colour updates tagOptions colour entry"
+
+**Scenario: Currently selected tag recolours nodes without a page reload**
+
+Given the user has selected a tag and capabilities are highlighted in its colour  
+And the tag's colour was changed in another tab  
+When the user focuses the combobox and the wire re-emits  
+Then the highlighted L2 boxes (and L3 tag rects) repaint with the new colour without a full page reload  
+
+> Tested by: bcm_CapabilityMap.test.js — "Selected L2 fill repaints when refreshed colour map changes"
+
+**Scenario: Selected tag deleted externally clears the selection**
+
+Given the user has a tag selected  
+And that tag was deleted in another tab  
+When the user focuses the combobox and the wire re-emits without that tag  
+Then `selectedTagId` clears and the combobox shows "None"  
+
+> Tested by: bcm_CapabilityMap.test.js — "If the selected tag is removed from the refreshed list, selectedTagId clears"
+
+**Scenario: Cross-tab edit verified end-to-end**
+
+Given the diagram is open with a tag selected  
+When the user edits that tag's colour on its standard record page in another tab  
+And returns to the diagram and focuses the combobox  
+Then highlighted nodes recolour to the new value  
+
+> Deferred: Playwright cannot cleanly simulate same-org cross-tab record edit + return without a costly second-context fixture; behaviour is jest-covered above and verified manually.
+
+---
+
 ## Feature: Drag handles are not visible to Viewers
 
 **Scenario: Viewer sees no drag handles on the diagram**

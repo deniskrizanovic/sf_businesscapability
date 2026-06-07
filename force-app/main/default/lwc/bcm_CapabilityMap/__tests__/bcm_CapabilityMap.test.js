@@ -74,6 +74,11 @@ jest.mock(
     }),
     { virtual: true }
 );
+jest.mock('@salesforce/apex', () => ({
+    __esModule: true,
+    refreshApex: jest.fn().mockResolvedValue(undefined),
+}), { virtual: true });
+const { refreshApex } = require('@salesforce/apex');
 jest.mock('@salesforce/apex/bcm_MapController.getMaps', () => ({ __esModule: true, default: mockGetMaps }), { virtual: true });
 jest.mock('@salesforce/apex/bcm_TagController.getTags', () => ({ __esModule: true, default: mockGetTags }), { virtual: true });
 jest.mock('@salesforce/apex/bcm_CapabilityController.getCapabilities',
@@ -1428,5 +1433,83 @@ describe('BcmCapabilityMap drag-drop', () => {
         expect(getGhost(element)).toBeNull();
         expect(mockReorderImpl).not.toHaveBeenCalled();
         expect(mockReparentImpl).not.toHaveBeenCalled();
+    });
+});
+
+describe('BcmCapabilityMap tag combobox refresh on focus', () => {
+    let element;
+
+    const TAGGED_CAPS_FOR_REFRESH = [
+        { Id: 'L1-A', Name: 'Capability A', bcm_Parent__c: null, bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false },
+        { Id: 'L2-A1', Name: 'Sub-Cap A1', bcm_Parent__c: 'L1-A', bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false,
+          Tags__r: [{ bcm_Tag__c: 'TAG-1' }] },
+    ];
+
+    function getTagCombobox() {
+        return element.shadowRoot.querySelectorAll('lightning-combobox')[1];
+    }
+
+    function getL2Rect(el, l2Id) {
+        return el.shadowRoot.querySelector(`[data-node-id="${l2Id}"][data-node-level="2"] > rect`);
+    }
+
+    beforeEach(async () => {
+        refreshApex.mockClear();
+        mockCapabilitiesImpl = jest.fn().mockResolvedValue(TAGGED_CAPS_FOR_REFRESH);
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [
+            { Id: 'TAG-1', Name: 'Strategic', bcm_Colour__c: '#FF0000' },
+        ], error: undefined });
+        await flushPromises();
+    });
+
+    afterEach(() => {
+        while (document.body.firstChild) {
+            document.body.removeChild(document.body.firstChild);
+        }
+    });
+
+    it('Focusing the tag combobox calls refreshApex on the getTags wire', () => {
+        getTagCombobox().dispatchEvent(new CustomEvent('focus'));
+        expect(refreshApex).toHaveBeenCalledTimes(1);
+    });
+
+    it('Second wire emission with a new colour updates tagOptions colour entry', async () => {
+        expect(getTagCombobox().options.find(o => o.value === 'TAG-1').colour).toBe('#FF0000');
+
+        mockGetTags.emit({ data: [
+            { Id: 'TAG-1', Name: 'Strategic', bcm_Colour__c: '#00FF00' },
+        ], error: undefined });
+        await flushPromises();
+
+        expect(getTagCombobox().options.find(o => o.value === 'TAG-1').colour).toBe('#00FF00');
+    });
+
+    it('Selected L2 fill repaints when refreshed colour map changes', async () => {
+        await seedLayout(element);
+        getTagCombobox().dispatchEvent(new CustomEvent('change', { detail: { value: 'TAG-1' } }));
+        await flushPromises();
+        expect(getL2Rect(element, 'L2-A1').getAttribute('fill')).toBe('#FF0000');
+
+        mockGetTags.emit({ data: [
+            { Id: 'TAG-1', Name: 'Strategic', bcm_Colour__c: '#00FF00' },
+        ], error: undefined });
+        await flushPromises();
+
+        expect(getL2Rect(element, 'L2-A1').getAttribute('fill')).toBe('#00FF00');
+    });
+
+    it('If the selected tag is removed from the refreshed list, selectedTagId clears', async () => {
+        await seedLayout(element);
+        getTagCombobox().dispatchEvent(new CustomEvent('change', { detail: { value: 'TAG-1' } }));
+        await flushPromises();
+        expect(getTagCombobox().value).toBe('TAG-1');
+
+        mockGetTags.emit({ data: [], error: undefined });
+        await flushPromises();
+
+        expect(getTagCombobox().value).toBe('');
     });
 });

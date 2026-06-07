@@ -121,11 +121,19 @@ export default class BcmCapabilityMap extends LightningElement {
     }
 
     @wire(getTags)
-    wiredTags({ data, error }) {
+    wiredTags(result) {
+        this._wiredTags = result;
+        const { data, error } = result;
         if (data) {
             this.tagOptions = [{ label: 'None', value: '' },
                 ...data.map(t => ({ label: t.Name, value: t.Id, colour: t.bcm_Colour__c }))];
             this._tagColourMap = new Map(data.map(t => [t.Id, t.bcm_Colour__c]));
+            if (this.selectedTagId && !this._tagColourMap.has(this.selectedTagId)) {
+                this.selectedTagId = '';
+            }
+            if (this._capabilities.length) {
+                this._buildLayout(this._capabilities);
+            }
         } else if (error) {
             this.errorMessage = error?.body?.message || 'Failed to load tags';
         }
@@ -169,6 +177,7 @@ export default class BcmCapabilityMap extends LightningElement {
 
     _capabilities   = [];
     _wiredCaps      = null;
+    _wiredTags      = null;
     _tagColourMap   = new Map();
     _keyNavMode     = false;
     _isDragging     = false;
@@ -568,6 +577,11 @@ export default class BcmCapabilityMap extends LightningElement {
             this._buildLayout([]);
         }
         this.isLoading = !!this.selectedMapId;
+    }
+
+    handleTagFocus() {
+        if (!this._wiredTags) return;
+        refreshApex(this._wiredTags);
     }
 
     handleTagChange(evt) {
