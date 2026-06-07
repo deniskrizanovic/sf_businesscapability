@@ -50,6 +50,22 @@
                     <span class="bcm-detail-level-badge slds-m-right_x-small">{levelBadge}</span>
                 </div>
             </template>
+            <template if:true={recordPageUrl}>
+                <div class="bcm-detail-record-link slds-m-top_x-small">
+                    <a href={recordPageUrl}
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="slds-text-link">
+                        Open record page
+                        <lightning-icon
+                            icon-name="utility:new_window"
+                            size="xx-small"
+                            alternative-text="Opens in new tab"
+                            class="slds-m-left_xx-small">
+                        </lightning-icon>
+                    </a>
+                </div>
+            </template>
         </header>
 
         <template if:true={isLoading}>

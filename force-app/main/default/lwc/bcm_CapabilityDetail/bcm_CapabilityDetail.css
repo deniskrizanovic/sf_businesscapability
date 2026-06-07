@@ -94,3 +94,12 @@
     background: #fafafa;
     flex: 0 0 auto;
 }
+
+.bcm-detail-record-link a {
+    display: inline-flex;
+    align-items: center;
+}
+
+.bcm-detail-record-link lightning-icon {
+    margin-left: 0.25rem;
+}

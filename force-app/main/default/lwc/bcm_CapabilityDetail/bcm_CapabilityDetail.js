@@ -1,6 +1,7 @@
 import { LightningElement, api, track } from 'lwc';
+import { NavigationMixin } from 'lightning/navigation';
 
-export default class BcmCapabilityDetail extends LightningElement {
+export default class BcmCapabilityDetail extends NavigationMixin(LightningElement) {
     _capability = null;
     _savePending = false;
     @api
@@ -21,11 +22,16 @@ export default class BcmCapabilityDetail extends LightningElement {
             this.editMode    = false;
             this._savePending = false;
         }
+        if (idChanged) {
+            this._refreshRecordPageUrl(val?.Id);
+        }
     }
     @api breadcrumb = [];
     @api isLoading = false;
     @api errorMessage = null;
     @api canEdit = false;
+
+    @track recordPageUrl = null;
 
     @track editMode = false;
     @track draftName;
@@ -207,5 +213,28 @@ export default class BcmCapabilityDetail extends LightningElement {
         }));
         // editMode stays true until parent re-feeds the capability prop with
         // a successful save (handled in the capability setter).
+    }
+
+    _refreshRecordPageUrl(recordId) {
+        if (!recordId) {
+            this.recordPageUrl = null;
+            return;
+        }
+        this[NavigationMixin.GenerateUrl]({
+            type: 'standard__recordPage',
+            attributes: { recordId, objectApiName: 'bcm_Capability__c', actionName: 'view' },
+        })
+            .then(url => {
+                if (this._capability?.Id === recordId) {
+                    this.recordPageUrl = url;
+                }
+            })
+            .catch(err => {
+                // eslint-disable-next-line no-console
+                console.warn('GenerateUrl failed for record page link', err);
+                if (this._capability?.Id === recordId) {
+                    this.recordPageUrl = null;
+                }
+            });
     }
 }

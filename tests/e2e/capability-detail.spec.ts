@@ -304,6 +304,29 @@ test.describe('Detail panel — layout — editor project', () => {
     });
 });
 
+// ── GH #45 record page link — editor project ─────────────────────────────────
+
+test.describe('Detail panel — record page link — editor project', () => {
+    test('Record page link opens record page in a new tab', async ({ page, context }) => {
+        await openDiagram(page);
+        await selectMap(page);
+        const panel = await openDetailPanelOnL2(page);
+
+        const link = panel.locator('.bcm-detail-record-link a');
+        await expect(link).toBeVisible();
+        await expect(link).toHaveAttribute('target', '_blank');
+        await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+
+        const [newPage] = await Promise.all([
+            context.waitForEvent('page'),
+            link.click(),
+        ]);
+        expect(newPage.url()).toContain('/lightning/r/bcm_Capability__c/');
+        await expect(page.locator('.bcm-detail-panel[data-open="true"]')).toBeVisible();
+        await newPage.close();
+    });
+});
+
 // ── FP30 viewer regression — viewer project ───────────────────────────────────
 
 test.describe('Detail panel — viewer no-edit — viewer project', () => {

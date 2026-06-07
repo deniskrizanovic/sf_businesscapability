@@ -860,3 +860,54 @@ Then an error message is shown inside the panel
 And the panel remains open  
 
 > Tested by: bcm_CapabilityDetail.test.js — "Save error keeps edit mode and surfaces error message"; bcm_CapabilityMap.test.js — "saved event Apex error surfaces errorMessage to detail panel"
+
+---
+
+## Feature: Detail Panel — record page link
+
+**Scenario: Link to standard record page is shown in read mode**
+
+Given a Viewer or Editor has the Detail Panel open for a capability  
+Then a text link "Open record page" is rendered in the panel header below the title row  
+And the link's `href` is the standard `bcm_Capability__c` record page URL for that capability  
+
+> Tested by: bcm_CapabilityDetail.test.js — "Record page link is rendered with correct href in read mode"
+
+**Scenario: Link is shown in edit mode**
+
+Given an Editor has the Detail Panel open and has switched to edit mode  
+Then the "Open record page" link is still rendered in the panel header  
+
+> Tested by: bcm_CapabilityDetail.test.js — "Record page link is rendered in edit mode"
+
+**Scenario: Link is shown to Viewers (no canEdit gating)**
+
+Given a Viewer has the Detail Panel open  
+Then the "Open record page" link is rendered  
+
+> Tested by: bcm_CapabilityDetail.test.js — "Record page link renders when canEdit is false"
+
+**Scenario: Clicking the link opens the record page in a new tab**
+
+Given the Detail Panel is open for a capability  
+When the user clicks "Open record page"  
+Then a new browser tab opens at the standard `bcm_Capability__c` record page URL for that capability  
+And the diagram + panel in the original tab are unchanged  
+And the new tab cannot manipulate the opener and does not leak the Referer header (`target="_blank"` + `rel="noopener noreferrer"`)  
+
+> Tested by: capability-detail.spec.ts — "Record page link opens record page in a new tab"
+
+**Scenario: No link rendered while panel has no capability loaded**
+
+Given the Detail Panel has no capability loaded  
+Then no "Open record page" link is rendered  
+
+> Tested by: bcm_CapabilityDetail.test.js — "Record page link is hidden when no capability loaded"
+
+**Scenario: Link href updates when the panel switches capability**
+
+Given the Detail Panel has been showing capability A  
+When the panel is switched to capability B  
+Then the "Open record page" link's `href` updates to B's record page URL  
+
+> Tested by: bcm_CapabilityDetail.test.js — "Record page link updates when capability changes"

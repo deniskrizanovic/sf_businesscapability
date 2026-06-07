@@ -1,7 +1,22 @@
 import { createElement } from 'lwc';
 import BcmCapabilityDetail from 'c/bcm_CapabilityDetail';
 
+jest.mock('lightning/navigation', () => {
+    const Navigate = Symbol('Navigate');
+    const GenerateUrl = Symbol('GenerateUrl');
+    const NavigationMixin = (Base) => class extends Base {
+        [Navigate]() {}
+        [GenerateUrl]({ attributes }) {
+            return Promise.resolve(`/lightning/r/${attributes.objectApiName}/${attributes.recordId}/${attributes.actionName}`);
+        }
+    };
+    NavigationMixin.Navigate = Navigate;
+    NavigationMixin.GenerateUrl = GenerateUrl;
+    return { NavigationMixin };
+});
+
 async function flushPromises() {
+    await Promise.resolve();
     await Promise.resolve();
     await Promise.resolve();
 }
@@ -259,6 +274,49 @@ describe('bcm_CapabilityDetail edit mode', () => {
         expect(el.shadowRoot.querySelector('.bcm-detail-input-name')).toBeNull();
         // Read-mode shows the original (unedited) name
         expect(el.shadowRoot.querySelector('.bcm-detail-name').textContent).toBe('Sub-Capability A');
+    });
+});
+
+describe('bcm_CapabilityDetail record page link', () => {
+    it('Record page link is rendered with correct href in read mode', async () => {
+        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB });
+        await flushPromises();
+        const link = el.shadowRoot.querySelector('.bcm-detail-record-link a');
+        expect(link).not.toBeNull();
+        expect(link.getAttribute('href')).toBe('/lightning/r/bcm_Capability__c/L2-1/view');
+        expect(link.getAttribute('target')).toBe('_blank');
+        expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+    });
+
+    it('Record page link is rendered in edit mode', async () => {
+        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: true });
+        await flushPromises();
+        el.shadowRoot.querySelector('.bcm-detail-edit')
+            .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await flushPromises();
+        const link = el.shadowRoot.querySelector('.bcm-detail-record-link a');
+        expect(link).not.toBeNull();
+    });
+
+    it('Record page link renders when canEdit is false', async () => {
+        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: false });
+        await flushPromises();
+        expect(el.shadowRoot.querySelector('.bcm-detail-record-link a')).not.toBeNull();
+    });
+
+    it('Record page link is hidden when no capability loaded', async () => {
+        const el = mount({});
+        await flushPromises();
+        expect(el.shadowRoot.querySelector('.bcm-detail-record-link a')).toBeNull();
+    });
+
+    it('Record page link updates when capability changes', async () => {
+        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB });
+        await flushPromises();
+        el.capability = { ...SAMPLE_CAPABILITY, Id: 'L2-OTHER', Name: 'Other' };
+        await flushPromises();
+        const link = el.shadowRoot.querySelector('.bcm-detail-record-link a');
+        expect(link.getAttribute('href')).toBe('/lightning/r/bcm_Capability__c/L2-OTHER/view');
     });
 });
 
