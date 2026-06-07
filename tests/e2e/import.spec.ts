@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { RUN_ID } from './fixtures/helpers';
+import { RUN_ID, setupAutoDismiss } from './fixtures/helpers';
 
 const SAMPLE_JSON = JSON.stringify({
     mapName: `E2E Import Map ${RUN_ID}`,
@@ -44,6 +44,7 @@ const SAMPLE_JSON = JSON.stringify({
 const flow = (page: Page) => page.frameLocator('iframe');
 
 async function openImportPanel(page: Page) {
+    await setupAutoDismiss(page);
     await page.goto('/lightning/o/bcm_Map__c/list?filterName=All');
     await page.getByRole('button', { name: 'JSON Import', exact: true }).click();
     // Sandbox can take >20s to render the flow screen inside the iframe
