@@ -155,9 +155,14 @@ export async function openDiagram(page: Page): Promise<void> {
     let lastErr: unknown;
     for (let attempt = 0; attempt < 3; attempt++) {
         try {
-            await page.goto('/lightning/n/bcm_Visualisation', { waitUntil: 'commit', timeout: 20000 });
+            await page.goto('/lightning/n/bcm_Visualisation', { waitUntil: 'commit', timeout: 10000 });
         } catch (err) {
             lastErr = err;
+            continue;
+        }
+        // Detect interrupt eagerly so we don't burn the canvas waitFor budget on a dead page.
+        if (await interruptBtn.isVisible({ timeout: 1500 }).catch(() => false)) {
+            await interruptBtn.click().catch(() => {});
             continue;
         }
         try {
