@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { FrameLocator, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 import { getRunId } from './run-id';
 
@@ -141,4 +141,41 @@ export async function openDiagram(page: Page): Promise<void> {
         }
     }
     throw lastErr ?? new Error('openDiagram: canvas never became visible');
+}
+
+/**
+ * Lightning Flow renders inside an iframe on the list view "JSON Import" panel.
+ * `flow(page)` returns the FrameLocator scoped to that iframe.
+ */
+export const flow = (page: Page): FrameLocator => page.frameLocator('iframe');
+
+const FLOW_SCREEN_BODY = 'flowruntime-lwc-body';
+
+/**
+ * Click a Flow Screen button that advances to another screen and wait for the
+ * transition to finish.
+ *
+ * Replaces magic-timeout text matchers (`expect(text).toBeVisible({ timeout: 30000 })`)
+ * with the actual transition signal: Lightning Flow re-renders the
+ * `<flowruntime-lwc-body>` host between screens, so we capture an element handle
+ * to the current body, click, and wait for that exact node to detach. The next
+ * `flowruntime-lwc-body` is then waited on before returning so callers can
+ * immediately assert against new screen content.
+ *
+ * Use only for buttons that move between screens (Import, Previous). For terminal
+ * buttons that dismiss the panel (Close), call the click directly and assert the
+ * panel is gone.
+ */
+export async function clickFlowNext(
+    page: Page,
+    name: 'Import' | 'Previous',
+): Promise<void> {
+    const body = flow(page).locator(FLOW_SCREEN_BODY).first();
+    await body.waitFor({ state: 'attached', timeout: 30000 });
+    const handle = await body.elementHandle({ timeout: 5000 });
+    await flow(page).getByRole('button', { name, exact: true }).click();
+    if (!handle) throw new Error('clickFlowNext: could not capture flowruntime-lwc-body handle');
+    await handle.waitForElementState('hidden', { timeout: 30000 });
+    await handle.dispose();
+    await body.waitFor({ state: 'visible', timeout: 30000 });
 }
