@@ -1,14 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { RUN_ID, setupAutoDismiss, selectMap } from './fixtures/helpers';
+import { RUN_ID, selectMap, openDiagram } from './fixtures/helpers';
 import { MAP_NAME } from './diagram.seed';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-async function openDiagram(page: import('@playwright/test').Page) {
-    await setupAutoDismiss(page);
-    await page.goto('/lightning/n/bcm_Visualisation');
-    await page.locator('.bcm-canvas').waitFor({ state: 'visible', timeout: 20000 });
-}
 
 async function getViewportTransform(page: import('@playwright/test').Page): Promise<string | null> {
     // The L1 g (first child of svg) carries l1Transform which includes scale(zoom) — sufficient for zoom checks
@@ -365,9 +359,7 @@ test.describe('Keyboard navigation — editor project', () => {
 
 test.describe('Permission — viewer project', () => {
     test('Viewer sees no drag handle icons on diagram', async ({ page }) => {
-        await setupAutoDismiss(page);
-        await page.goto('/lightning/n/bcm_Visualisation');
-        await page.locator('.bcm-canvas').waitFor({ state: 'visible', timeout: 20000 });
+        await openDiagram(page);
         const handles = await page.locator('.bcm-drag-handle').count();
         expect(handles).toBe(0);
     });

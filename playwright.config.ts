@@ -9,6 +9,7 @@ export default defineConfig({
     globalTeardown: './tests/e2e/global-teardown.ts',
     fullyParallel: false,
     workers: 1,
+    retries: 1,
     reporter: [['html', { outputFolder: 'playwright-report', open: 'never' }]],
     use: {
         baseURL: process.env.SF_BASE_URL,

@@ -109,3 +109,36 @@ export async function selectMap(page: Page, mapName: string): Promise<void> {
 
     await page.locator('.bcm-canvas polygon').first().waitFor({ state: 'visible', timeout: 20000 });
 }
+
+/**
+ * Navigate to the Visualisation tab and wait for the canvas to mount.
+ *
+ * Hardens against the Lightning "Sorry to interrupt — Check your Internet
+ * connection" dialog that occasionally replaces the app shell on first paint.
+ * If detected, click Refresh/Try Again and re-navigate. Up to 3 attempts.
+ */
+export async function openDiagram(page: Page): Promise<void> {
+    await setupAutoDismiss(page);
+    const canvas = page.locator('.bcm-canvas');
+    const interruptBtn = page.getByRole('button', { name: /Refresh|Try Again/ });
+
+    let lastErr: unknown;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            await page.goto('/lightning/n/bcm_Visualisation', { waitUntil: 'commit', timeout: 20000 });
+        } catch (err) {
+            lastErr = err;
+            continue;
+        }
+        try {
+            await canvas.waitFor({ state: 'visible', timeout: 20000 });
+            return;
+        } catch (err) {
+            lastErr = err;
+            if (await interruptBtn.isVisible().catch(() => false)) {
+                await interruptBtn.click().catch(() => {});
+            }
+        }
+    }
+    throw lastErr ?? new Error('openDiagram: canvas never became visible');
+}

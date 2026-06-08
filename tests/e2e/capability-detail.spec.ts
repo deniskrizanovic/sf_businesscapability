@@ -1,14 +1,8 @@
 import { test, expect, Page } from '@playwright/test';
-import { setupAutoDismiss, selectMap } from './fixtures/helpers';
+import { selectMap, openDiagram } from './fixtures/helpers';
 import { MAP_NAME, L1_NAME, L2_NAME, L3_NAME } from './capability-detail.seed';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-async function openDiagram(page: Page) {
-    await setupAutoDismiss(page);
-    await page.goto('/lightning/n/bcm_Visualisation');
-    await page.locator('.bcm-canvas').waitFor({ state: 'visible', timeout: 20000 });
-}
 
 async function openDetailPanelOnL1(page: Page) {
     const node = page.locator(`svg.bcm-canvas g.bcm-node[data-node-level="1"][data-node-name="${L1_NAME}"]`);

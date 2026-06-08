@@ -2,18 +2,12 @@ import { test, expect } from '@playwright/test';
 import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import { RUN_ID, setupAutoDismiss, selectMap } from './fixtures/helpers';
+import { RUN_ID, selectMap, openDiagram } from './fixtures/helpers';
 import {
     MAP_NAME, L1A_NAME, L1B_NAME, L2A1_NAME, L2A2_NAME, L3A1A_NAME, L3A1B_NAME,
 } from './drag-drop.seed';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-async function openDiagram(page: import('@playwright/test').Page) {
-    await setupAutoDismiss(page);
-    await page.goto('/lightning/n/bcm_Visualisation');
-    await page.locator('.bcm-canvas').waitFor({ state: 'visible', timeout: 20000 });
-}
 
 async function waitForDragDropSettled(page: import('@playwright/test').Page) {
     // Wait for the save to *begin* (short timeout — no-op gestures never set true; swallow).
