@@ -111,6 +111,36 @@ export async function selectMap(page: Page, mapName: string): Promise<void> {
 }
 
 /**
+ * Navigate to a Lightning URL and clear the "Sorry to interrupt — Check your
+ * Internet connection" interrupt screen if it appears. Up to 3 attempts.
+ *
+ * Salesforce sandboxes intermittently render this interrupt page in place of
+ * the requested record/app page on first paint. Without recovery the next
+ * locator wait fails with a confusing "element not found" against the wrong
+ * DOM. Use this any time `page.goto()` lands on a Lightning page.
+ */
+export async function gotoLightning(page: Page, url: string): Promise<void> {
+    const interruptBtn = page.getByRole('button', { name: /Refresh|Try Again/ });
+    let lastErr: unknown;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            await page.goto(url, { waitUntil: 'commit', timeout: 20000 });
+        } catch (err) {
+            lastErr = err;
+            continue;
+        }
+        // Give the app shell a beat to either render or surface the interrupt.
+        await page.waitForLoadState('domcontentloaded', { timeout: 20000 }).catch(() => {});
+        if (await interruptBtn.isVisible().catch(() => false)) {
+            await interruptBtn.click().catch(() => {});
+            continue;
+        }
+        return;
+    }
+    throw lastErr ?? new Error(`gotoLightning: interrupt screen never cleared for ${url}`);
+}
+
+/**
  * Navigate to the Visualisation tab and wait for the canvas to mount.
  *
  * Hardens against the Lightning "Sorry to interrupt — Check your Internet

@@ -16,7 +16,8 @@ export default function globalSetup() {
     const { dragDropSeed } = require('./drag-drop.seed');
     const { capabilityDetailSeed } = require('./capability-detail.seed');
     const { diagramSeed } = require('./diagram.seed');
+    const { capabilityTagSeed } = require('./capability-tag.seed');
     /* eslint-enable @typescript-eslint/no-require-imports */
 
-    runAllSeeds([dragDropSeed, capabilityDetailSeed, diagramSeed]);
+    runAllSeeds([dragDropSeed, capabilityDetailSeed, diagramSeed, capabilityTagSeed]);
 }

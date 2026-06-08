@@ -33,7 +33,8 @@ The suite is intentionally a thin layer on top of the real org. We do not abstra
 tests/e2e/
 ├── fixtures/
 │   ├── auth.setup.ts        Logs in as editor + viewer, saves storage state
-│   ├── helpers.ts           setupAutoDismiss, selectMap, recordIdFromUrl, RUN_ID
+│   ├── helpers.ts           setupAutoDismiss, selectMap, openDiagram, gotoLightning,
+│   │                        flow, clickFlowNext, recordIdFromUrl, RUN_ID
 │   ├── run-id.ts            Reads .run_id from disk
 │   └── seeds.ts             Aggregator: runs all SeedSpecs through bcm_ImportController
 ├── *.seed.ts                Per-feature payloads + exported MAP_NAME / cap names
@@ -95,6 +96,7 @@ The original suite seeded data inside `beforeAll` blocks in each spec, driving t
 - Each spec's `beforeAll` opened the Import Flow iframe, pasted JSON, and clicked Next/Import. Slow (10–20 s per spec) and flaky (iframe selectors, focus-trap collisions).
 - Editor and Viewer projects ran the same `beforeAll` independently, each creating its own Map. With `fullyParallel`, they raced — both projects sometimes seeded, then one's teardown ran before the other's tests.
 - A single Map name with two records caused `selectMap` to throw a strict-mode violation deep inside an unrelated test.
+- One late hold-out (`capability-tag.spec.ts`) seeded a Map + Capability + Tag through the new-record forms inside `beforeAll`. On a sluggish sandbox the three sequential UI saves blew the default 30 s hook timeout; the failed-record retry then hit the Lightning "Check your Internet connection" interrupt screen with no recovery. Both went away when the spec was migrated to a `*.seed.ts` payload + `postSeedApex` (see below).
 
 ### Current approach
 
@@ -118,6 +120,15 @@ export interface SeedSpec {
 - **No editor/viewer race.** Both projects see the same already-seeded data.
 - **Specs are read-only against seed data** (with one exception: the drag-drop gesture test mutates sort order, then asserts; subsequent drag-drop tests don't depend on the original order).
 
+### `postSeedApex` for things the importer can't do
+
+`bcm_ImportController.importCapabilities` only handles Map + Capability hierarchies. Anything else is `postSeedApex`:
+
+- **`diagram.seed.ts`** flips `bcm_IsCrossCutting__c = true` on two seeded capabilities (the importer doesn't expose the field).
+- **`capability-tag.seed.ts`** inserts a `bcm_Tag__c` and **transfers ownership to the editor user** so the editor's UI session can save a `bcm_CapabilityTag__c` master-detail junction without `insufficient access rights on cross-reference id`. The Tag is read-write OWD but the integration user that runs the seed is not the editor; without the ownership transfer, sharing-recalc lag intermittently blocks the cross-reference write.
+
+When a spec needs a record the importer doesn't model, prefer `postSeedApex` over per-spec UI setup. UI setup pulls Salesforce sandbox latency back into the test timeline.
+
 ---
 
 ## 6. Map selection helper
@@ -138,6 +149,18 @@ await selectMap(page, MAP_NAME);     // open combobox, click option, wait for SV
 3. **Duplicate seed.** If two Maps end up with the same name (e.g. a stale partial run), the option locator matches twice and Playwright's strict mode throws cryptically. `selectMap` checks the option count, throws a clear "duplicate seed — check globalSetup ran exactly once" diagnostic.
 
 After clicking the option, `selectMap` waits for `.bcm-canvas polygon` to be visible. The combobox click is wrapped in `expect.toPass` so a transient overlay-mount can be retried.
+
+### `gotoLightning` for record-page navigation
+
+Salesforce sandboxes intermittently render a "Sorry to interrupt — Check your Internet connection / Try Again" page in place of the requested record or app page on first paint. Without recovery, the next locator wait fails against the wrong DOM with a confusing "element not found" error.
+
+`openDiagram` has handled this for the Visualisation tab from the start. The same pattern is now exposed as a generic helper:
+
+```ts
+await gotoLightning(page, '/lightning/r/bcm_Capability__c/<id>/view');
+```
+
+`gotoLightning` does up to three goto attempts; if the interrupt screen appears after a goto, it clicks Refresh/Try Again and re-navigates. Use it whenever a spec calls `page.goto(<lightning-url>)` directly (record pages, list views, app launchers). Plain `page.goto` is fine for non-Lightning URLs.
 
 ---
 
@@ -237,6 +260,6 @@ Pre-flight: `.env` populated, `SF_ORG_ALIAS` matches `sf` CLI alias, both test u
 
 - **No mocked Salesforce.** The whole point is to test against the real platform.
 - **No CI integration yet.** The suite is run manually before merging. Adding GitHub Actions is the first step if the project becomes multi-developer.
-- **No retries.** `playwright.config.ts` does not set `retries`. Flake should be diagnosed and fixed, not papered over. If a class of flake proves unfixable (e.g. genuine Salesforce platform jitter), retries can be added with a comment naming the affected tests.
+- **One retry, used for diagnosis.** `playwright.config.ts` sets `retries: 1`. The retry exists so that a transient sandbox jitter does not fail a whole run, but the suite's stance is that flake should be diagnosed and fixed, not papered over with bigger retry counts. The HTML report flags any test that needed its retry as `flaky` — treat those as an open question, not a pass.
 - **No visual regression.** Screenshots are saved on failure for diagnosis, not asserted.
 - **No load testing.** This is functional only.
