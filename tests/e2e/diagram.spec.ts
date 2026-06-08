@@ -1,7 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { execFileSync } from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
 import { RUN_ID, setupAutoDismiss, selectMap } from './fixtures/helpers';
 import { MAP_NAME } from './diagram.seed';
 
@@ -375,30 +372,4 @@ test.describe('Permission — viewer project', () => {
         expect(handles).toBe(0);
     });
 
-});
-
-// ── Teardown — editor project ─────────────────────────────────────────────────
-
-test.describe('Teardown — editor project', () => {
-    test.afterAll(() => {
-        const orgAlias = process.env.SF_ORG_ALIAS;
-        if (!orgAlias) throw new Error('SF_ORG_ALIAS not set');
-
-        const apex = `
-List<bcm_Capability__c> caps = [SELECT Id FROM bcm_Capability__c WHERE bcm_Map__r.Name LIKE '%${RUN_ID}%' LIMIT 10000];
-if (!caps.isEmpty()) delete caps;
-List<bcm_Map__c> maps = [SELECT Id FROM bcm_Map__c WHERE Name LIKE '%${RUN_ID}%' AND Name LIKE '%Diagram%' LIMIT 10000];
-if (!maps.isEmpty()) delete maps;
-`.trim();
-
-        const apexFile = path.resolve(`tests/e2e/.teardown_diagram_${RUN_ID}.apex`);
-        fs.writeFileSync(apexFile, apex, 'utf-8');
-        try {
-            execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], { stdio: 'inherit' });
-        } finally {
-            fs.unlinkSync(apexFile);
-        }
-    });
-
-    test('placeholder so afterAll runs', () => { /* intentional */ });
 });

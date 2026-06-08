@@ -1,0 +1,242 @@
+# E2E Test Architecture
+
+This document explains the design of the Playwright end-to-end suite under `tests/e2e/`. It complements:
+
+- [ADR 0003 — Playwright for E2E testing](../adr/0003-playwright-e2e-testing.md): why Playwright, alternatives rejected.
+- [ADR 0004 — Drag-drop test strategy](../adr/0004-playwright-drag-drop-test-strategy.md): hybrid gesture + outcome-only approach.
+- [Quality Plan §3 Layer 2](08-quality-plan.md): how e2e fits into the overall test stack and what it owns.
+
+This doc is the *how* and *why* of the suite mechanics — authentication, seeding, isolation, helpers, ordering, teardown — and the constraints that forced each choice.
+
+---
+
+## 1. Constraints
+
+The suite runs against a **deployed Salesforce org**, not a local stub. Every test logs in over the public web, navigates Lightning Experience, and exercises real Apex / LWC. This single fact dictates most of the architecture:
+
+| Constraint | Consequence for design |
+|---|---|
+| Org is shared across runs and users | Test data must be namespaced per run so concurrent runs (CI + local + WebStorm) cannot collide |
+| Login is slow (5–15 s) and rate-limited | Cannot log in per test; sessions are reused |
+| Lightning UI mounts onboarding overlays asynchronously | Helpers must strip overlays before they steal focus from controls |
+| `sf apex run` is the only out-of-band write path | Seed and teardown go through Apex, not REST or the UI |
+| Salesforce permission model is the system under test | Two real users (Editor + Viewer) are required; mocking permissions defeats the test |
+| Concurrent UI sessions on one org cause cross-talk | Workers must be limited; project ordering must be deterministic |
+
+The suite is intentionally a thin layer on top of the real org. We do not abstract Salesforce away. We build small helpers around its idiosyncrasies and let the tests be plain Playwright.
+
+---
+
+## 2. Suite layout
+
+```
+tests/e2e/
+├── fixtures/
+│   ├── auth.setup.ts        Logs in as editor + viewer, saves storage state
+│   ├── helpers.ts           setupAutoDismiss, selectMap, recordIdFromUrl, RUN_ID
+│   ├── run-id.ts            Reads .run_id from disk
+│   └── seeds.ts             Aggregator: runs all SeedSpecs through bcm_ImportController
+├── *.seed.ts                Per-feature payloads + exported MAP_NAME / cap names
+├── *.spec.ts                Per-feature scenarios
+├── global-setup.ts          Writes .run_id, then calls runAllSeeds([…])
+├── global-teardown.ts       Deletes everything matching %RUN_ID% in FK-safe order
+└── .run_id, .auth/*.json    Generated, gitignored
+```
+
+`playwright.config.ts` ties it together:
+
+- **`globalSetup`** runs once per `playwright test` invocation. Writes the RUN_ID, then seeds all maps via a single `sf apex run`.
+- **`globalTeardown`** runs once at end. Single Apex script wipes everything by RUN_ID.
+- **Three projects**: `setup` (auth), `editor`, `viewer`. Editor/viewer each consume their respective `storageState`.
+- **`fullyParallel: false`** plus **`workers: 1`** — see §7.
+
+---
+
+## 3. Authentication: setup project + storageState
+
+Logging in over the Salesforce login page costs roughly ten seconds and occasionally trips MFA prompts. Doing it per test would dominate the run time and introduce flake unrelated to the system under test.
+
+`fixtures/auth.setup.ts` is a Playwright **setup project** that runs before any spec. It logs in once as editor and once as viewer, then writes the browser's cookies + localStorage to `tests/e2e/.auth/editor.json` and `tests/e2e/.auth/viewer.json`. The `editor` and `viewer` projects each declare the setup project as a dependency and load the appropriate `storageState`.
+
+Two test users are created once and reused indefinitely (`scripts/create-e2e-users.sh`). They use a custom profile (`AutomatedTester - Minimum Access Clone`) with `BypassMFAForUiLogins` and `SkipIdentityConfirmation`. Without those, headless login would stall on the second-factor and identity-confirmation interstitials. The profile hides all `bcm_*` tabs at the profile level so the e2e tab-visibility tests are genuinely exercising permission sets, not profile defaults.
+
+Test users live in `.env` (gitignored); `.env.example` documents the variables.
+
+---
+
+## 4. RUN_ID isolation
+
+Every run needs a unique stamp so that:
+
+1. Two developers running the suite simultaneously against the same org do not collide.
+2. A run that crashes mid-test leaves behind data that the next run does not collide with — eventual cleanup is enough.
+3. Teardown can find exactly its own records and not delete a colleague's seed.
+
+`global-setup.ts` writes `Date.now().toString()` to `tests/e2e/.run_id`. `fixtures/run-id.ts` reads it. `helpers.ts` re-exports the value as `RUN_ID`. Every record name embeds it: `E2E DragDrop Map 1716900000000`, `Domain Alpha 1716900000000`, etc.
+
+The RUN_ID is read **eagerly at module load** by `fixtures/run-id.ts`. This forces an explicit ordering inside `global-setup.ts`: the `.run_id` file must be written **before** any seed module is required, because the seed modules embed the RUN_ID into their `MAP_NAME` constants at module-load time.
+
+```ts
+// global-setup.ts
+fs.writeFileSync(path.resolve('tests/e2e/.run_id'), runId, 'utf-8');
+const { dragDropSeed } = require('./drag-drop.seed');  // reads RUN_ID now
+```
+
+`require()` is used (not dynamic `import()`) because Playwright's CommonJS-style loader does not handle top-level `await import()` reliably in the global-setup hook.
+
+---
+
+## 5. Seeding: one `sf apex run`, in `globalSetup`
+
+### Earlier approach (rejected)
+
+The original suite seeded data inside `beforeAll` blocks in each spec, driving the JSON Import Flow through the UI. That meant:
+
+- Each spec's `beforeAll` opened the Import Flow iframe, pasted JSON, and clicked Next/Import. Slow (10–20 s per spec) and flaky (iframe selectors, focus-trap collisions).
+- Editor and Viewer projects ran the same `beforeAll` independently, each creating its own Map. With `fullyParallel`, they raced — both projects sometimes seeded, then one's teardown ran before the other's tests.
+- A single Map name with two records caused `selectMap` to throw a strict-mode violation deep inside an unrelated test.
+
+### Current approach
+
+`globalSetup` runs **once per invocation**, before any project, and seeds all features in a single Apex transaction. Each feature exports a `SeedSpec` payload from its `*.seed.ts` file:
+
+```ts
+// fixtures/seeds.ts
+export interface SeedSpec {
+    label: string;
+    payload: unknown;            // accepted by bcm_ImportController.importCapabilities
+    postSeedApex?: string;       // optional follow-up DML the importer can't do
+}
+```
+
+`runAllSeeds` concatenates each payload into one Apex script that calls `bcm_ImportController.importCapabilities('<json>')` per seed and asserts success. The script is written to a temp `.apex` file and executed via `sf apex run --file`. Total seed time: roughly one Apex round-trip regardless of how many features are added.
+
+### Properties this gives us
+
+- **Idempotent.** `bcm_ImportController` upserts by `externalId`. Re-running globalSetup after a crashed run is safe.
+- **Single failure surface.** If a seed fails, the whole run fails fast at globalSetup, not five minutes into a spec with a confusing UI error.
+- **No editor/viewer race.** Both projects see the same already-seeded data.
+- **Specs are read-only against seed data** (with one exception: the drag-drop gesture test mutates sort order, then asserts; subsequent drag-drop tests don't depend on the original order).
+
+---
+
+## 6. Map selection helper
+
+Most diagram-based specs follow the pattern:
+
+```ts
+await openDiagram(page);             // navigate, wait for canvas
+await selectMap(page, MAP_NAME);     // open combobox, click option, wait for SVG
+```
+
+`selectMap` (in `fixtures/helpers.ts`) hardens three known flakes:
+
+1. **Onboarding overlays close the dropdown.** Lightning mounts `RUNTIME_THP_LEARNING-*`, `SALES_YUKON-*`, etc. wrapped in `<lightning-focus-trap>`. The trap steals focus and silently closes any open combobox. `setupAutoDismiss` (called by every test before navigation) installs a `MutationObserver` via `addInitScript` that strips matching elements *as they mount*. Earlier attempts using `addLocatorHandler` fired mid-click and stole focus instead of restoring it.
+
+2. **Late banners (Live Preview, June-2026 security nag).** Same pattern: `setupAutoDismiss` removes them before they can intercept clicks.
+
+3. **Duplicate seed.** If two Maps end up with the same name (e.g. a stale partial run), the option locator matches twice and Playwright's strict mode throws cryptically. `selectMap` checks the option count, throws a clear "duplicate seed — check globalSetup ran exactly once" diagnostic.
+
+After clicking the option, `selectMap` waits for `.bcm-canvas polygon` to be visible. The combobox click is wrapped in `expect.toPass` so a transient overlay-mount can be retried.
+
+---
+
+## 7. Worker count and project ordering
+
+### Why workers = 1 (and `fullyParallel: false`)
+
+Multiple concurrent Playwright workers all logged into the same Salesforce org as the same user produce:
+
+- Cross-talk on list views (one worker's New record steals another worker's modal focus).
+- Combobox dropdowns closed by another worker's overlay.
+- Org-side throttles (login, refresh-apex storms).
+
+With `fullyParallel: false`, Playwright still spawns one worker per project — so editor and viewer ran concurrently. Setting `workers: 1` forces full serialisation across all projects. The penalty is wall-clock time; the gain is that the only failures left are real.
+
+A WebStorm run with the suite in concurrent mode produced 9–13 random failures across 95 tests. The same suite with `workers: 1` produced one cluster of related failures (seed wipe collision — see §8) and otherwise passed clean.
+
+### Why deterministic order matters
+
+With `workers: 1 + fullyParallel: false`, spec files run in alphabetical order. That ordering must not matter — a spec must not depend on (or be broken by) another spec's after-effects. This invariant is enforced by §8.
+
+---
+
+## 8. Teardown: single source
+
+There is **one** teardown: `global-teardown.ts`. It generates an Apex script that deletes everything matching `%RUN_ID%` in FK-safe order:
+
+1. `bcm_CapabilityTag__c` (junction)
+2. `bcm_Tag__c`
+3. `bcm_Capability__c`
+4. `bcm_Map__c`
+
+Tags are deleted before Capabilities because `bcm_CapabilityTag__c` is master-detail to *both* Capability and Tag; deleting Capabilities cascades junction records, and a same-transaction Tag delete afterwards conflicts with the in-flight cascade.
+
+### Pitfall: per-spec `afterAll` teardowns are dangerous
+
+Earlier versions of `diagram.spec.ts` and `capability-detail.spec.ts` each had their own `afterAll` block running an Apex DELETE. Two failure modes:
+
+- **`diagram.spec.ts`** deleted capabilities by `bcm_Map__r.Name LIKE '%${RUN_ID}%'` — *no Map-name filter on the cap-delete*. Because every seed uses the same RUN_ID, that one query nuked drag-drop and capability-detail capabilities too. Under `workers: 1` (alphabetical order), `diagram.spec.ts` runs before `drag-drop.spec.ts`, so drag-drop's seed was wiped before its tests ran. Symptom: `selectMap` finds the Map but waits 20 s for `.bcm-canvas polygon` that never paints (no caps to render).
+- **`capability-detail.spec.ts`** correctly scoped its delete to its own MAP_NAME but ran in editor's `afterAll`. If viewer's tests on the same spec ran after editor's, they saw a deleted Map.
+
+**Both per-spec teardowns have been removed.** The rule is now: **only `global-teardown.ts` deletes data.** A spec that needs to mutate seed data should make changes that don't affect other specs; if isolation is genuinely needed, define a fresh seed in a new `*.seed.ts` file.
+
+---
+
+## 9. Drag-drop: hybrid gesture + outcome-only
+
+Documented in [ADR 0004](../adr/0004-playwright-drag-drop-test-strategy.md). Summary:
+
+- **One** real-mouse gesture test (`L2 reorder within column`) drives `mouse.down → move(8 steps) → up` against handle bounding boxes. Proves the SVG hit-testing + optimistic update path end-to-end.
+- **Five** outcome-only tests (`L2 reparent`, `L1 reorder`, `L3 reorder`, `L3 reparent`, etc.) skip the gesture and mutate `bcm_Parent__c` / `bcm_SortOrder__c` directly via `sf apex run`, then reload and assert structure. Proves the persistence permutations without combinatorial flake.
+- Cancel paths and Apex-error revert are Jest-only.
+
+The gesture test waits for the optimistic→server roundtrip via a `[data-bcm-saving="true|false"]` attribute toggle on the canvas container. This avoids `waitForTimeout` and races with auto-dismiss toasts.
+
+`parseDragDropOrder` runs an ad-hoc Apex query and parses the debug log, anchoring on the `USER_DEBUG` marker. The anchor is necessary because `sf apex run` echoes the source file in its output — the source itself contains the `DRAG_DROP_RESULT:` string, which would otherwise match first.
+
+---
+
+## 10. Spec → test traceability
+
+Every spec scenario in `docs/specs/` carries a `> Tested by:` marker. For Playwright specs the marker is the test description string verbatim:
+
+```
+> Tested by: e2e/map.spec.ts::"editor creates a Map record with a description"
+```
+
+If a test description changes, the marker updates in the same commit. Verified by `/check-traceability` (see `docs/design/08-quality-plan.md` §1).
+
+This means **test descriptions are part of the contract** — renaming a test for stylistic reasons silently breaks traceability. Use `sed`-style global rename or update the spec in the same PR.
+
+---
+
+## 11. Running the suite
+
+```bash
+# Whole suite
+npx playwright test
+
+# One spec
+npx playwright test tests/e2e/drag-drop.spec.ts
+
+# One project
+npx playwright test --project=editor
+
+# HTML report (opens last run's results)
+npx playwright show-report
+```
+
+`globalTeardown` runs even when only one spec is selected, so partial runs leave the org clean.
+
+Pre-flight: `.env` populated, `SF_ORG_ALIAS` matches `sf` CLI alias, both test users created (`./scripts/create-e2e-users.sh <alias>`).
+
+---
+
+## 12. What is intentionally not in the suite
+
+- **No mocked Salesforce.** The whole point is to test against the real platform.
+- **No CI integration yet.** The suite is run manually before merging. Adding GitHub Actions is the first step if the project becomes multi-developer.
+- **No retries.** `playwright.config.ts` does not set `retries`. Flake should be diagnosed and fixed, not papered over. If a class of flake proves unfixable (e.g. genuine Salesforce platform jitter), retries can be added with a comment naming the affected tests.
+- **No visual regression.** Screenshots are saved on failure for diagnosis, not asserted.
+- **No load testing.** This is functional only.

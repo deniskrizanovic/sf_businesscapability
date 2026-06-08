@@ -8,7 +8,8 @@ export default defineConfig({
     globalSetup: './tests/e2e/global-setup.ts',
     globalTeardown: './tests/e2e/global-teardown.ts',
     fullyParallel: false,
-    reporter: 'html',
+    workers: 1,
+    reporter: [['html', { outputFolder: 'playwright-report', open: 'never' }]],
     use: {
         baseURL: process.env.SF_BASE_URL,
         trace: 'on-first-retry',

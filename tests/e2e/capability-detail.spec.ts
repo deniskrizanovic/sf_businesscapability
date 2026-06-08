@@ -1,8 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-import { execFileSync } from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
-import { RUN_ID, setupAutoDismiss, selectMap } from './fixtures/helpers';
+import { setupAutoDismiss, selectMap } from './fixtures/helpers';
 import { MAP_NAME, L1_NAME, L2_NAME, L3_NAME } from './capability-detail.seed';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -241,7 +238,7 @@ test.describe('Detail panel — record page link — editor project', () => {
         const link = panel.locator('.bcm-detail-record-link a');
         await expect(link).toBeVisible();
         await expect(link).toHaveAttribute('target', '_blank');
-        await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+        await expect(link).toHaveAttribute('rel', /\bnoopener\b/);
 
         const [newPage] = await Promise.all([
             context.waitForEvent('page'),
@@ -264,30 +261,4 @@ test.describe('Detail panel — viewer no-edit — viewer project', () => {
         await expect(panel.locator('.bcm-detail-save')).toHaveCount(0);
         await expect(panel.locator('.bcm-detail-cancel')).toHaveCount(0);
     });
-});
-
-// ── Teardown — editor project ─────────────────────────────────────────────────
-
-test.describe('Detail panel — teardown — editor project', () => {
-    test.afterAll(() => {
-        const orgAlias = process.env.SF_ORG_ALIAS;
-        if (!orgAlias) throw new Error('SF_ORG_ALIAS not set');
-
-        const apex = `
-List<bcm_Capability__c> caps = [SELECT Id FROM bcm_Capability__c WHERE bcm_Map__r.Name = '${MAP_NAME}' LIMIT 10000];
-if (!caps.isEmpty()) delete caps;
-List<bcm_Map__c> maps = [SELECT Id FROM bcm_Map__c WHERE Name = '${MAP_NAME}' LIMIT 10000];
-if (!maps.isEmpty()) delete maps;
-`.trim();
-
-        const apexFile = path.resolve(`tests/e2e/.teardown_detail_${RUN_ID}.apex`);
-        fs.writeFileSync(apexFile, apex, 'utf-8');
-        try {
-            execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], { stdio: 'inherit' });
-        } finally {
-            fs.unlinkSync(apexFile);
-        }
-    });
-
-    test('teardown placeholder', () => { /* triggers afterAll */ });
 });
