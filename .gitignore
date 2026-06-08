@@ -51,6 +51,7 @@ tests/e2e/.teardown_*.apex
 # Playwright test results
 playwright-report/
 test-results/
+test-results-saved/
 
 # Python Salesforce Functions
 **/__pycache__/
