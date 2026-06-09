@@ -33,10 +33,14 @@ If no skill exists for the metadata type, state that explicitly and ask before p
 
 ## Spec Files — Accepted Coverage Markers
 
-Every `> Tested by:` line in `docs/specs/` must use one of these three forms. `not yet covered` and `UI only` are banned.
+Every `> Tested by:` line in `docs/specs/` must use one of these forms. `not yet covered` and `UI only` are banned.
 
 | Marker | When to use |
 |---|---|
-| `> Tested by: ClassName.methodName` | Apex or e2e test exists and passes |
-| `> Tested by: ClassName.methodName (not yet written — see docs/handoff/<file>.md)` | Method name agreed, test not written yet; handoff doc must exist |
+| `> Tested by: ClassName.methodName` | Apex test exists and passes |
+| `> Tested by: e2e/file.spec.ts::"test name"` or `file.spec.ts — "test name"` | Playwright e2e test exists and passes |
+| `> Tested by: file.test.js — "test name"` | LWC Jest test exists and passes |
+| `> Tested by: <Class.method or test ref> (not yet written — see docs/handoff/<file>.md)` | Method/test name agreed, not written yet; handoff doc must exist |
 | `> Deferred: <one-line reason>` | Consciously skipped (platform-enforced, out of scope) |
+
+A single scenario MAY chain multiple references separated by `;` or `,` when the same behaviour is covered at multiple layers (e.g. one Jest test + one e2e test). Each reference must independently match one of the forms above.
