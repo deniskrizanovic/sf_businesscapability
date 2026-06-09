@@ -8,7 +8,11 @@ export default defineConfig({
     globalSetup: './tests/e2e/global-setup.ts',
     globalTeardown: './tests/e2e/global-teardown.ts',
     fullyParallel: false,
-    workers: 1,
+    // workers: 2 lets the `editor` and `viewer` projects run concurrently. They authenticate
+    // as different users, so the same-user UI cross-talk listed in 09-e2e-test-architecture.md §7
+    // does not apply across projects. Spec files within each project remain serial because
+    // fullyParallel is false. Revert to workers: 1 if cross-project flake returns.
+    workers: 2,
     retries: 1,
     reporter: [['html', { outputFolder: 'playwright-report', open: 'never' }]],
     use: {

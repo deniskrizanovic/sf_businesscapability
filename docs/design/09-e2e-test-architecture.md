@@ -50,7 +50,7 @@ tests/e2e/
 - **`globalSetup`** runs once per `playwright test` invocation. Writes the RUN_ID, then seeds all maps via a single `sf apex run`.
 - **`globalTeardown`** runs once at end. Single Apex script wipes everything by RUN_ID.
 - **Three projects**: `setup` (auth), `editor`, `viewer`. Editor/viewer each consume their respective `storageState`.
-- **`fullyParallel: false`** plus **`workers: 1`** — see §7.
+- **`fullyParallel: false`** plus **`workers: 2`** — see §7.
 
 ---
 
@@ -186,21 +186,23 @@ await gotoLightning(page, '/lightning/r/bcm_Capability__c/<id>/view');
 
 ## 7. Worker count and project ordering
 
-### Why workers = 1 (and `fullyParallel: false`)
+### Why `workers: 2` + `fullyParallel: false`
 
-Multiple concurrent Playwright workers all logged into the same Salesforce org as the same user produce:
+The earlier `workers: 1` setting was adopted while three different sources of cross-worker flake were in play:
 
-- Cross-talk on list views (one worker's New record steals another worker's modal focus).
-- Combobox dropdowns closed by another worker's overlay.
-- Org-side throttles (login, refresh-apex storms).
+1. **Cross-spec teardown collision** — `diagram.spec.ts` deleted capabilities by `Map.Name LIKE '%RUN_ID%'` with no Map filter, wiping other suites' caps before they ran. **Fixed in §8** (single global teardown).
+2. **Same-user UI cross-talk** — two workers logged in as the same user steal each other's modal focus / close combobox dropdowns / etc.
+3. **Org-side throttles** on parallel login + refresh-apex storms.
 
-With `fullyParallel: false`, Playwright still spawns one worker per project — so editor and viewer ran concurrently. Setting `workers: 1` forces full serialisation across all projects. The penalty is wall-clock time; the gain is that the only failures left are real.
+(2) and (3) are the structural reasons that survive any teardown fix. They only bite *within the same project* — the `editor` and `viewer` projects authenticate as different users with separate `storageState`s, so cross-project parallelism does not trigger same-user cross-talk and the throttle headroom is fine for two workers.
 
-A WebStorm run with the suite in concurrent mode produced 9–13 random failures across 95 tests. The same suite with `workers: 1` produced one cluster of related failures (seed wipe collision — see §8) and otherwise passed clean.
+`fullyParallel: false + workers: 2` therefore lets `editor` and `viewer` projects run concurrently while spec files within each project remain serial. That preserves the deterministic ordering specs rely on (§8), retains all single-project flake protection, and recovers most of the wall-clock cost of the prior `workers: 1` setting.
+
+If cross-project flake returns (rare — both projects need to touch the same record), revert to `workers: 1` and document the regression.
 
 ### Why deterministic order matters
 
-With `workers: 1 + fullyParallel: false`, spec files run in alphabetical order. That ordering must not matter — a spec must not depend on (or be broken by) another spec's after-effects. This invariant is enforced by §8.
+Within each project, `workers: 2 + fullyParallel: false` still runs spec files in alphabetical order. That ordering must not matter — a spec must not depend on (or be broken by) another spec's after-effects. This invariant is enforced by §8.
 
 ---
 
