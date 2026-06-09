@@ -17,7 +17,17 @@ export default function globalSetup() {
     const { capabilityDetailSeed } = require('./capability-detail.seed');
     const { diagramSeed } = require('./diagram.seed');
     const { capabilityTagSeed } = require('./capability-tag.seed');
+    const { capabilityRelatedListSeed, capabilityRtfSeed } = require('./capability.seed');
+    const { viewerReadMapSeed } = require('./map.seed');
     /* eslint-enable @typescript-eslint/no-require-imports */
 
-    runAllSeeds([dragDropSeed, capabilityDetailSeed, diagramSeed, capabilityTagSeed]);
+    runAllSeeds([
+        dragDropSeed,
+        capabilityDetailSeed,
+        diagramSeed,
+        capabilityTagSeed,
+        capabilityRelatedListSeed,
+        capabilityRtfSeed,
+        viewerReadMapSeed,
+    ]);
 }

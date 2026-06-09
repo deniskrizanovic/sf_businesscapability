@@ -1,27 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { execFileSync } from 'child_process';
 import { gotoLightning, setupAutoDismiss } from './fixtures/helpers';
+import { getSeedIds } from './fixtures/seeds';
 import { CAP_NAME, TAG_NAME } from './capability-tag.seed';
 
-// Resolve the seeded Capability's record URL once for the worker.
+// Resolve the seeded Capability's record URL from the seed-ids file written by globalSetup.
 function capabilityViewPath(): string {
-    const orgAlias = process.env.SF_ORG_ALIAS;
-    if (!orgAlias) throw new Error('SF_ORG_ALIAS not set');
-    const out = execFileSync(
-        'sf',
-        [
-            'data', 'query',
-            '--query', `SELECT Id FROM bcm_Capability__c WHERE Name = '${CAP_NAME}' LIMIT 1`,
-            '--target-org', orgAlias,
-            '--json',
-        ],
-        { encoding: 'utf-8', env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' } },
-    );
-    // sf CLI sometimes prefixes/wraps JSON output with ANSI escape codes; strip them.
-    const cleaned = out.replace(/\x1B\[[0-9;]*[A-Za-z]/g, '');
-    const parsed = JSON.parse(cleaned);
-    const id = parsed?.result?.records?.[0]?.Id;
-    if (!id) throw new Error(`capability-tag seed not found: ${CAP_NAME}`);
+    const id = getSeedIds().capabilities[CAP_NAME];
+    if (!id) throw new Error(`capability-tag seed not found in .seed-ids.json: ${CAP_NAME}`);
     return `/lightning/r/bcm_Capability__c/${id}/view`;
 }
 

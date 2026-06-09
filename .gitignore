@@ -45,6 +45,7 @@ $RECYCLE.BIN/
 # Playwright auth sessions and run state
 tests/e2e/.auth/
 tests/e2e/.run_id
+tests/e2e/.seed-ids.json
 tests/e2e/.diagram_map_url
 tests/e2e/.teardown_*.apex
 
@@ -79,3 +80,4 @@ retrieved_temp/
 
 # AI session artifacts
 .ai/
+/.claude/scheduled_tasks.lock
