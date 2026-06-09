@@ -1609,4 +1609,61 @@ describe('BcmCapabilityMap tag session persistence', () => {
         expect(tagCombobox.value).toBeFalsy();
         expect(sessionStorage.getItem('bcm.visualisation.selectedTagId')).toBeNull();
     });
+
+    it('Silent fallback when sessionStorage.setItem throws on tag change', async () => {
+        const setItemSpy = jest.spyOn(Storage.prototype, 'setItem')
+            .mockImplementation(() => { throw new Error('QuotaExceeded'); });
+        try {
+            mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+            mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
+            await flushPromises();
+            const tagCombobox = element.shadowRoot.querySelectorAll('lightning-combobox')[1];
+            expect(() => {
+                tagCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'TAG-1' } }));
+            }).not.toThrow();
+            await flushPromises();
+            expect(tagCombobox.value).toBe('TAG-1');
+        } finally {
+            setItemSpy.mockRestore();
+        }
+    });
+
+    it('Silent fallback when sessionStorage.getItem throws on init (tag restore)', async () => {
+        const getItemSpy = jest.spyOn(Storage.prototype, 'getItem')
+            .mockImplementation(() => { throw new Error('SecurityError'); });
+        try {
+            document.body.removeChild(element);
+            element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+            document.body.appendChild(element);
+            expect(() => {
+                mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+                mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
+            }).not.toThrow();
+            await flushPromises();
+            const tagCombobox = element.shadowRoot.querySelectorAll('lightning-combobox')[1];
+            expect(tagCombobox.value).toBeFalsy();
+        } finally {
+            getItemSpy.mockRestore();
+        }
+    });
+
+    it('Silent fallback when sessionStorage.removeItem throws on stale tag path', async () => {
+        sessionStorage.setItem('bcm.visualisation.selectedTagId', 'TAG-DELETED');
+        const removeItemSpy = jest.spyOn(Storage.prototype, 'removeItem')
+            .mockImplementation(() => { throw new Error('SecurityError'); });
+        try {
+            document.body.removeChild(element);
+            element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+            document.body.appendChild(element);
+            expect(() => {
+                mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+                mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
+            }).not.toThrow();
+            await flushPromises();
+            const tagCombobox = element.shadowRoot.querySelectorAll('lightning-combobox')[1];
+            expect(tagCombobox.value).toBeFalsy();
+        } finally {
+            removeItemSpy.mockRestore();
+        }
+    });
 });
