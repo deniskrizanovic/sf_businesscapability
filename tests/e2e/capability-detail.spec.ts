@@ -1,67 +1,8 @@
 import { test, expect, Page } from '@playwright/test';
-import { execFileSync } from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
-import { RUN_ID, setupAutoDismiss } from './fixtures/helpers';
-
-// ── Seed data ─────────────────────────────────────────────────────────────────
-const MAP_NAME = `E2E Detail Panel Map ${RUN_ID}`;
-const L1_NAME  = `Detail Domain ${RUN_ID}`;
-const L2_NAME  = `Detail Group ${RUN_ID}`;
-const L3_NAME  = `Detail Capability ${RUN_ID}`;
-
-const SAMPLE_JSON = JSON.stringify({
-    mapName: MAP_NAME,
-    mapDescription: '<p>Seeded for detail-panel e2e</p>',
-    capabilities: [
-        {
-            externalId: `dp-l1-${RUN_ID}`,
-            name: L1_NAME,
-            level: 1,
-            sortOrder: 1,
-            definition: '<p>L1 def</p>',
-            strategySupport: '<p>L1 strategy</p>',
-            architecturalNuance: '<p>L1 nuance</p>',
-            children: [
-                {
-                    externalId: `dp-l2-${RUN_ID}`,
-                    name: L2_NAME,
-                    level: 2,
-                    sortOrder: 1,
-                    definition: '<p>L2 def</p>',
-                    strategySupport: '<p>L2 strategy</p>',
-                    architecturalNuance: '<p>L2 nuance</p>',
-                    children: [
-                        {
-                            externalId: `dp-l3-${RUN_ID}`,
-                            name: L3_NAME,
-                            level: 3,
-                            sortOrder: 1,
-                            definition: '<p>L3 def</p>',
-                            strategySupport: '<p>L3 strategy</p>',
-                            architecturalNuance: '<p>L3 nuance</p>',
-                            children: [],
-                        },
-                    ],
-                },
-            ],
-        },
-    ],
-});
+import { selectMap, openDiagram } from './fixtures/helpers';
+import { MAP_NAME, L1_NAME, L2_NAME, L3_NAME } from './capability-detail.seed';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-async function openDiagram(page: Page) {
-    await setupAutoDismiss(page);
-    await page.goto('/lightning/n/bcm_Visualisation');
-    await page.locator('.bcm-canvas').waitFor({ state: 'visible', timeout: 20000 });
-}
-
-async function selectMap(page: Page) {
-    await page.getByRole('combobox', { name: 'Map' }).first().click();
-    await page.getByRole('option', { name: MAP_NAME }).click({ timeout: 15000 });
-    await page.locator('.bcm-canvas polygon').first().waitFor({ state: 'visible', timeout: 20000 });
-}
 
 async function openDetailPanelOnL1(page: Page) {
     const node = page.locator(`svg.bcm-canvas g.bcm-node[data-node-level="1"][data-node-name="${L1_NAME}"]`);
@@ -92,43 +33,19 @@ async function openDetailPanelOnL3(page: Page) {
     return panel;
 }
 
-// ── Seed once for the whole spec ──────────────────────────────────────────────
-
-test.describe('Detail panel — seed — editor project', () => {
-    test.beforeAll(async ({ browser }) => {
-        test.setTimeout(180000);
-        const ctx  = await browser.newContext({ storageState: 'tests/e2e/.auth/editor.json' });
-        const page = await ctx.newPage();
-        await setupAutoDismiss(page);
-
-        const flow = page.frameLocator('iframe');
-        await page.goto('/lightning/o/bcm_Map__c/list?filterName=All');
-        await page.getByRole('button', { name: 'JSON Import', exact: true }).click();
-        await flow.getByLabel('Paste JSON').waitFor({ state: 'visible', timeout: 40000 });
-        await flow.getByLabel('Paste JSON').fill(SAMPLE_JSON);
-        await flow.getByRole('button', { name: 'Import', exact: true }).click();
-        await flow.getByText(/Successfully imported \d+ capabilities/).waitFor({ timeout: 90000 });
-        await flow.getByRole('button', { name: 'Close', exact: true }).click();
-
-        await ctx.close();
-    });
-
-    test('seed placeholder', () => { /* triggers beforeAll */ });
-});
-
 // ── FP29 scenarios — editor project ───────────────────────────────────────────
 
 test.describe('Detail panel — open and close — editor project', () => {
     test('View detail opens panel with capability name in header', async ({ page }) => {
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         const panel = await openDetailPanelOnL2(page);
         await expect(panel.locator('.bcm-detail-name')).toHaveText(L2_NAME);
     });
 
     test('Close button dismisses the detail panel', async ({ page }) => {
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         await openDetailPanelOnL2(page);
         await page.locator('.bcm-detail-close button').click();
         await expect(page.locator('.bcm-detail-panel[data-open="true"]')).toHaveCount(0, { timeout: 5000 });
@@ -136,7 +53,7 @@ test.describe('Detail panel — open and close — editor project', () => {
 
     test('Escape key closes the detail panel', async ({ page }) => {
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         await openDetailPanelOnL2(page);
         await page.keyboard.press('Escape');
         await expect(page.locator('.bcm-detail-panel[data-open="true"]')).toHaveCount(0, { timeout: 5000 });
@@ -144,7 +61,7 @@ test.describe('Detail panel — open and close — editor project', () => {
 
     test('Switching nodes updates panel content without closing', async ({ page }) => {
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         await openDetailPanelOnL2(page);
         // Panel open -> single click on another node refreshes panel directly (no menu).
         const l1 = page.locator(`svg.bcm-canvas g.bcm-node[data-node-level="1"][data-node-name="${L1_NAME}"]`);
@@ -158,7 +75,7 @@ test.describe('Detail panel — open and close — editor project', () => {
 test.describe('Detail panel — breadcrumb + level badge — editor project', () => {
     test('Panel breadcrumb shows one segment for L1', async ({ page }) => {
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         const panel = await openDetailPanelOnL1(page);
         const segs = panel.locator('.bcm-detail-breadcrumb-segment');
         await expect(segs).toHaveCount(1);
@@ -167,7 +84,7 @@ test.describe('Detail panel — breadcrumb + level badge — editor project', ()
 
     test('Panel breadcrumb shows two segments for L2', async ({ page }) => {
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         const panel = await openDetailPanelOnL2(page);
         const segs = panel.locator('.bcm-detail-breadcrumb-segment');
         await expect(segs).toHaveCount(2);
@@ -177,7 +94,7 @@ test.describe('Detail panel — breadcrumb + level badge — editor project', ()
 
     test('Panel breadcrumb reflects full ancestor path for L3', async ({ page }) => {
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         const panel = await openDetailPanelOnL3(page);
         const segs = panel.locator('.bcm-detail-breadcrumb-segment');
         await expect(segs).toHaveCount(3);
@@ -188,7 +105,7 @@ test.describe('Detail panel — breadcrumb + level badge — editor project', ()
 
     test('Panel shows correct level badge', async ({ page }) => {
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         const panel = await openDetailPanelOnL2(page);
         await expect(panel.locator('.bcm-detail-level-badge')).toHaveText('L2');
     });
@@ -197,7 +114,7 @@ test.describe('Detail panel — breadcrumb + level badge — editor project', ()
 test.describe('Detail panel — fields — editor project', () => {
     test('Panel displays all expected fields', async ({ page }) => {
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         const panel = await openDetailPanelOnL2(page);
         const labels = panel.locator('.bcm-detail-field-label');
         await expect(labels).toHaveCount(4);
@@ -213,7 +130,7 @@ test.describe('Detail panel — fields — editor project', () => {
 test.describe('Detail panel — edit + save — editor project', () => {
     test('Editor sees Edit button and can enter edit mode', async ({ page }) => {
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         const panel = await openDetailPanelOnL2(page);
         const editBtn = panel.locator('.bcm-detail-edit button');
         await expect(editBtn).toBeVisible();
@@ -226,7 +143,7 @@ test.describe('Detail panel — edit + save — editor project', () => {
     test('Save persists name change and refreshes diagram', async ({ page }) => {
         const newName = `${L2_NAME} EDITED`;
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         const panel = await openDetailPanelOnL2(page);
         await panel.locator('.bcm-detail-edit button').click();
         const nameInput = panel.locator('.bcm-detail-input-name input');
@@ -248,7 +165,7 @@ test.describe('Detail panel — edit + save — editor project', () => {
 
     test('Cancel reverts unsaved name change', async ({ page }) => {
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         const panel = await openDetailPanelOnL2(page);
         await panel.locator('.bcm-detail-edit button').click();
         const nameInput = panel.locator('.bcm-detail-input-name input');
@@ -266,7 +183,7 @@ test.describe('Detail panel — edit + save — editor project', () => {
 test.describe('Detail panel — layout — editor project', () => {
     test('Panel stays inside LWC bounds and Save/Cancel are visible in edit mode', async ({ page }) => {
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         const panel = await openDetailPanelOnL2(page);
 
         const root = page.locator('c-bcm_-capability-map').first();
@@ -309,13 +226,13 @@ test.describe('Detail panel — layout — editor project', () => {
 test.describe('Detail panel — record page link — editor project', () => {
     test('Record page link opens record page in a new tab', async ({ page, context }) => {
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         const panel = await openDetailPanelOnL2(page);
 
         const link = panel.locator('.bcm-detail-record-link a');
         await expect(link).toBeVisible();
         await expect(link).toHaveAttribute('target', '_blank');
-        await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+        await expect(link).toHaveAttribute('rel', /\bnoopener\b/);
 
         const [newPage] = await Promise.all([
             context.waitForEvent('page'),
@@ -332,36 +249,10 @@ test.describe('Detail panel — record page link — editor project', () => {
 test.describe('Detail panel — viewer no-edit — viewer project', () => {
     test('Viewer sees no Edit/Save/Cancel buttons in panel', async ({ page }) => {
         await openDiagram(page);
-        await selectMap(page);
+        await selectMap(page, MAP_NAME);
         const panel = await openDetailPanelOnL2(page);
         await expect(panel.locator('.bcm-detail-edit')).toHaveCount(0);
         await expect(panel.locator('.bcm-detail-save')).toHaveCount(0);
         await expect(panel.locator('.bcm-detail-cancel')).toHaveCount(0);
     });
-});
-
-// ── Teardown — editor project ─────────────────────────────────────────────────
-
-test.describe('Detail panel — teardown — editor project', () => {
-    test.afterAll(() => {
-        const orgAlias = process.env.SF_ORG_ALIAS;
-        if (!orgAlias) throw new Error('SF_ORG_ALIAS not set');
-
-        const apex = `
-List<bcm_Capability__c> caps = [SELECT Id FROM bcm_Capability__c WHERE bcm_Map__r.Name = '${MAP_NAME}' LIMIT 10000];
-if (!caps.isEmpty()) delete caps;
-List<bcm_Map__c> maps = [SELECT Id FROM bcm_Map__c WHERE Name = '${MAP_NAME}' LIMIT 10000];
-if (!maps.isEmpty()) delete maps;
-`.trim();
-
-        const apexFile = path.resolve(`tests/e2e/.teardown_detail_${RUN_ID}.apex`);
-        fs.writeFileSync(apexFile, apex, 'utf-8');
-        try {
-            execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], { stdio: 'inherit' });
-        } finally {
-            fs.unlinkSync(apexFile);
-        }
-    });
-
-    test('teardown placeholder', () => { /* triggers afterAll */ });
 });

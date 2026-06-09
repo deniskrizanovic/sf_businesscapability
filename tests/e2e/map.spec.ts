@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { APP_PATH, RUN_ID, setupAutoDismiss } from './fixtures/helpers';
+import { getSeedIds } from './fixtures/seeds';
+import { VIEWER_READ_MAP_NAME } from './map.seed';
 
 async function createMap(
     page: import('@playwright/test').Page,
@@ -46,19 +48,16 @@ test.describe('Map CRUD — editor project', () => {
 test.describe('Map access — viewer project', () => {
     let mapUrl: string;
 
-    test.beforeAll(async ({ browser }) => {
-        const ctx = await browser.newContext({
-            storageState: 'tests/e2e/.auth/editor.json',
-        });
-        const page = await ctx.newPage();
-        mapUrl = await createMap(page, `E2E Viewer Read Map ${RUN_ID}`);
-        await ctx.close();
+    test.beforeAll(() => {
+        const id = getSeedIds().maps[VIEWER_READ_MAP_NAME];
+        if (!id) throw new Error(`viewer-read-map seed not found: ${VIEWER_READ_MAP_NAME}`);
+        mapUrl = `/lightning/r/bcm_Map__c/${id}/view`;
     });
 
     test('viewer can read a Map record', async ({ page }) => {
         await setupAutoDismiss(page);
         await page.goto(mapUrl);
-        await expect(page.getByRole('heading', { name: `E2E Viewer Read Map ${RUN_ID}` })).toBeVisible();
+        await expect(page.getByRole('heading', { name: VIEWER_READ_MAP_NAME })).toBeVisible();
     });
 
     test('viewer cannot create a Map record — no New button', async ({ page }) => {

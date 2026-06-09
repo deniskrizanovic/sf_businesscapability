@@ -1,5 +1,9 @@
 import { test, expect, type Page } from '@playwright/test';
-import { RUN_ID } from './fixtures/helpers';
+import { RUN_ID, clickFlowNext, flow, setupAutoDismiss } from './fixtures/helpers';
+
+// Sandbox can take >20s to mount the Flow iframe; helper waits up to 40s for
+// "Paste JSON" to appear, so the per-test budget must exceed that plus run-up.
+test.describe.configure({ timeout: 60_000 });
 
 const SAMPLE_JSON = JSON.stringify({
     mapName: `E2E Import Map ${RUN_ID}`,
@@ -40,10 +44,8 @@ const SAMPLE_JSON = JSON.stringify({
     ],
 });
 
-// List view actions in Lightning open inside an iframe — all flow-content selectors must go through this
-const flow = (page: Page) => page.frameLocator('iframe');
-
 async function openImportPanel(page: Page) {
+    await setupAutoDismiss(page);
     await page.goto('/lightning/o/bcm_Map__c/list?filterName=All');
     await page.getByRole('button', { name: 'JSON Import', exact: true }).click();
     // Sandbox can take >20s to render the flow screen inside the iframe
@@ -65,14 +67,14 @@ test.describe('Successful import — editor project', () => {
     test('valid JSON shows success screen with capability count', async ({ page }) => {
         await openImportPanel(page);
         await flow(page).getByLabel('Paste JSON').fill(SAMPLE_JSON);
-        await flow(page).getByRole('button', { name: 'Import', exact: true }).click();
-        await expect(flow(page).getByText(/Successfully imported \d+ capabilities/)).toBeVisible({ timeout: 30000 });
+        await clickFlowNext(page, 'Import');
+        await expect(flow(page).getByText(/Successfully imported \d+ capabilities/)).toBeVisible();
     });
 
     test('Close button on success screen dismisses the panel', async ({ page }) => {
         await openImportPanel(page);
         await flow(page).getByLabel('Paste JSON').fill(SAMPLE_JSON);
-        await flow(page).getByRole('button', { name: 'Import', exact: true }).click();
+        await clickFlowNext(page, 'Import');
         await flow(page).getByRole('button', { name: 'Close', exact: true }).click();
         await expect(flow(page).getByLabel('Paste JSON')).not.toBeVisible();
     });
@@ -81,14 +83,14 @@ test.describe('Successful import — editor project', () => {
         // First import
         await openImportPanel(page);
         await flow(page).getByLabel('Paste JSON').fill(SAMPLE_JSON);
-        await flow(page).getByRole('button', { name: 'Import', exact: true }).click();
+        await clickFlowNext(page, 'Import');
         await flow(page).getByRole('button', { name: 'Close', exact: true }).click();
 
         // Second import with same JSON
         await openImportPanel(page);
         await flow(page).getByLabel('Paste JSON').fill(SAMPLE_JSON);
-        await flow(page).getByRole('button', { name: 'Import', exact: true }).click();
-        await expect(flow(page).getByText(/Successfully imported \d+ capabilities/)).toBeVisible({ timeout: 30000 });
+        await clickFlowNext(page, 'Import');
+        await expect(flow(page).getByText(/Successfully imported \d+ capabilities/)).toBeVisible();
     });
 });
 
@@ -98,15 +100,15 @@ test.describe('Import error handling — editor project', () => {
     test('malformed JSON shows error screen', async ({ page }) => {
         await openImportPanel(page);
         await flow(page).getByLabel('Paste JSON').fill('not valid json {{{');
-        await flow(page).getByRole('button', { name: 'Import', exact: true }).click();
-        await expect(flow(page).getByText(/Invalid JSON/i)).toBeVisible({ timeout: 30000 });
+        await clickFlowNext(page, 'Import');
+        await expect(flow(page).getByText(/Invalid JSON/i)).toBeVisible();
     });
 
     test('error screen Previous button returns to Screen 1', async ({ page }) => {
         await openImportPanel(page);
         await flow(page).getByLabel('Paste JSON').fill('not valid json {{{');
-        await flow(page).getByRole('button', { name: 'Import', exact: true }).click();
-        await flow(page).getByRole('button', { name: 'Previous', exact: true }).click();
+        await clickFlowNext(page, 'Import');
+        await clickFlowNext(page, 'Previous');
         await expect(flow(page).getByLabel('Paste JSON')).toBeVisible();
     });
 });
@@ -117,9 +119,9 @@ test.describe('Import panel — viewer project', () => {
     test('viewer clicking Import shows error screen (no crash, no unhandled exception)', async ({ page }) => {
         await openImportPanel(page);
         await flow(page).getByLabel('Paste JSON').fill(SAMPLE_JSON);
-        await flow(page).getByRole('button', { name: 'Import', exact: true }).click();
+        await clickFlowNext(page, 'Import');
         // AuraHandledException.getMessage() returns 'Script-thrown exception' at runtime —
         // assert the error screen (Previous button) appears rather than matching the message text
-        await expect(flow(page).getByRole('button', { name: 'Previous', exact: true })).toBeVisible({ timeout: 30000 });
+        await expect(flow(page).getByRole('button', { name: 'Previous', exact: true })).toBeVisible();
     });
 });

@@ -30,6 +30,8 @@ The `bcm_Map__c` record page is the primary entry point for both the diagram and
 
 ## Permission Sets
 
+> **Note on OWD:** `bcm_Map__c` and `bcm_Capability__c` use `ReadWrite` org-wide defaults (see [01-data-model.md § Org-Wide Defaults](01-data-model.md#org-wide-defaults-sharing-model)). Viewer-vs-Editor enforcement therefore relies on object CRUD in the permission sets below, not on sharing — Salesforce's CRUD check denies Viewer writes before sharing is consulted.
+
 ### bcm_Viewer
 **Label:** BCM Viewer
 **Description:** Read-only access to the Business Capability Map application.

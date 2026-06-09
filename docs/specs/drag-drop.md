@@ -99,7 +99,7 @@ Given the user has initiated a drag on a capability node
 When the drag is in progress  
 Then a semi-transparent ghost of the dragged element follows the cursor  
 
-> Tested by: bcm_CapabilityMap.test.js > "ghost renders at cursor"
+> Tested by: bcm_CapabilityMap.test.js — "ghost renders at cursor"
 
 **Scenario: A drop indicator line appears at the target position**
 
@@ -107,7 +107,7 @@ Given the user is dragging a capability over a valid drop target
 When the cursor is between two sibling nodes  
 Then a drop indicator line is rendered between those siblings  
 
-> Tested by: bcm_CapabilityMap.test.js > "drop indicator renders at target gap"
+> Tested by: bcm_CapabilityMap.test.js — "drop indicator renders at target gap"
 
 ---
 
@@ -119,7 +119,7 @@ Given the user has initiated a drag on a capability node
 When the user releases the mouse outside any valid drop target  
 Then the diagram returns to its original state with no changes applied  
 
-> Tested by: bcm_CapabilityMap.test.js > "drop outside valid target cancels"
+> Tested by: bcm_CapabilityMap.test.js — "drop outside valid target cancels"
 
 ---
 
@@ -133,7 +133,7 @@ When the drag-drop is completed
 Then the diagram reverts to its pre-drag state  
 And an error message is displayed: "Failed to save changes. Your changes have been reverted."  
 
-> Tested by: bcm_CapabilityMap.test.js > "apex error reverts and toasts"
+> Tested by: bcm_CapabilityMap.test.js — "apex error reverts and toasts"
 
 **Scenario: Save failure during reparent reverts the diagram**
 
@@ -143,4 +143,4 @@ When the drag-drop is completed
 Then the diagram reverts to its pre-drag state  
 And an error message is displayed: "Failed to save changes. Your changes have been reverted."  
 
-> Tested by: bcm_CapabilityMap.test.js > "apex error reverts and toasts"
+> Tested by: bcm_CapabilityMap.test.js — "apex error reverts and toasts"

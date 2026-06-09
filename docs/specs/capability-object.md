@@ -23,12 +23,22 @@ Given I am creating a Capability
 When I click the Parent Capability field  
 Then I can only search for and select other Capability records  
 
-**Scenario: Definition field displays formatted text**
-> Tested by: `e2e/capability.spec.ts::"Definition RTF field is accessible via inline edit on the record detail view"`
+**Scenario: Definition field is editable via the inline-edit pencil**
 
 Given I am logged in as an Editor  
-When I create a Capability and enter formatted text in the Definition field  
+And I open a Capability record  
+When I click the Edit Definition pencil  
+Then the rich-text editor mounts inside the Definition field with formatting controls (Bold) available  
+
+> Tested by: `e2e/capability.spec.ts::"Definition field is editable via inline-edit pencil — RTF editor mounts with Bold toolbar"`
+
+**Scenario: Formatted text in the Definition field persists and renders**
+
+Given I am logged in as an Editor  
+When I enter formatted text (e.g. bold) in the Definition field via inline edit and save  
 Then the record saves and the Definition renders the formatting when I view it  
+
+> Deferred: persistence + render of formatted rich text is platform-enforced (Salesforce inline-edit + lightning-formatted-rich-text); no project code on this path.
 
 ---
 
@@ -172,6 +182,8 @@ Then I see the error: "The parent capability must be exactly one level above (e.
 ---
 
 ## Feature: Access rules are enforced for Editors and Viewers
+
+> Access enforcement is **CRUD-based**, not sharing-based: `bcm_Capability__c` is `ReadWrite` OWD (see [data-model § Org-Wide Defaults](../design/01-data-model.md#org-wide-defaults-sharing-model)). `bcm_Viewer` grants `Read` only on the object, so Viewer writes are blocked by Salesforce's CRUD check, not by record sharing.
 
 **Scenario: Viewer can read a Capability record**
 > Deferred: read access is permission-set-enforced; verified via UI, not Apex

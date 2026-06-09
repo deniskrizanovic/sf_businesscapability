@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { APP_PATH, RUN_ID, setupAutoDismiss, recordIdFromUrl } from './fixtures/helpers';
+import { APP_PATH, setupAutoDismiss } from './fixtures/helpers';
+import { getSeedIds } from './fixtures/seeds';
+import { RELATED_MAP_NAME, RELATED_CAP_NAME, RTF_CAP_NAME } from './capability.seed';
 
 // ── Record form fields ────────────────────────────────────────────────────────
 
@@ -22,58 +24,39 @@ test.describe('Capability form — editor project', () => {
         ).toHaveAttribute('placeholder', 'Search Capabilities...');
     });
 
-    test('Definition RTF field is accessible via inline edit on the record detail view', async ({ page }) => {
-        const mapName = `E2E Cap RTF Map ${RUN_ID}`;
-        const capName = `E2E RTF Cap ${RUN_ID}`;
+    test('Definition field is editable via inline-edit pencil — RTF editor mounts with Bold toolbar', async ({ page }) => {
+        const id = getSeedIds().capabilities[RTF_CAP_NAME];
+        if (!id) throw new Error(`capability-rtf seed not found: ${RTF_CAP_NAME}`);
 
         await setupAutoDismiss(page);
-        await page.goto('/lightning/o/bcm_Map__c/new');
-        await page.getByLabel('Map Name').fill(mapName);
-        await page.getByRole('button', { name: 'Save', exact: true }).click();
-        await page.waitForURL(/\/view$/);
-        const mapUrl = page.url();
+        await page.goto(`/lightning/r/bcm_Capability__c/${id}/view`);
+        await expect(page.getByRole('heading', { name: RTF_CAP_NAME })).toBeVisible();
 
-        const mapId = recordIdFromUrl(mapUrl);
-        await page.goto(`/lightning/o/bcm_Capability__c/new?defaultFieldValues=bcm_Map__c=${mapId}`);
-        await page.getByLabel('Capability Name').fill(capName);
-        await page.getByLabel('Level').fill('1');
-        await page.getByLabel('Sort Order').fill('1');
-        await page.getByRole('button', { name: 'Save', exact: true }).click();
-        await page.waitForURL(/\/view$/);
+        // Inline-edit pencil is rendered as a button labelled "Edit Definition" alongside the
+        // field — relies on the English field label "Definition" matching the org's user language.
+        const editPencil = page.getByRole('button', { name: 'Edit Definition' });
+        await expect(editPencil).toBeVisible();
+        await editPencil.click();
 
-        await expect(page.getByRole('heading', { name: capName })).toBeVisible();
+        // Scope the RTF assertion to the Definition field's ARIA group so other RTF fields on
+        // the record page (Strategy Support, Architectural Nuance) cannot satisfy it.
+        const definitionGroup = page.getByRole('group', { name: 'Definition' });
+        await expect(definitionGroup.getByRole('textbox', { name: 'Definition' }))
+            .toBeVisible({ timeout: 10000 });
+        await expect(definitionGroup.getByRole('button', { name: 'Bold' }))
+            .toBeVisible({ timeout: 5000 });
     });
 });
 
 // ── Map record page related list ─────────────────────────────────────────────
 
 test.describe('Map record page — editor project', () => {
-    const mapName = `E2E Related List Map ${RUN_ID}`;
-    const capName = `E2E Related Cap ${RUN_ID}`;
     let mapUrl: string;
 
-    test.beforeAll(async ({ browser }) => {
-        const ctx = await browser.newContext({
-            storageState: 'tests/e2e/.auth/editor.json',
-        });
-        const page = await ctx.newPage();
-        await setupAutoDismiss(page);
-
-        await page.goto('/lightning/o/bcm_Map__c/new');
-        await page.getByLabel('Map Name').fill(mapName);
-        await page.getByRole('button', { name: 'Save', exact: true }).click();
-        await page.waitForURL(/\/view$/);
-        mapUrl = page.url();
-
-        const mapId = recordIdFromUrl(mapUrl);
-        await page.goto(`/lightning/o/bcm_Capability__c/new?defaultFieldValues=bcm_Map__c=${mapId}`);
-        await page.getByLabel('Capability Name').fill(capName);
-        await page.getByLabel('Level').fill('1');
-        await page.getByLabel('Sort Order').fill('1');
-        await page.getByRole('button', { name: 'Save', exact: true }).click();
-        await page.waitForURL(/\/view$/);
-
-        await ctx.close();
+    test.beforeAll(() => {
+        const id = getSeedIds().maps[RELATED_MAP_NAME];
+        if (!id) throw new Error(`capability-related-list seed not found: ${RELATED_MAP_NAME}`);
+        mapUrl = `/lightning/r/bcm_Map__c/${id}/view`;
     });
 
     test('Map record page includes a Capabilities related list', async ({ page }) => {
@@ -85,7 +68,7 @@ test.describe('Map record page — editor project', () => {
     test('linked Capability appears in the Map related list', async ({ page }) => {
         await setupAutoDismiss(page);
         await page.goto(mapUrl);
-        await expect(page.getByRole('link', { name: capName })).toBeVisible();
+        await expect(page.getByRole('link', { name: RELATED_CAP_NAME })).toBeVisible();
     });
 });
 
