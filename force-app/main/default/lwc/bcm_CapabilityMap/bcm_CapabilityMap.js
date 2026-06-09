@@ -132,12 +132,25 @@ export default class BcmCapabilityMap extends LightningElement {
             if (this.selectedTagId && !this._tagColourMap.has(this.selectedTagId)) {
                 this.selectedTagId = '';
             }
+            this._maybeRestoreSelectedTag();
             if (this._capabilities.length) {
                 this._buildLayout(this._capabilities);
             }
         } else if (error) {
             this.errorMessage = error?.body?.message || 'Failed to load tags';
         }
+    }
+
+    _maybeRestoreSelectedTag() {
+        if (this._tagRestoreAttempted) return;
+        this._tagRestoreAttempted = true;
+        const persistedId = safeSessionGet(SESSION_KEY_SELECTED_TAG);
+        if (!persistedId) return;
+        if (!this._tagColourMap.has(persistedId)) {
+            safeSessionRemove(SESSION_KEY_SELECTED_TAG);
+            return;
+        }
+        this.selectedTagId = persistedId;
     }
 
     // ── State ─────────────────────────────────────────────────────────────────
@@ -187,6 +200,7 @@ export default class BcmCapabilityMap extends LightningElement {
     _panStartX      = 0;
     _panStartY      = 0;
     _restoreAttempted = false;
+    _tagRestoreAttempted = false;
 
     @api get zoom() { return this._zoom; }
     set zoom(v)      { this._zoom = v; }
