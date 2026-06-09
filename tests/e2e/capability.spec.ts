@@ -24,7 +24,7 @@ test.describe('Capability form — editor project', () => {
         ).toHaveAttribute('placeholder', 'Search Capabilities...');
     });
 
-    test('Definition RTF field is accessible via inline edit on the record detail view', async ({ page }) => {
+    test('Definition field is editable via inline-edit pencil — RTF editor mounts with Bold toolbar', async ({ page }) => {
         const id = getSeedIds().capabilities[RTF_CAP_NAME];
         if (!id) throw new Error(`capability-rtf seed not found: ${RTF_CAP_NAME}`);
 
