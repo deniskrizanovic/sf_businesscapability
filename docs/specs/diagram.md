@@ -45,6 +45,35 @@ And no error is surfaced to the user
 
 > Tested by: bcm_CapabilityMap.test.js — "Silent fallback when sessionStorage.setItem throws (no crash, no abort)"
 
+## Feature: Colour-by-tag selection persists for session
+
+**Scenario: Colour-by-tag selection is restored after navigation/reload**
+
+Given the user selected a Tag in the `Colour by Tag` dropdown
+When the user navigates away and returns to the Visualisation page within the same browser session
+Then the `Colour by Tag` dropdown still shows the previously selected Tag
+And the canvas re-applies that tag's colour to capabilities carrying it
+
+> Tested by: bcm_CapabilityMap.test.js — "Restores selectedTagId from sessionStorage on init when id is in tagOptions"; diagram.spec.ts — "Colour-by-Tag selection persists across page reload within same session"
+
+**Scenario: Persisted Tag id no longer in options is silently cleared**
+
+Given the user has a persisted Tag id in sessionStorage that no longer exists in `tagOptions`
+When the Visualisation panel reloads
+Then the `Colour by Tag` dropdown is at "None"
+And the persisted key is removed from sessionStorage
+
+> Tested by: bcm_CapabilityMap.test.js — "Clears persisted tag id and leaves selector at None when id is not in tagOptions"
+
+**Scenario: sessionStorage unavailable does not crash colour-by-tag**
+
+Given `sessionStorage.setItem` throws (privacy mode / quota)
+When the user selects a Tag from the `Colour by Tag` dropdown
+Then the diagram still re-renders with the chosen tag colour
+And no error is surfaced to the user
+
+> Tested by: bcm_CapabilityMap.test.js — "Silent fallback when sessionStorage.setItem throws on tag change"
+
 ---
 
 ## Feature: Diagram renders the correct structure for a selected Map
