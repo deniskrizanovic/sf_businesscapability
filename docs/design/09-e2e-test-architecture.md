@@ -36,12 +36,13 @@ tests/e2e/
 │   ├── helpers.ts           setupAutoDismiss, selectMap, openDiagram, gotoLightning,
 │   │                        flow, clickFlowNext, recordIdFromUrl, RUN_ID
 │   ├── run-id.ts            Reads .run_id from disk
-│   └── seeds.ts             Aggregator: runs all SeedSpecs through bcm_ImportController
+│   └── seeds.ts             Aggregator: runs all SeedSpecs through bcm_ImportController,
+│                            writes Name->Id map to .seed-ids.json, exposes getSeedIds()
 ├── *.seed.ts                Per-feature payloads + exported MAP_NAME / cap names
 ├── *.spec.ts                Per-feature scenarios
 ├── global-setup.ts          Writes .run_id, then calls runAllSeeds([…])
 ├── global-teardown.ts       Deletes everything matching %RUN_ID% in FK-safe order
-└── .run_id, .auth/*.json    Generated, gitignored
+└── .run_id, .seed-ids.json, .auth/*.json    Generated, gitignored
 ```
 
 `playwright.config.ts` ties it together:
@@ -128,6 +129,25 @@ export interface SeedSpec {
 - **`capability-tag.seed.ts`** inserts a `bcm_Tag__c` and **transfers ownership to the editor user** so the editor's UI session can save a `bcm_CapabilityTag__c` master-detail junction without `insufficient access rights on cross-reference id`. The Tag is read-write OWD but the integration user that runs the seed is not the editor; without the ownership transfer, sharing-recalc lag intermittently blocks the cross-reference write.
 
 When a spec needs a record the importer doesn't model, prefer `postSeedApex` over per-spec UI setup. UI setup pulls Salesforce sandbox latency back into the test timeline.
+
+The current registered seeds (see `global-setup.ts`) are: `dragDropSeed`, `capabilityDetailSeed`, `diagramSeed`, `capabilityTagSeed`, `capabilityRelatedListSeed`, `capabilityRtfSeed`, `viewerReadMapSeed`. The last three were migrated from per-spec UI `beforeAll` into apex-seed payloads to remove sandbox latency and editor/viewer ordering races; the same playbook applies to any future spec that needs a pre-existing Map or Capability.
+
+### Seed-ids capture: `.seed-ids.json` + `getSeedIds()`
+
+Specs that need to deep-link to a seeded record (`/lightning/r/bcm_Capability__c/<id>/view`) used to run a per-test `sf data query` to resolve Name->Id. That added 1–3 s per spec and another sandbox round-trip that could fail.
+
+`runAllSeeds` now appends a final Apex block to the seed script that queries every `bcm_Capability__c`, `bcm_Map__c`, and `bcm_Tag__c` whose Name matches `%RUN_ID%`, JSON-serialises the `Name -> Id` map, base64-encodes it, and emits a single `System.debug('BCM_SEED_IDS:<base64>')` line. The TS side captures `sf apex run` stdout, anchors on the `USER_DEBUG|...|DEBUG|BCM_SEED_IDS:` marker (so the echoed Apex source doesn't false-match), decodes the JSON, and writes `tests/e2e/.seed-ids.json`.
+
+Specs read it through `getSeedIds()` from `fixtures/seeds.ts`:
+
+```ts
+const id = getSeedIds().capabilities[RTF_CAP_NAME];
+await page.goto(`/lightning/r/bcm_Capability__c/${id}/view`);
+```
+
+The base64 wrapper is load-bearing: the Lightning debug-log pipeline HTML-entity-encodes raw quotes in `System.debug` output, mangling JSON. Base64 encoding survives it cleanly.
+
+`.seed-ids.json` is gitignored and rewritten on every globalSetup; it is not a contract surface beyond the current run.
 
 ---
 
