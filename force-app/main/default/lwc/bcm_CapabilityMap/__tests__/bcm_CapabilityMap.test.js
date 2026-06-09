@@ -1538,3 +1538,43 @@ describe('BcmCapabilityMap tag combobox refresh on focus', () => {
         expect(getTagCombobox().value).toBe('');
     });
 });
+
+describe('BcmCapabilityMap tag session persistence', () => {
+    let element;
+
+    beforeEach(() => {
+        sessionStorage.clear();
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+    });
+
+    afterEach(() => {
+        document.body.removeChild(element);
+        sessionStorage.clear();
+        jest.clearAllMocks();
+    });
+
+    it('Writes selectedTagId to sessionStorage on tag change', async () => {
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [
+            { Id: 'TAG-1', Name: 'Red',   bcm_Colour__c: '#FF0000' },
+            { Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' },
+        ], error: undefined });
+        await flushPromises();
+        const tagCombobox = element.shadowRoot.querySelectorAll('lightning-combobox')[1];
+        tagCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'TAG-2' } }));
+        await flushPromises();
+        expect(sessionStorage.getItem('bcm.visualisation.selectedTagId')).toBe('TAG-2');
+    });
+
+    it('Removes persisted selectedTagId when user selects None', async () => {
+        sessionStorage.setItem('bcm.visualisation.selectedTagId', 'TAG-2');
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [{ Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' }], error: undefined });
+        await flushPromises();
+        const tagCombobox = element.shadowRoot.querySelectorAll('lightning-combobox')[1];
+        tagCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: '' } }));
+        await flushPromises();
+        expect(sessionStorage.getItem('bcm.visualisation.selectedTagId')).toBeNull();
+    });
+});

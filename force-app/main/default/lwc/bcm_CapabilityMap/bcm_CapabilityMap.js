@@ -37,6 +37,7 @@ const ZOOM_STEP  = 0.1;
 const ZOOM_DEFAULT = 1.0;
 
 const SESSION_KEY_SELECTED_MAP = 'bcm.visualisation.selectedMapId';
+const SESSION_KEY_SELECTED_TAG = 'bcm.visualisation.selectedTagId';
 
 function safeSessionGet(key) {
     try { return sessionStorage.getItem(key); } catch (_) { return null; }
@@ -586,6 +587,11 @@ export default class BcmCapabilityMap extends LightningElement {
 
     handleTagChange(evt) {
         this.selectedTagId = evt.detail.value;
+        if (this.selectedTagId) {
+            safeSessionSet(SESSION_KEY_SELECTED_TAG, this.selectedTagId);
+        } else {
+            safeSessionRemove(SESSION_KEY_SELECTED_TAG);
+        }
         this._buildLayout(this._capabilities);
     }
 
