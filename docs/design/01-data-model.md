@@ -83,3 +83,18 @@ Junction object linking Capabilities to Tags. A Capability may have many Tags.
 | `bcm_Capability__c` | Read | Read, Create, Edit, Delete |
 | `bcm_Tag__c` | Read | Read, Create, Edit, Delete |
 | `bcm_CapabilityTag__c` | Read | Read, Create, Edit, Delete |
+
+## Org-Wide Defaults (Sharing Model)
+
+| Object | Internal Sharing Model | External Sharing Model |
+|---|---|---|
+| `bcm_Map__c` | `ReadWrite` (Public Read/Write) | `Private` |
+| `bcm_Capability__c` | `ReadWrite` (Public Read/Write) | `Private` |
+| `bcm_Tag__c` | `Read` (Public Read Only) | n/a |
+| `bcm_CapabilityTag__c` | `ControlledByParent` (junction) | n/a |
+
+**Rationale:** Capability maps are intentionally non-confidential — every BCM user who can see the app should see every map and every capability. We do not have a row-level segmentation requirement (e.g. "Finance maps are hidden from HR"); restricting visibility per record would defeat the purpose of an enterprise-wide capability inventory.
+
+With `ReadWrite` OWD, **edit access is gated entirely by the permission sets** ([06-app-structure.md](06-app-structure.md)): `bcm_Viewer` grants `Read` only on `bcm_Map__c` and `bcm_Capability__c`, so Viewer users still cannot create, edit, or delete records — Salesforce's CRUD check fires before sharing. `bcm_Editor` grants full CRUD plus the `bcm_CanEdit` custom permission for the diagram's structural-edit affordances.
+
+**Why not `Read` OWD?** The earlier model used `Read` OWD and would have required sharing rules or manual record sharing for any future "edit a record I do not own" workflow. `ReadWrite` keeps the access model declarative (permsets only) and consistent with how the e2e suite expects integration users (test harness, importer) to write to records seeded by other users without sharing-recalc lag intermittently blocking master-detail junction inserts (see [09-e2e-test-architecture.md §5](09-e2e-test-architecture.md)).

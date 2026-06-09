@@ -29,9 +29,12 @@ const PAYLOAD = {
 const EDITOR_USERNAME = process.env.SF_EDITOR_USERNAME;
 if (!EDITOR_USERNAME) throw new Error('SF_EDITOR_USERNAME not set — required for capability-tag seed');
 
+// Escape backslash then single-quote for safe interpolation into an Apex/SOQL string literal.
+const apexEscape = (s: string): string => s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
 const POST_SEED_APEX = `
-Id editorUserId = [SELECT Id FROM User WHERE Username = '${EDITOR_USERNAME}' LIMIT 1].Id;
-bcm_Tag__c t = new bcm_Tag__c(Name = '${TAG_NAME}', bcm_Colour__c = '#B8E0C8');
+Id editorUserId = [SELECT Id FROM User WHERE Username = '${apexEscape(EDITOR_USERNAME)}' LIMIT 1].Id;
+bcm_Tag__c t = new bcm_Tag__c(Name = '${apexEscape(TAG_NAME)}', bcm_Colour__c = '#B8E0C8');
 insert t;
 t.OwnerId = editorUserId;
 update t;

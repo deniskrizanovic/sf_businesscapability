@@ -32,6 +32,8 @@ Then the record is removed and the user is returned to the list view
 
 ## Feature: Viewers have read-only access to Maps
 
+> Read-only enforcement is **CRUD-based**, not sharing-based: `bcm_Map__c` is `ReadWrite` OWD (see [data-model § Org-Wide Defaults](../design/01-data-model.md#org-wide-defaults-sharing-model)). `bcm_Viewer` grants `Read` only on the object, so Viewer writes are blocked by Salesforce's CRUD check, not by record sharing.
+
 **Scenario: Viewer can view a Map record**
 
 Given the user has the `bcm_Viewer` permission set assigned  

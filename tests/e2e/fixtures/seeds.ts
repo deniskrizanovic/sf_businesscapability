@@ -13,6 +13,8 @@ export interface SeedSpec {
 }
 
 export interface SeedIds {
+    /** Run id this seed-ids file was written for. Specs reject mismatches against the current run. */
+    runId: string;
     /** bcm_Capability__c.Name -> Id, for every Capability whose Name contains the run id. */
     capabilities: Record<string, string>;
     /** bcm_Map__c.Name -> Id, for every Map whose Name contains the run id. */
@@ -37,6 +39,11 @@ export function runAllSeeds(seeds: SeedSpec[]): void {
 
     const orgAlias = process.env.SF_ORG_ALIAS;
     if (!orgAlias) throw new Error('SF_ORG_ALIAS not set — required for e2e seeding');
+
+    // Delete any prior seed-ids file up-front so a mid-run abort cannot leave stale Ids
+    // for the next run to consume. The new file is only written after seeding succeeds.
+    const seedIdsPath = path.resolve(SEED_IDS_FILE);
+    try { fs.unlinkSync(seedIdsPath); } catch { /* nothing to remove */ }
 
     const runId = getRunId();
     const blocks: string[] = [];
@@ -87,7 +94,8 @@ export function runAllSeeds(seeds: SeedSpec[]): void {
     process.stdout.write(stdout);
 
     const seedIds = parseSeedIds(stdout);
-    fs.writeFileSync(path.resolve(SEED_IDS_FILE), JSON.stringify(seedIds, null, 2), 'utf-8');
+    seedIds.runId = runId;
+    fs.writeFileSync(seedIdsPath, JSON.stringify(seedIds, null, 2), 'utf-8');
 }
 
 /**
@@ -131,8 +139,20 @@ function parseSeedIds(stdout: string): SeedIds {
     return JSON.parse(json) as SeedIds;
 }
 
-/** Read the seed-ids file written by runAllSeeds. */
+let cachedSeedIds: SeedIds | undefined;
+
+/** Read the seed-ids file written by runAllSeeds. Cached after first read. */
 export function getSeedIds(): SeedIds {
+    if (cachedSeedIds) return cachedSeedIds;
     const raw = fs.readFileSync(path.resolve(SEED_IDS_FILE), 'utf-8');
-    return JSON.parse(raw) as SeedIds;
+    const parsed = JSON.parse(raw) as SeedIds;
+    const currentRunId = getRunId();
+    if (parsed.runId !== currentRunId) {
+        throw new Error(
+            `seed-ids file runId=${parsed.runId} does not match current runId=${currentRunId}. ` +
+            `Re-run globalSetup (delete tests/e2e/.seed-ids.json and tests/e2e/.run_id).`,
+        );
+    }
+    cachedSeedIds = parsed;
+    return parsed;
 }

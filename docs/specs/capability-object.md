@@ -173,6 +173,8 @@ Then I see the error: "The parent capability must be exactly one level above (e.
 
 ## Feature: Access rules are enforced for Editors and Viewers
 
+> Access enforcement is **CRUD-based**, not sharing-based: `bcm_Capability__c` is `ReadWrite` OWD (see [data-model § Org-Wide Defaults](../design/01-data-model.md#org-wide-defaults-sharing-model)). `bcm_Viewer` grants `Read` only on the object, so Viewer writes are blocked by Salesforce's CRUD check, not by record sharing.
+
 **Scenario: Viewer can read a Capability record**
 > Deferred: read access is permission-set-enforced; verified via UI, not Apex
 
