@@ -38,14 +38,13 @@ test.describe('Capability form — editor project', () => {
         await expect(editPencil).toBeVisible();
         await editPencil.click();
 
-        // Scope the RTF assertion to the Definition field item so other RTF fields on the
-        // record page (Strategy Support, Architectural Nuance) cannot satisfy it.
-        const definitionItem = page
-            .locator('records-record-layout-item:has(label:has-text("Definition"))')
-            .first();
-        const rte = definitionItem.locator('lightning-input-rich-text');
-        await expect(rte).toBeVisible({ timeout: 10000 });
-        await expect(rte.getByRole('button', { name: 'Bold' })).toBeVisible({ timeout: 5000 });
+        // Scope the RTF assertion to the Definition field's ARIA group so other RTF fields on
+        // the record page (Strategy Support, Architectural Nuance) cannot satisfy it.
+        const definitionGroup = page.getByRole('group', { name: 'Definition' });
+        await expect(definitionGroup.getByRole('textbox', { name: 'Definition' }))
+            .toBeVisible({ timeout: 10000 });
+        await expect(definitionGroup.getByRole('button', { name: 'Bold' }))
+            .toBeVisible({ timeout: 5000 });
     });
 });
 
