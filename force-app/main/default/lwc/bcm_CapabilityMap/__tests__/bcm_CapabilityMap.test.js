@@ -1596,4 +1596,17 @@ describe('BcmCapabilityMap tag session persistence', () => {
         const tagCombobox = element.shadowRoot.querySelectorAll('lightning-combobox')[1];
         expect(tagCombobox.value).toBe('TAG-2');
     });
+
+    it('Clears persisted tag id and leaves selector at None when id is not in tagOptions', async () => {
+        sessionStorage.setItem('bcm.visualisation.selectedTagId', 'TAG-DELETED');
+        document.body.removeChild(element);
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
+        await flushPromises();
+        const tagCombobox = element.shadowRoot.querySelectorAll('lightning-combobox')[1];
+        expect(tagCombobox.value).toBeFalsy();
+        expect(sessionStorage.getItem('bcm.visualisation.selectedTagId')).toBeNull();
+    });
 });
