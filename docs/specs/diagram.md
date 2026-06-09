@@ -123,7 +123,7 @@ Given the diagram is at maximum zoom
 When the user continues scrolling upward  
 Then the zoom does not increase further  
 
-> Tested by: BcmCapabilityMapTest.ZoomInClamped300, BcmCapabilityMapTest.ZoomOutClamped20
+> Tested by: bcm_CapabilityMap.test.js — "Zoom In clamped at 300%", bcm_CapabilityMap.test.js — "Zoom Out clamped at 20%"
 
 **Scenario: Pan in any direction updates the L2 viewport transform without clip**
 
@@ -665,7 +665,7 @@ Given the diagram is at maximum zoom (300%)
 When the user clicks the "+" button  
 Then the zoom level remains at 300% and does not increase further  
 
-> Tested by: BcmCapabilityMapTest.ZoomInClamped300
+> Tested by: bcm_CapabilityMap.test.js — "Zoom In clamped at 300%"
 
 **Scenario: Zoom Out button does not go below minimum zoom**
 
@@ -673,7 +673,7 @@ Given the diagram is at minimum zoom (20%)
 When the user clicks the "-" button  
 Then the zoom level remains at 20% and does not decrease further  
 
-> Tested by: BcmCapabilityMapTest.ZoomOutClamped20
+> Tested by: bcm_CapabilityMap.test.js — "Zoom Out clamped at 20%"
 
 ---
 
@@ -708,7 +708,7 @@ When the user clicks the reset view button
 Then zoom returns to 100%  
 And pan offsets return to (0, 0)  
 
-> Tested by: BcmCapabilityMapTest.ResetViewRestoresDefaults
+> Tested by: bcm_CapabilityMap.test.js — "Reset View returns zoom to 1.0 and pan to (0,0)"
 
 ---
 
@@ -720,7 +720,7 @@ Given the user has zoomed the diagram
 When the user selects a different map from the dropdown  
 Then zoom resets to 100% and pan resets to (0, 0) before rendering the new map  
 
-> Tested by: BcmCapabilityMapTest.MapSwitchResetsZoomAndPan
+> Tested by: bcm_CapabilityMap.test.js — "Switching selected map resets zoom and pan to defaults"
 
 ---
 
