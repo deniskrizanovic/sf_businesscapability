@@ -32,17 +32,20 @@ test.describe('Capability form — editor project', () => {
         await page.goto(`/lightning/r/bcm_Capability__c/${id}/view`);
         await expect(page.getByRole('heading', { name: RTF_CAP_NAME })).toBeVisible();
 
-        // Inline-edit pencil is rendered as a button labelled "Edit Definition" alongside the field.
+        // Inline-edit pencil is rendered as a button labelled "Edit Definition" alongside the
+        // field — relies on the English field label "Definition" matching the org's user language.
         const editPencil = page.getByRole('button', { name: 'Edit Definition' });
         await expect(editPencil).toBeVisible();
         await editPencil.click();
 
-        // Rich-text editor mounts as a lightning-input-rich-text — assert its toolbar appears,
-        // proving the Definition field opened in an editable RTF surface (not a plain textarea).
-        await expect(page.locator('lightning-input-rich-text').first()).toBeVisible({ timeout: 10000 });
-        await expect(
-            page.getByRole('button', { name: /^(Bold|Italic)$/ }).first()
-        ).toBeVisible({ timeout: 5000 });
+        // Scope the RTF assertion to the Definition field item so other RTF fields on the
+        // record page (Strategy Support, Architectural Nuance) cannot satisfy it.
+        const definitionItem = page
+            .locator('records-record-layout-item:has(label:has-text("Definition"))')
+            .first();
+        const rte = definitionItem.locator('lightning-input-rich-text');
+        await expect(rte).toBeVisible({ timeout: 10000 });
+        await expect(rte.getByRole('button', { name: 'Bold' })).toBeVisible({ timeout: 5000 });
     });
 });
 

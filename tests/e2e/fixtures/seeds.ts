@@ -74,6 +74,13 @@ export function runAllSeeds(seeds: SeedSpec[]): void {
                 stdio: ['inherit', 'pipe', 'inherit'],
             },
         );
+    } catch (err) {
+        // sf prints the actual Apex compile / runtime error on stdout, not stderr.
+        // execFileSync attaches captured streams to the thrown error — re-emit so the
+        // failure message reaches the developer instead of being swallowed.
+        const e = err as { stdout?: Buffer | string };
+        if (e.stdout) process.stdout.write(e.stdout.toString());
+        throw err;
     } finally {
         fs.unlinkSync(apexFile);
     }
