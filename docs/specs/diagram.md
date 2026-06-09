@@ -427,10 +427,16 @@ Then that capability and its subtree are absent from the diagram
 Given at least one hidden capability  
 When the user clicks the Show Hidden button  
 Then hidden capabilities appear with a dashed border  
-And the button shows a highlighted (brand) variant  
 
 > Tested by: diagram.spec.ts — "Show Hidden toggle button responds to clicks without error"
-> Deferred: button variant change on Show Hidden click is a JS-internal style invariant; toggle behaviour is e2e-covered above
+
+**Scenario: Show Hidden button variant changes when toggled on**
+
+Given the Show Hidden toggle is off  
+When the user clicks the Show Hidden button  
+Then the button shows a highlighted (brand) variant  
+
+> Deferred: JS-internal style invariant; toggle behaviour is e2e-covered above
 
 **Scenario: Parent hidden cascades to children**
 
