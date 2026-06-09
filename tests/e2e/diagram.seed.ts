@@ -94,20 +94,22 @@ if (!EDITOR_USERNAME) throw new Error('SF_EDITOR_USERNAME not set — required f
 const apexEscape = (s: string): string => s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
 const POST_SEED_APEX = `
-List<bcm_Capability__c> cc = [SELECT Id FROM bcm_Capability__c
-    WHERE Name IN ('Cross-cutting Foo ${RUN_ID}', 'Cross-cutting Bar ${RUN_ID}')];
-for (bcm_Capability__c c : cc) c.bcm_IsCrossCutting__c = true;
-update cc;
+{
+    List<bcm_Capability__c> cc = [SELECT Id FROM bcm_Capability__c
+        WHERE Name IN ('Cross-cutting Foo ${RUN_ID}', 'Cross-cutting Bar ${RUN_ID}')];
+    for (bcm_Capability__c c : cc) c.bcm_IsCrossCutting__c = true;
+    update cc;
 
-Id editorUserId = [SELECT Id FROM User WHERE Username = '${apexEscape(EDITOR_USERNAME)}' LIMIT 1].Id;
-bcm_Tag__c t = new bcm_Tag__c(Name = '${apexEscape(DIAGRAM_TAG_NAME)}', bcm_Colour__c = '${DIAGRAM_TAG_COLOUR}');
-insert t;
-t.OwnerId = editorUserId;
-update t;
+    Id editorUserId = [SELECT Id FROM User WHERE Username = '${apexEscape(EDITOR_USERNAME)}' LIMIT 1].Id;
+    bcm_Tag__c t = new bcm_Tag__c(Name = '${apexEscape(DIAGRAM_TAG_NAME)}', bcm_Colour__c = '${DIAGRAM_TAG_COLOUR}');
+    insert t;
+    t.OwnerId = editorUserId;
+    update t;
 
-bcm_Capability__c tagged = [SELECT Id FROM bcm_Capability__c
-    WHERE Name = '${apexEscape(DIAGRAM_TAG_CAP_NAME)}' LIMIT 1];
-insert new bcm_CapabilityTag__c(bcm_Capability__c = tagged.Id, bcm_Tag__c = t.Id);
+    bcm_Capability__c tagged = [SELECT Id FROM bcm_Capability__c
+        WHERE Name = '${apexEscape(DIAGRAM_TAG_CAP_NAME)}' LIMIT 1];
+    insert new bcm_CapabilityTag__c(bcm_Capability__c = tagged.Id, bcm_Tag__c = t.Id);
+}
 `.trim();
 
 export const diagramSeed: SeedSpec = {
