@@ -166,7 +166,7 @@ test.describe('Zoom & pan — editor project', () => {
         return page.locator('svg.bcm-canvas > g').nth(0).getAttribute('transform').catch(() => null);
     }
 
-    test('ArrowRight pan -> L2 transform translateX increases (no clip on right)', async ({ page }) => {
+    test( 'ArrowRight pan -> L2 transform translateX increases (no clip on right)', async ({ page }) => {
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
         const svg = page.locator('svg.bcm-canvas');
