@@ -17,29 +17,28 @@ test.describe('Visual language reference capture — editor project', () => {
     });
 
     test('l1 focused', async ({ page }) => {
-        await page.locator('.bcm-l1 polygon').first().click();
+        await page.locator('g.bcm-l1').first().click();
         await page.waitForTimeout(200);
         await page.locator('.bcm-canvas').screenshot({ path: 'tests/e2e/__visual__/l1-focused.png' });
     });
 
     test('l2 focused', async ({ page }) => {
-        await page.locator('.bcm-l2 rect').first().click();
+        await page.locator('g.bcm-l2').first().click();
         await page.waitForTimeout(200);
         await page.locator('.bcm-canvas').screenshot({ path: 'tests/e2e/__visual__/l2-focused.png' });
     });
 
     test('l3 focused', async ({ page }) => {
-        await page.locator('.bcm-l3-label').first().click();
+        await page.locator('g.bcm-l3-group text').first().click();
         await page.waitForTimeout(200);
         await page.locator('.bcm-canvas').screenshot({ path: 'tests/e2e/__visual__/l3-focused.png' });
     });
 
     test('tag highlighted', async ({ page }) => {
-        // Select first tag in combobox
-        const tagCombobox = page.locator('[data-id="tag-filter-combobox"]');
-        await tagCombobox.click();
-        await page.waitForTimeout(200);
-        const firstOption = page.locator('lightning-base-combobox-item').first();
+        const tagCombo = page.getByRole('combobox', { name: 'Colour by Tag' }).first();
+        await tagCombo.click();
+        await page.waitForTimeout(300);
+        const firstOption = page.getByRole('option').filter({ hasNotText: 'None' }).first();
         await firstOption.click();
         await page.waitForTimeout(300);
         await page.locator('.bcm-canvas').screenshot({ path: 'tests/e2e/__visual__/tag-highlighted.png' });
@@ -60,9 +59,8 @@ test.describe('Visual language reference capture — editor project', () => {
     });
 
     test('detail panel open', async ({ page }) => {
-        // Click L3 to open detail panel
-        await page.locator('.bcm-l3-label').first().click();
-        await page.waitForTimeout(300);
+        await page.locator('g.bcm-l2').first().click();
+        await page.waitForTimeout(500);
         const detailPanel = page.locator('.bcm-detail-panel');
         await expect(detailPanel).toBeVisible();
         await page.screenshot({ path: 'tests/e2e/__visual__/detail-panel-open.png' });
