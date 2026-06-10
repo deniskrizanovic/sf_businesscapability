@@ -4,7 +4,7 @@ import { MAP_NAME } from '../diagram.seed';
 
 const CAPTURE_ENABLED = process.env.BCM_CAPTURE === '1';
 
-test.describe('Visual language reference capture', () => {
+test.describe('Visual language reference capture — editor project', () => {
     test.skip(!CAPTURE_ENABLED, 'Set BCM_CAPTURE=1 to capture reference PNGs');
 
     test.beforeEach(async ({ page }) => {

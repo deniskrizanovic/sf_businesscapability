@@ -156,22 +156,22 @@ BCM_STRATEGY_MARK = {
 
 ## Tag Presets
 
-10 curated hex/label pairs for harmonious tag colouring. Surfaced via `bcm_ColourSwatch` component.
+10 hex/label pairs surfaced via `bcm_ColourSwatch`. Hexes match the `bcm_Tag__c.bcm_Colour__c` picklist exactly so the swatch lookup, the picklist values, and any future picker share one source of truth.
 
 | Hex | Label | RGB |
 |---|---|---|
-| `#e8e8e8` | Soft Slate | 232, 232, 232 |
-| `#f5f1e8` | Muted Sand | 245, 241, 232 |
-| `#e8f0e8` | Pale Sage | 232, 240, 232 |
-| `#f0e8e8` | Desaturated Rose | 240, 232, 232 |
-| `#e8eff5` | Faint Sky | 232, 239, 245 |
-| `#d0d0d0` | Mid Grey | 208, 208, 208 |
-| `#b8b8b8` | Darker Slate | 184, 184, 184 |
-| `#ede8e0` | Warm Beige | 237, 232, 224 |
-| `#e8dcd0` | Muted Terracotta | 232, 220, 208 |
-| `#ece8f0` | Pale Lilac | 236, 232, 240 |
+| `#A8C7FF` | Blue | 168, 199, 255 |
+| `#B8E0C8` | Green | 184, 224, 200 |
+| `#F8B4B4` | Red | 248, 180, 180 |
+| `#D8C4EC` | Purple | 216, 196, 236 |
+| `#FFD4A8` | Orange | 255, 212, 168 |
+| `#B8DCDC` | Teal | 184, 220, 220 |
+| `#FFC8DC` | Pink | 255, 200, 220 |
+| `#FFE4A8` | Amber | 255, 228, 168 |
+| `#C4C8F0` | Indigo | 196, 200, 240 |
+| `#B8E0C0` | Emerald | 184, 224, 192 |
 
-**Out-of-palette behaviour:** Tags with `bcm_Colour__c` values not in the preset list render a raw-hex display label in the colour swatch. No migration of existing `bcm_Tag__c` records — legacy hex values remain valid, just not curated.
+**Out-of-palette behaviour:** Tags with `bcm_Colour__c` values not in the preset list render a raw-hex display label in the colour swatch. No migration of existing `bcm_Tag__c` records.
 
 ## Out of Scope
 

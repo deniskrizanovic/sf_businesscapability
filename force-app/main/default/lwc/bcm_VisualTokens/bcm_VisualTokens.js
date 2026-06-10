@@ -42,18 +42,20 @@ export const BCM_STRATEGY_MARK = Object.freeze({
     l1Variant: 'chevron-edge'
 });
 
-// Tag presets (curated dictionary surfaced via bcm_ColourSwatch)
+// Tag presets surfaced via bcm_ColourSwatch. Hexes match bcm_Tag__c.bcm_Colour__c
+// picklist values; this module is the canonical lookup so the swatch and any
+// future picker share one source.
 export const BCM_TAG_PRESETS = Object.freeze([
-    { hex: '#e8e8e8', label: 'Soft Slate' },
-    { hex: '#f5f1e8', label: 'Muted Sand' },
-    { hex: '#e8f0e8', label: 'Pale Sage' },
-    { hex: '#f0e8e8', label: 'Desaturated Rose' },
-    { hex: '#e8eff5', label: 'Faint Sky' },
-    { hex: '#d0d0d0', label: 'Mid Grey' },
-    { hex: '#b8b8b8', label: 'Darker Slate' },
-    { hex: '#ede8e0', label: 'Warm Beige' },
-    { hex: '#e8dcd0', label: 'Muted Terracotta' },
-    { hex: '#ece8f0', label: 'Pale Lilac' }
+    { hex: '#A8C7FF', label: 'Blue' },
+    { hex: '#B8E0C8', label: 'Green' },
+    { hex: '#F8B4B4', label: 'Red' },
+    { hex: '#D8C4EC', label: 'Purple' },
+    { hex: '#FFD4A8', label: 'Orange' },
+    { hex: '#B8DCDC', label: 'Teal' },
+    { hex: '#FFC8DC', label: 'Pink' },
+    { hex: '#FFE4A8', label: 'Amber' },
+    { hex: '#C4C8F0', label: 'Indigo' },
+    { hex: '#B8E0C0', label: 'Emerald' }
 ]);
 
 // Type scale

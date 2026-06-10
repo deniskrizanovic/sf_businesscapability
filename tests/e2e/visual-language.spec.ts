@@ -11,7 +11,7 @@ const EXPECTED_FOCUS_RING     = '#0070D2';
 const EXPECTED_BAND_RAMP      = ['#f7f7f7', '#ececec', '#e0e0e0', '#d4d4d4'];
 const EXPECTED_STRATEGY_FILL_RGB = 'rgb(194, 155, 61)'; // #c29b3d
 
-test.describe('Visual language regression', () => {
+test.describe('Visual language regression — editor project', () => {
     test.beforeEach(async ({ page }) => {
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
