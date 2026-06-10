@@ -17,7 +17,9 @@ import {
     BCM_FOCUS_RING,
     BCM_BAND_RAMP,
     BCM_STRATEGY_MARK,
-    BCM_BAND_LABEL_LIGHT, BCM_BAND_LABEL_DARK
+    BCM_BAND_LABEL_LIGHT, BCM_BAND_LABEL_DARK,
+    BCM_BAND_STROKE,
+    BCM_PANEL_SECONDARY_TEXT
 } from 'c/bcm_VisualTokens';
 
 // ── Layout constants ──────────────────────────────────────────────────────────
@@ -266,6 +268,17 @@ export default class BcmCapabilityMap extends LightningElement {
         return this.showStrategicSupport ? 'brand' : 'border';
     }
 
+    // ── Visual-token getters (template bindings) ──────────────────────────────
+    get focusRingColour()   { return BCM_FOCUS_RING; }
+    get l1LabelColour()     { return BCM_L1_LABEL; }
+    get l2LabelColour()     { return BCM_L2_LABEL; }
+    get bandLabelLight()    { return BCM_BAND_LABEL_LIGHT; }
+    get bandStroke()        { return BCM_BAND_STROKE; }
+    get l1GhostFill()       { return BCM_L1_FILL; }
+    get l1GhostStroke()     { return BCM_L1_STROKE; }
+    get l2GhostFill()       { return BCM_L2_SURFACE; }
+    get dragHandleColour()  { return BCM_PANEL_SECONDARY_TEXT; }
+
     // ── Computed SVG dimensions & transform ───────────────────────────────────
     get canvasWidth() {
         const roots = this._l1Roots || [];
@@ -309,6 +322,40 @@ export default class BcmCapabilityMap extends LightningElement {
     get l1Nodes() { return this._layoutL1 || []; }
     get l2Nodes() { return this._layoutL2 || []; }
     get bandNodes() { return this._layoutBand || []; }
+
+    _buildL1StrategyMark(pointsStr, x, y, w, h) {
+        // Chevron points: 0=top-left, 1=top-right before notch, 2=right tip,
+        //                 3=bottom-right after notch, 4=bottom-left
+        // Strategy mark follows right-arrow shape: outer edge (1→2→3), inner offset leftward.
+        const pts = pointsStr.split(' ').map(p => {
+            const [px, py] = p.split(',').map(Number);
+            return { x: px, y: py };
+        });
+        if (pts.length < 5) {
+            // Fallback: vertical rect on right edge
+            return {
+                kind    : 'rect',
+                isL1Edge: false,
+                isRect  : true,
+                x       : pts[1]?.x || (x + w),
+                y       : pts[0]?.y || y,
+                width   : BCM_STRATEGY_MARK.weight,
+                height  : h,
+            };
+        }
+        const w2 = BCM_STRATEGY_MARK.weight;
+        const outerTopRight    = pts[1];
+        const tip              = pts[2];
+        const outerBottomRight = pts[3];
+        const innerTopRight    = { x: outerTopRight.x - w2, y: outerTopRight.y };
+        const innerTip         = { x: tip.x - w2,           y: tip.y };
+        const innerBottomRight = { x: outerBottomRight.x - w2, y: outerBottomRight.y };
+        const polygonPoints = [
+            outerTopRight, tip, outerBottomRight,
+            innerBottomRight, innerTip, innerTopRight
+        ].map(p => `${p.x},${p.y}`).join(' ');
+        return { kind: 'l1-edge', isL1Edge: true, isRect: false, polygonPoints };
+    }
 
     _buildLayout(capabilities) {
         if (!capabilities?.length) {
@@ -407,12 +454,7 @@ export default class BcmCapabilityMap extends LightningElement {
             l2ByCol[colIdx] = [];
 
             const l1Strategy = (this.showStrategicSupport && isStrategic(l1.bcm_StrategySupport__c))
-                ? {
-                    x      : x + STRATEGY_STRIPE_INSET_X,
-                    y      : y + STRATEGY_STRIPE_INSET_Y,
-                    width  : STRATEGY_STRIPE_W,
-                    height : h - STRATEGY_STRIPE_INSET_Y * 2,
-                }
+                ? this._buildL1StrategyMark(points, x, y, w, h)
                 : null;
 
             l1Nodes.push({
@@ -427,7 +469,7 @@ export default class BcmCapabilityMap extends LightningElement {
                 points,
                 handleX     : x + 8,
                 handleY     : y + h / 2 + 4,
-                strategyStripe: l1Strategy,
+                strategyMark: l1Strategy,
                 labelLines: textLines.map((text, i) => ({
                     key : l1.Id + '-label-' + i,
                     text,
@@ -491,8 +533,10 @@ export default class BcmCapabilityMap extends LightningElement {
                         l3Name    : l3.Name,
                         isFocused : l3Focused,
                         lines,
-                        strategyStripe: (this.showStrategicSupport && isStrategic(l3.bcm_StrategySupport__c))
+                        strategyMark: (this.showStrategicSupport && isStrategic(l3.bcm_StrategySupport__c))
                             ? {
+                                isL1Edge: false,
+                                isRect  : true,
                                 x      : bulletBaseX - 8,
                                 y      : focusRectStartY,
                                 width  : STRATEGY_STRIPE_W,
@@ -528,6 +572,8 @@ export default class BcmCapabilityMap extends LightningElement {
 
                 const l2Strategy = (this.showStrategicSupport && isStrategic(l2.bcm_StrategySupport__c))
                     ? {
+                        isL1Edge: false,
+                        isRect  : true,
                         x      : colX + STRATEGY_STRIPE_INSET_X,
                         y      : boxY + STRATEGY_STRIPE_INSET_Y,
                         width  : STRATEGY_STRIPE_W,
@@ -551,7 +597,7 @@ export default class BcmCapabilityMap extends LightningElement {
                     strokeDash  : l2Dashed ? '4 2' : '',
                     handleX     : colX + 4,
                     handleY     : boxY + 12,
-                    strategyStripe: l2Strategy,
+                    strategyMark: l2Strategy,
                     labelLines : l2Lines.map((text, i) => ({
                         key  : l2.Id + '-label-' + i,
                         text,
@@ -627,8 +673,10 @@ export default class BcmCapabilityMap extends LightningElement {
                     points,
                     labelX: bandX + BAND_LABEL_PAD_X,
                     labelY: y + h - BAND_LABEL_PAD_BOTTOM,
-                    strategyStripe: (this.showStrategicSupport && isStrategic(cc.bcm_StrategySupport__c))
+                    strategyMark: (this.showStrategicSupport && isStrategic(cc.bcm_StrategySupport__c))
                         ? {
+                            isL1Edge: false,
+                            isRect  : true,
                             x      : bandX + STRATEGY_STRIPE_INSET_X,
                             y      : y + STRATEGY_STRIPE_INSET_Y,
                             width  : STRATEGY_STRIPE_W,

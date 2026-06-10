@@ -124,13 +124,15 @@
                             stroke-width={node.strokeWidth}
                             stroke-dasharray={node.strokeDash}>
                         </rect>
-                        <template if:true={node.strategyStripe}>
-                            <rect class="bcm-strategy-stripe"
-                                  x={node.strategyStripe.x}
-                                  y={node.strategyStripe.y}
-                                  width={node.strategyStripe.width}
-                                  height={node.strategyStripe.height}>
-                            </rect>
+                        <template if:true={node.strategyMark}>
+                            <template if:true={node.strategyMark.isRect}>
+                                <rect class="bcm-strategy-stripe"
+                                      x={node.strategyMark.x}
+                                      y={node.strategyMark.y}
+                                      width={node.strategyMark.width}
+                                      height={node.strategyMark.height}>
+                                </rect>
+                            </template>
                         </template>
                         <template if:true={canEdit}>
                             <text
@@ -141,7 +143,7 @@
                                 x={node.handleX}
                                 y={node.handleY}
                                 font-size="14"
-                                fill="#666666"
+                                fill={dragHandleColour}
                                 onmousedown={handleHandleMouseDown}>
                                 ⠿
                             </text>
@@ -152,7 +154,7 @@
                                 x={line.x}
                                 y={line.y}
                                 dominant-baseline="middle"
-                                fill="#222222"
+                                fill={l2LabelColour}
                                 font-size="12"
                                 font-weight="bold">
                                 {line.text}
@@ -168,8 +170,8 @@
                                         width={group.focusRect.width}
                                         height={group.focusRect.height}
                                         rx="3"
-                                        fill="#E8F4FF"
-                                        stroke="#0070D2"
+                                        fill="transparent"
+                                        stroke={focusRingColour}
                                         stroke-width="1"
                                         class="bcm-l3-focus-rect">
                                     </rect>
@@ -185,13 +187,15 @@
                                         class="bcm-l3-tag-rect">
                                     </rect>
                                 </template>
-                                <template if:true={group.strategyStripe}>
-                                    <rect class="bcm-strategy-stripe"
-                                          x={group.strategyStripe.x}
-                                          y={group.strategyStripe.y}
-                                          width={group.strategyStripe.width}
-                                          height={group.strategyStripe.height}>
-                                    </rect>
+                                <template if:true={group.strategyMark}>
+                                    <template if:true={group.strategyMark.isRect}>
+                                        <rect class="bcm-strategy-stripe"
+                                              x={group.strategyMark.x}
+                                              y={group.strategyMark.y}
+                                              width={group.strategyMark.width}
+                                              height={group.strategyMark.height}>
+                                        </rect>
+                                    </template>
                                 </template>
                                 <template for:each={group.lines} for:item="line" for:index="lineIdx">
                                     <text
@@ -235,13 +239,18 @@
                 <template for:each={l1Nodes} for:item="node">
                     <g key={node.id} onclick={handleNodeClick} data-node-id={node.id} data-node-name={node.name} data-node-level="1" data-focused={node.isFocused} class="bcm-node bcm-l1">
                         <polygon points={node.points} fill={node.fill} stroke={node.strokeColour} stroke-width={node.strokeWidth} stroke-dasharray={node.strokeDash}></polygon>
-                        <template if:true={node.strategyStripe}>
-                            <rect class="bcm-strategy-stripe"
-                                  x={node.strategyStripe.x}
-                                  y={node.strategyStripe.y}
-                                  width={node.strategyStripe.width}
-                                  height={node.strategyStripe.height}>
-                            </rect>
+                        <template if:true={node.strategyMark}>
+                            <template if:true={node.strategyMark.isL1Edge}>
+                                <polygon class="bcm-strategy-stripe" points={node.strategyMark.polygonPoints}></polygon>
+                            </template>
+                            <template if:true={node.strategyMark.isRect}>
+                                <rect class="bcm-strategy-stripe"
+                                      x={node.strategyMark.x}
+                                      y={node.strategyMark.y}
+                                      width={node.strategyMark.width}
+                                      height={node.strategyMark.height}>
+                                </rect>
+                            </template>
                         </template>
                         <template for:each={node.labelLines} for:item="line">
                             <text
@@ -250,7 +259,7 @@
                                 y={line.y}
                                 text-anchor="middle"
                                 dominant-baseline="middle"
-                                fill="#FFFFFF"
+                                fill={l1LabelColour}
                                 font-size="13"
                                 font-weight="bold">
                                 {line.text}
@@ -265,7 +274,7 @@
                                 x={node.handleX}
                                 y={node.handleY}
                                 font-size="14"
-                                fill="#FFFFFF"
+                                fill={l1LabelColour}
                                 onmousedown={handleHandleMouseDown}>
                                 ⠿
                             </text>
@@ -284,7 +293,7 @@
                         y1={dropIndicator.y1}
                         x2={dropIndicator.x2}
                         y2={dropIndicator.y2}
-                        stroke="#0070d2"
+                        stroke={focusRingColour}
                         stroke-width="2">
                     </line>
                 </g>
@@ -294,13 +303,13 @@
             <template if:true={ghost}>
                 <g class="bcm-ghost" data-bcm-ghost="true" transform={ghostTransform}>
                     <template if:true={ghost.isL1}>
-                        <polygon points={ghost.points} fill="#4A4A4A" stroke="#333333" stroke-width="1"></polygon>
+                        <polygon points={ghost.points} fill={l1GhostFill} stroke={l1GhostStroke} stroke-width="1"></polygon>
                     </template>
                     <template if:true={ghost.isL2}>
-                        <rect x="0" y="0" width={ghost.width} height={ghost.height} rx="6" fill="#FFFFFF" stroke="#0070D2" stroke-width="1"></rect>
+                        <rect x="0" y="0" width={ghost.width} height={ghost.height} rx="6" fill={l2GhostFill} stroke={focusRingColour} stroke-width="1"></rect>
                     </template>
                     <template if:true={ghost.isL3}>
-                        <rect x="0" y="0" width={ghost.width} height={ghost.height} rx="3" fill="#E8F4FF" stroke="#0070D2" stroke-width="1"></rect>
+                        <rect x="0" y="0" width={ghost.width} height={ghost.height} rx="3" fill="transparent" stroke={focusRingColour} stroke-width="1"></rect>
                     </template>
                     <text x={ghost.labelX} y={ghost.labelY} font-size="12" fill={ghost.labelFill}>{ghost.label}</text>
                 </g>
@@ -317,20 +326,22 @@
                            data-node-name={node.name}
                            data-node-level="1"
                            onclick={handleBandClick}>
-                            <polygon points={node.points} fill={node.fill} stroke="#0e2342" stroke-width="1.2"></polygon>
-                            <template if:true={node.strategyStripe}>
-                                <rect class="bcm-strategy-stripe"
-                                      x={node.strategyStripe.x}
-                                      y={node.strategyStripe.y}
-                                      width={node.strategyStripe.width}
-                                      height={node.strategyStripe.height}>
-                                </rect>
+                            <polygon points={node.points} fill={node.fill} stroke={bandStroke} stroke-width="1.2"></polygon>
+                            <template if:true={node.strategyMark}>
+                                <template if:true={node.strategyMark.isRect}>
+                                    <rect class="bcm-strategy-stripe"
+                                          x={node.strategyMark.x}
+                                          y={node.strategyMark.y}
+                                          width={node.strategyMark.width}
+                                          height={node.strategyMark.height}>
+                                    </rect>
+                                </template>
                             </template>
                             <text
                                 x={node.labelX}
                                 y={node.labelY}
                                 dominant-baseline="alphabetic"
-                                fill="#FFFFFF"
+                                fill={bandLabelLight}
                                 font-size="13"
                                 font-weight="700"
                                 letter-spacing="0.4">
