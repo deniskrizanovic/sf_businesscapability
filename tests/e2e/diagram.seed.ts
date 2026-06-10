@@ -5,6 +5,7 @@ export const MAP_NAME = `E2E Diagram Map ${RUN_ID}`;
 export const DIAGRAM_TAG_NAME = `Diagram Tag ${RUN_ID}`;
 const DIAGRAM_TAG_COLOUR     = '#B8E0C8';
 const DIAGRAM_TAG_CAP_NAME   = `Capability Alpha One One ${RUN_ID}`;
+export const STRATEGY_CAP_NAME = `Capability Alpha One One ${RUN_ID}`;
 
 const PAYLOAD = {
     mapName: MAP_NAME,
@@ -109,6 +110,11 @@ function buildPostSeedApex(): string {
     bcm_Capability__c tagged = [SELECT Id FROM bcm_Capability__c
         WHERE Name = '${apexEscape(DIAGRAM_TAG_CAP_NAME)}' LIMIT 1];
     insert new bcm_CapabilityTag__c(bcm_Capability__c = tagged.Id, bcm_Tag__c = t.Id);
+
+    bcm_Capability__c sc = [SELECT Id FROM bcm_Capability__c
+        WHERE Name = '${apexEscape(STRATEGY_CAP_NAME)}' LIMIT 1];
+    sc.bcm_StrategySupport__c = '<p>Strategy rationale ${RUN_ID}</p>';
+    update sc;
 }
 `.trim();
 }
