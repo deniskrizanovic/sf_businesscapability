@@ -18,7 +18,7 @@
       - L2/L3: system sans-serif stack (Segoe UI, Roboto, sans-serif)
 
       Focus model: single-channel stroke ring only (no fill shift)
-      Strategy glyph: small vertical stripe overlay for direction A
+      Strategy glyph: chevron-edge on L1, vertical stripe on L2/L3
     */
 
     :root {
@@ -323,14 +323,15 @@
             <text x="560" y="110" class="annotation-text" text-anchor="middle">(focused — 3px SLDS blue ring, 4.6:1 vs white)</text>
           </g>
 
-          <!-- L1 Chevron: strategic support (with vertical stripe glyph) -->
+          <!-- L1 Chevron: strategic support (with chevron-edge glyph) -->
           <g id="l1-strategic">
             <path d="M 750 50 L 1050 50 L 1070 70 L 1050 90 L 750 90 L 770 70 Z"
                   class="l1-chevron-strategic"/>
-            <!-- Vertical stripe overlay (left edge) -->
-            <rect x="750" y="50" width="6" height="40" class="strategy-stripe"/>
+            <!-- Chevron-edge strategy mark (left arrow shape) -->
+            <polygon points="750,50 770,70 750,90 756,90 774,70 756,50"
+                     class="strategy-stripe"/>
             <text x="910" y="75" class="l1-label" text-anchor="middle">Corporate Services</text>
-            <text x="910" y="110" class="annotation-text" text-anchor="middle">(strategic — gold stripe overlay)</text>
+            <text x="910" y="110" class="annotation-text" text-anchor="middle">(strategic — gold chevron-edge)</text>
           </g>
         </g>
 
@@ -372,7 +373,7 @@
             <rect x="970" y="0" width="200" height="60" rx="4"
                   class="l2-box-default"/>
             <!-- Vertical stripe overlay (left edge) -->
-            <rect x="970" y="0" width="6" height="60" rx="4 0 0 4" class="strategy-stripe"/>
+            <rect x="970" y="0" width="6" height="60" class="strategy-stripe"/>
             <text x="1070" y="35" class="l2-label" text-anchor="middle">Treasury</text>
             <text x="1070" y="80" class="annotation-text" text-anchor="middle">(strategic — gold stripe)</text>
           </g>
@@ -455,7 +456,7 @@
           <text x="0" y="45" class="legend-text">• Focus: 3px SLDS blue stroke ring (#0070D2)</text>
           <text x="0" y="65" class="legend-text">• Dashed: hidden capability, muted text</text>
           <text x="0" y="85" class="legend-text">• Tag-highlight: darker fill (#d9d9d9)</text>
-          <text x="0" y="105" class="legend-text">• Strategy: 6px gold stripe overlay (L1)</text>
+          <text x="0" y="105" class="legend-text">• Strategy: chevron-edge gold (L1)</text>
           <text x="0" y="125" class="legend-text">• Strategy: 6px/3px gold stripe (L2/L3)</text>
           <text x="0" y="155" class="legend-heading">Typography</text>
           <text x="0" y="180" class="legend-text">• L1: Georgia (serif, 16px, 600)</text>
