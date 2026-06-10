@@ -1,5 +1,6 @@
 import { LightningElement, api, track } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
+import { BCM_TAG_SWATCH_FALLBACK } from 'c/bcm_VisualTokens';
 
 export default class BcmCapabilityDetail extends NavigationMixin(LightningElement) {
     _capability = null;
@@ -106,7 +107,7 @@ export default class BcmCapabilityDetail extends NavigationMixin(LightningElemen
         return junctions.map(j => ({
             id: j.bcm_Tag__c,
             name: j.bcm_Tag__r?.Name,
-            style: `background-color:${j.bcm_Tag__r?.bcm_Colour__c || '#ccc'};`,
+            style: `background-color:${j.bcm_Tag__r?.bcm_Colour__c || BCM_TAG_SWATCH_FALLBACK};`,
         }));
     }
 

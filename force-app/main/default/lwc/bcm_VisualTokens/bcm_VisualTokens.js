@@ -22,6 +22,9 @@ export const BCM_L3_FOCUS_RECT = '#0070D2';
 // Tag fallback (out-of-preset / dashed-hidden default)
 export const BCM_TAG_FALLBACK = '#ffffff';
 
+// Tag swatch fallback (detail panel missing tag colour)
+export const BCM_TAG_SWATCH_FALLBACK = '#cccccc';
+
 // Focus
 export const BCM_FOCUS_RING = '#0070D2';
 export const BCM_FOCUS_RING_WIDTH = 3; // px

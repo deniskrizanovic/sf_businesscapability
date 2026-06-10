@@ -19,6 +19,7 @@
 
     /* Tag fallback */
     --bcm-tag-fallback: #ffffff;
+    --bcm-tag-swatch-fallback: #cccccc;
 
     /* Focus */
     --bcm-focus-ring: #0070D2;
