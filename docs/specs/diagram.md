@@ -1015,3 +1015,55 @@ When the panel is switched to capability B
 Then the "Open record page" link's `href` updates to B's record page URL  
 
 > Tested by: bcm_CapabilityDetail.test.js — "Record page link updates when capability changes"
+
+## Feature: Visual language
+
+Per ADR-0005, the diagram canvas reads from a centralised `bcm_VisualTokens` module. Direction A (editorial monochrome) defines the palette, type scale, focus model, strategy-mark glyph, and cross-cutting band ramp.
+
+**Scenario: L1 chevron renders with editorial-monochrome tokens**
+
+Given a Map is selected on the diagram  
+Then the L1 chevron polygon is filled with `BCM_L1_FILL` and stroked with `BCM_L1_STROKE`  
+
+> Tested by: visual-language.spec.ts — "L1 chevron renders with new tokens"
+
+**Scenario: L2 box renders with editorial-monochrome tokens**
+
+Given a Map is selected on the diagram  
+And no tag is selected  
+Then each L2 rect is filled with `BCM_TAG_FALLBACK` and stroked with `BCM_L2_STROKE`  
+
+> Tested by: visual-language.spec.ts — "L2 box renders with new tokens"
+
+**Scenario: Cross-cutting band first chevron uses the new ramp**
+
+Given a Map with cross-cutting capabilities is selected  
+When the cross-cutting band is toggled on  
+Then the first band chevron is filled with `BCM_BAND_RAMP[0]`  
+
+> Tested by: visual-language.spec.ts — "Cross-cutting band first chevron renders with new band ramp"
+
+**Scenario: Strategy-marked node renders the configured glyph**
+
+Given Strategic Support is toggled on  
+And a capability whose `bcm_StrategySupport__c` is non-empty is rendered  
+Then the strategy-mark element is rendered with computed fill `BCM_STRATEGY_MARK.fill`  
+
+> Tested by: visual-language.spec.ts — "Strategic Support marked node renders strategy mark glyph with token fill"
+
+**Scenario: Focused L2 retains its surface fill and renders the focus-ring stroke (single-channel focus)**
+
+Given a Map is selected on the diagram  
+When an L2 box is focused  
+Then the L2 rect's `fill` is unchanged from its default value  
+And the L2 rect's `stroke` matches `BCM_FOCUS_RING`  
+
+> Tested by: visual-language.spec.ts — "Focused L2 stroke matches focus ring token"; bcm_CapabilityMap.test.js — "Canvas mousedown clears L2 highlight"
+
+**Scenario: Out-of-preset tag colour falls back to raw-hex display label in the swatch**
+
+Given a tag whose `bcm_Colour__c` is not present in `BCM_TAG_PRESETS`  
+When its `bcm_ColourSwatch` renders on the Tag record page  
+Then the swatch label displays the raw hex value  
+
+> Deferred: presentational, no behaviour change beyond label string

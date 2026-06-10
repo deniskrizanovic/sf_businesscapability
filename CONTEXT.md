@@ -78,6 +78,9 @@ Two Permission Sets control access to the application:
 ## Diagram Page
 A standalone Lightning App Page (full-width) hosting the `bcm_CapabilityMap` LWC. A map selector combobox at the top of the page allows the user to switch between Maps without leaving the page. This is the primary interface for the application.
 
+## Visual Tokens
+A single source of truth for diagram-specific colours, type scale, focus model, and strategy-mark glyph metadata. Lives in the `bcm_VisualTokens` LWC bundle as JS exports (`BCM_*`) with a hand-synced CSS mirror (`--bcm-*`) for stylesheet consumers. SLDS owns chrome (toolbar, comboboxes, detail-panel form fields); the tokens module owns the SVG canvas and diagram-specific surfaces. See ADR-0005 and `docs/design/10-visual-language.md` for values and rationale.
+
 ## LWC Components
 - `bcm_CapabilityMap` — container component; owns map selector, data loading, SVG viewport, zoom/pan via `<g transform>`, layout calculation, and all Apex interaction per ADR 0002
 - `bcm_CapabilityNode` — child component; renders a single Capability as chevron, box, or bullet depending on Level; owns drag handle and emits `nodedrop` and `nodeclick` events
