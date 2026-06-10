@@ -1,4 +1,4 @@
-import type { FrameLocator, Page } from '@playwright/test';
+import type { FrameLocator, Locator, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 import { getRunId } from './run-id';
 
@@ -213,4 +213,46 @@ export async function clickFlowNext(
     await handle.waitForElementState('hidden', { timeout: 30000 });
     await handle.dispose();
     await body.waitFor({ state: 'visible', timeout: 30000 });
+}
+
+/**
+ * Assert that the given element's bounding rect lies within the bounding rect
+ * of every ancestor that uses `overflow: hidden | auto | scroll`. Catches the
+ * specific bug where SLDS overlays render under an `overflow: hidden`
+ * container that visually crops them even though `getBoundingClientRect()`
+ * returns the full layout rect (so `toBeVisible()` would lie).
+ *
+ * Walks up to `document.documentElement`. Reports the first violation with
+ * tag, classes, and both rects to make the failure debuggable.
+ */
+export async function expectNotClippedByAncestor(locator: Locator): Promise<void> {
+    const violation = await locator.evaluate((el: Element) => {
+        const elRect = el.getBoundingClientRect();
+        let parent: Element | null = el.parentElement;
+        while (parent && parent !== document.documentElement) {
+            const cs = getComputedStyle(parent);
+            const ovX = cs.overflowX;
+            const ovY = cs.overflowY;
+            const clips = (v: string) => v === 'hidden' || v === 'auto' || v === 'scroll';
+            if (clips(ovX) || clips(ovY)) {
+                const aRect = parent.getBoundingClientRect();
+                const overflowsBottom = elRect.bottom > aRect.bottom + 0.5;
+                const overflowsTop    = elRect.top    < aRect.top    - 0.5;
+                const overflowsRight  = elRect.right  > aRect.right  + 0.5;
+                const overflowsLeft   = elRect.left   < aRect.left   - 0.5;
+                if (overflowsBottom || overflowsTop || overflowsRight || overflowsLeft) {
+                    return {
+                        tag: parent.tagName.toLowerCase(),
+                        className: (parent as HTMLElement).className || '',
+                        elRect: { top: elRect.top, bottom: elRect.bottom, left: elRect.left, right: elRect.right },
+                        ancestorRect: { top: aRect.top, bottom: aRect.bottom, left: aRect.left, right: aRect.right },
+                        overflow: { x: ovX, y: ovY },
+                    };
+                }
+            }
+            parent = parent.parentElement;
+        }
+        return null;
+    });
+    expect(violation, `Element clipped by ancestor: ${JSON.stringify(violation)}`).toBeNull();
 }

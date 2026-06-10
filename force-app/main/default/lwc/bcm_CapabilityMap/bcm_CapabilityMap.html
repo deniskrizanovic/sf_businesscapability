@@ -343,15 +343,18 @@
         </svg>
     </div>
 
-    <!-- Detail panel overlay — anchored to .bcm-root so it never clips on small diagrams -->
-    <c-bcm_-capability-detail
-        capability={detailCapability}
-        breadcrumb={detailBreadcrumb}
-        is-loading={detailIsLoading}
-        error-message={detailErrorMessage}
-        can-edit={canEdit}
-        onclose={handleDetailClose}
-        onsaved={handleDetailSaved}>
-    </c-bcm_-capability-detail>
+    <!-- Panel-only clip wrapper — keeps the off-screen (translateX(100%)) detail panel
+         from bleeding outside the LWC, without clipping toolbar overlays. -->
+    <div class="bcm-panel-clip">
+        <c-bcm_-capability-detail
+            capability={detailCapability}
+            breadcrumb={detailBreadcrumb}
+            is-loading={detailIsLoading}
+            error-message={detailErrorMessage}
+            can-edit={canEdit}
+            onclose={handleDetailClose}
+            onsaved={handleDetailSaved}>
+        </c-bcm_-capability-detail>
+    </div>
     </div>
 </template>

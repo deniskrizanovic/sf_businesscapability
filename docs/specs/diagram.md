@@ -45,6 +45,26 @@ And no error is surfaced to the user
 
 > Tested by: bcm_CapabilityMap.test.js — "Silent fallback when sessionStorage.setItem throws (no crash, no abort)"
 
+## Feature: Toolbar comboboxes render unclipped
+
+**Scenario: Map combobox option panel is fully visible with no map selected**
+
+Given the user opens the Visualisation page
+And no Map is selected
+When the user opens the `Map` combobox
+Then the option list renders fully — no ancestor element with `overflow: hidden`, `auto`, or `scroll` clips the panel below its bottom edge
+
+> Tested by: diagram.spec.ts — "Map combobox option panel is not clipped when no map selected"
+
+**Scenario: Colour-by-Tag combobox option panel is fully visible with no map selected**
+
+Given the user opens the Visualisation page
+And no Map is selected
+When the user opens the `Colour by Tag` combobox
+Then the option list renders fully — no ancestor element with `overflow: hidden`, `auto`, or `scroll` clips the panel below its bottom edge
+
+> Tested by: diagram.spec.ts — "Colour by Tag combobox option panel is not clipped when no map selected"
+
 ## Feature: Colour-by-tag selection persists for session
 
 **Scenario: Colour-by-tag selection is restored after navigation/reload**
