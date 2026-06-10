@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>66.0</apiVersion>
     <isExposed>true</isExposed>
@@ -7,10 +7,12 @@
     </targets>
     <targetConfigs>
         <targetConfig targets="lightning__RecordPage">
-            <property name="colourField"
-                      type="String"
-                      default="bcm_Tag__c.bcm_Colour__c"
-                      label="Colour Hex Field (Object.Field API Name)" />
+            <property
+                name="colourField"
+                type="String"
+                default="bcm_Tag__c.bcm_Colour__c"
+                label="Colour Hex Field (Object.Field API Name)"
+            />
         </targetConfig>
     </targetConfigs>
 </LightningComponentBundle>

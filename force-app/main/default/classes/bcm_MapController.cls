@@ -3,7 +3,6 @@
  * Used by bcm_CapabilityMap LWC to populate the Map selector combobox.
  */
 public with sharing class bcm_MapController {
-
     /**
      * Returns all Maps ordered by Name.
      *

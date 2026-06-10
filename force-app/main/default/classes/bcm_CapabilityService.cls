@@ -3,7 +3,6 @@
  * Per ADR 0002: services own all DML; controllers delegate.
  */
 public with sharing class bcm_CapabilityService {
-
     /**
      * Persists an allowlisted set of editable fields on a Capability:
      * Name, Definition, Strategy Support, Architectural Nuance, Hide From Diagram.

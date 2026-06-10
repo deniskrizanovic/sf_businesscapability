@@ -15,14 +15,14 @@
     /* Surface — Level 3 bullets */
     --bcm-l3-label: #333333;
     --bcm-l3-label-dimmed: #999999;
-    --bcm-l3-focus-rect: #0070D2;
+    --bcm-l3-focus-rect: #0070d2;
 
     /* Tag fallback */
     --bcm-tag-fallback: #ffffff;
     --bcm-tag-swatch-fallback: #cccccc;
 
     /* Focus */
-    --bcm-focus-ring: #0070D2;
+    --bcm-focus-ring: #0070d2;
     --bcm-focus-ring-width: 3px;
 
     /* Cross-cutting band */
@@ -30,7 +30,6 @@
     --bcm-band-2: #ececec;
     --bcm-band-3: #e0e0e0;
     --bcm-band-4: #d4d4d4;
-    --bcm-band-divider: #c0c0c0;
     --bcm-band-stroke: #0e2342;
 
     /* Strategy mark */
@@ -89,7 +88,7 @@
     overflow-y: auto;
 }
 
-.bcm-detail-panel[data-open="true"] {
+.bcm-detail-panel[data-open='true'] {
     transform: translateX(0);
 }
 

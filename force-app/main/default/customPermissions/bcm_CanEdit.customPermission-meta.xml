@@ -1,5 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomPermission xmlns="http://soap.sforce.com/2006/04/metadata">
-    <description>Grants edit access within the Business Capability Map app (drag-drop, write operations).</description>
+    <description
+    >Grants edit access within the Business Capability Map app (drag-drop, write operations).</description>
     <label>BCM Can Edit</label>
 </CustomPermission>

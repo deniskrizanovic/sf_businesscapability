@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <Profile xmlns="http://soap.sforce.com/2006/04/metadata">
     <applicationVisibilities>
         <application>SUI_Console</application>
@@ -863,15 +863,21 @@
     </fieldPermissions>
     <flowAccesses>
         <enabled>false</enabled>
-        <flow>cfp_DataMovementsJSONImporter</flow>
+        <flow>
+cfp_DataMovementsJSONImporter;
+        </flow>
     </flowAccesses>
     <flowAccesses>
         <enabled>false</enabled>
-        <flow>cfp_addDefaultDMsToFuncProcess</flow>
+        <flow>
+cfp_addDefaultDMsToFuncProcess;
+        </flow>
     </flowAccesses>
     <flowAccesses>
         <enabled>false</enabled>
-        <flow>sfdc_default_ReportExport_Protection_Flow</flow>
+        <flow>
+sfdc_default_ReportExport_Protection_Flow;
+        </flow>
     </flowAccesses>
     <layoutAssignments>
         <layout>Asset-Asset Layout</layout>

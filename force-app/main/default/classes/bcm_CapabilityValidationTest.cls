@@ -1,6 +1,5 @@
 @IsTest(SeeAllData=false)
 private class bcm_CapabilityValidationTest {
-
     @TestSetup
     static void setupTestData() {
         TestDataFactory.createMap('Test Map', true);
@@ -226,7 +225,8 @@ private class bcm_CapabilityValidationTest {
         // Querying ObjectPermissions is the authoritative check for perm set configuration.
         Test.startTest();
         ObjectPermissions op = [
-            SELECT PermissionsCreate FROM ObjectPermissions
+            SELECT PermissionsCreate
+            FROM ObjectPermissions
             WHERE Parent.Name = 'bcm_Viewer' AND SObjectType = 'bcm_Capability__c'
             LIMIT 1
         ];
@@ -297,7 +297,11 @@ private class bcm_CapabilityValidationTest {
 
         // Then
         bcm_Capability__c saved = [SELECT bcm_Level__c FROM bcm_Capability__c WHERE Id = :cap.Id];
-        Assert.areEqual(1, (Integer) saved.bcm_Level__c, 'Level should be derived as 1 when no parent');
+        Assert.areEqual(
+            1,
+            (Integer) saved.bcm_Level__c,
+            'Level should be derived as 1 when no parent'
+        );
     }
 
     // @spec capability-object.md · "Level and Sort Order fill in automatically" · "A child Capability gets Level 2"
@@ -315,7 +319,11 @@ private class bcm_CapabilityValidationTest {
 
         // Then
         bcm_Capability__c saved = [SELECT bcm_Level__c FROM bcm_Capability__c WHERE Id = :child.Id];
-        Assert.areEqual(2, (Integer) saved.bcm_Level__c, 'Level should be derived as 2 when parent is L1');
+        Assert.areEqual(
+            2,
+            (Integer) saved.bcm_Level__c,
+            'Level should be derived as 2 when parent is L1'
+        );
     }
 
     // @spec capability-object.md · "Level and Sort Order fill in automatically" · "A grandchild Capability gets Level 3"
@@ -334,7 +342,11 @@ private class bcm_CapabilityValidationTest {
 
         // Then
         bcm_Capability__c saved = [SELECT bcm_Level__c FROM bcm_Capability__c WHERE Id = :l3.Id];
-        Assert.areEqual(3, (Integer) saved.bcm_Level__c, 'Level should be derived as 3 when parent is L2');
+        Assert.areEqual(
+            3,
+            (Integer) saved.bcm_Level__c,
+            'Level should be derived as 3 when parent is L2'
+        );
     }
 
     // ─── Trigger behaviour: SortOrder auto-assign ─────────────────────────────
@@ -352,8 +364,16 @@ private class bcm_CapabilityValidationTest {
         Test.stopTest();
 
         // Then
-        bcm_Capability__c saved = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :cap.Id];
-        Assert.areEqual(1, (Integer) saved.bcm_SortOrder__c, 'SortOrder should be auto-assigned as 1 when no siblings exist');
+        bcm_Capability__c saved = [
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :cap.Id
+        ];
+        Assert.areEqual(
+            1,
+            (Integer) saved.bcm_SortOrder__c,
+            'SortOrder should be auto-assigned as 1 when no siblings exist'
+        );
     }
 
     // @spec capability-object.md · "Level and Sort Order fill in automatically" · "Sort Order is preserved when I enter one manually with no siblings"
@@ -369,8 +389,16 @@ private class bcm_CapabilityValidationTest {
         Test.stopTest();
 
         // Then
-        bcm_Capability__c saved = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :cap.Id];
-        Assert.areEqual(5, (Integer) saved.bcm_SortOrder__c, 'SortOrder should remain 5 when explicitly provided');
+        bcm_Capability__c saved = [
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :cap.Id
+        ];
+        Assert.areEqual(
+            5,
+            (Integer) saved.bcm_SortOrder__c,
+            'SortOrder should remain 5 when explicitly provided'
+        );
     }
 
     // @spec capability-object.md · "Level and Sort Order fill in automatically" · "Multiple Capabilities inserted in the same save each land at their requested Sort Order"
@@ -408,21 +436,32 @@ private class bcm_CapabilityValidationTest {
         Test.stopTest();
 
         // Then — new records sit at their requested positions
-        Map<Id, bcm_Capability__c> saved = new Map<Id, bcm_Capability__c>([
-            SELECT Id, bcm_SortOrder__c FROM bcm_Capability__c WHERE Id IN :newRecords
-        ]);
-        Assert.areEqual(3,  (Integer) saved.get(newRecords[0].Id).bcm_SortOrder__c, 'First new record should be at position 3');
-        Assert.areEqual(7,  (Integer) saved.get(newRecords[1].Id).bcm_SortOrder__c, 'Second new record should be at position 7');
+        Map<Id, bcm_Capability__c> saved = new Map<Id, bcm_Capability__c>(
+            [SELECT Id, bcm_SortOrder__c FROM bcm_Capability__c WHERE Id IN :newRecords]
+        );
+        Assert.areEqual(
+            3,
+            (Integer) saved.get(newRecords[0].Id).bcm_SortOrder__c,
+            'First new record should be at position 3'
+        );
+        Assert.areEqual(
+            7,
+            (Integer) saved.get(newRecords[1].Id).bcm_SortOrder__c,
+            'Second new record should be at position 7'
+        );
 
         // Then — existing siblings shifted correctly
-        Map<Id, bcm_Capability__c> updatedSiblings = new Map<Id, bcm_Capability__c>([
-            SELECT Id, bcm_SortOrder__c FROM bcm_Capability__c WHERE Id IN :siblings
-        ]);
+        Map<Id, bcm_Capability__c> updatedSiblings = new Map<Id, bcm_Capability__c>(
+            [SELECT Id, bcm_SortOrder__c FROM bcm_Capability__c WHERE Id IN :siblings]
+        );
         List<Integer> expectedPositions = new List<Integer>{ 1, 2, 4, 5, 6, 8, 9, 10, 11, 12 };
         for (Integer i = 0; i < siblings.size(); i++) {
             Integer actual = (Integer) updatedSiblings.get(siblings[i].Id).bcm_SortOrder__c;
-            Assert.areEqual(expectedPositions[i], actual,
-                'Sibling originally at ' + (i + 1) + ' should now be at ' + expectedPositions[i]);
+            Assert.areEqual(
+                expectedPositions[i],
+                actual,
+                'Sibling originally at ' + (i + 1) + ' should now be at ' + expectedPositions[i]
+            );
         }
     }
 
@@ -452,8 +491,11 @@ private class bcm_CapabilityValidationTest {
         bcm_Map__c m = [SELECT Id FROM bcm_Map__c LIMIT 1];
         bcm_Capability__c l1 = TestDataFactory.createCapability(m.Id, null, 1, 1, true);
         bcm_Capability__c l2 = new bcm_Capability__c(
-            Name = 'L2 cross', bcm_Map__c = m.Id, bcm_Parent__c = l1.Id,
-            bcm_Level__c = 2, bcm_SortOrder__c = 1,
+            Name = 'L2 cross',
+            bcm_Map__c = m.Id,
+            bcm_Parent__c = l1.Id,
+            bcm_Level__c = 2,
+            bcm_SortOrder__c = 1,
             bcm_IsCrossCutting__c = true
         );
 
@@ -479,8 +521,11 @@ private class bcm_CapabilityValidationTest {
         bcm_Capability__c l1 = TestDataFactory.createCapability(m.Id, null, 1, 1, true);
         bcm_Capability__c l2 = TestDataFactory.createCapability(m.Id, l1.Id, 2, 1, true);
         bcm_Capability__c l3 = new bcm_Capability__c(
-            Name = 'L3 cross', bcm_Map__c = m.Id, bcm_Parent__c = l2.Id,
-            bcm_Level__c = 3, bcm_SortOrder__c = 1,
+            Name = 'L3 cross',
+            bcm_Map__c = m.Id,
+            bcm_Parent__c = l2.Id,
+            bcm_Level__c = 3,
+            bcm_SortOrder__c = 1,
             bcm_IsCrossCutting__c = true
         );
 
@@ -523,7 +568,8 @@ private class bcm_CapabilityValidationTest {
         // Then
         bcm_Capability__c saved = [
             SELECT bcm_Level__c, bcm_IsCrossCutting__c, bcm_Parent__c
-            FROM bcm_Capability__c WHERE Id = :cap.Id
+            FROM bcm_Capability__c
+            WHERE Id = :cap.Id
         ];
         Assert.areEqual(2, (Integer) saved.bcm_Level__c, 'Level should now be 2');
         Assert.isFalse(saved.bcm_IsCrossCutting__c, 'IsCrossCutting should be cleared');
@@ -579,7 +625,13 @@ private class bcm_CapabilityValidationTest {
         bcm_Capability__c parent = TestDataFactory.createCapability(m.Id, null, null, 1, true);
         TestDataFactory.createCapability(m.Id, parent.Id, null, 1, true);
         TestDataFactory.createCapability(m.Id, parent.Id, null, 2, true);
-        bcm_Capability__c child = TestDataFactory.createCapability(m.Id, parent.Id, null, null, false);
+        bcm_Capability__c child = TestDataFactory.createCapability(
+            m.Id,
+            parent.Id,
+            null,
+            null,
+            false
+        );
 
         // When
         Test.startTest();
@@ -587,9 +639,16 @@ private class bcm_CapabilityValidationTest {
         Test.stopTest();
 
         // Then
-        bcm_Capability__c saved = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :child.Id];
-        Assert.areEqual(3, (Integer) saved.bcm_SortOrder__c,
-            'SortOrder should auto-assign as 3 when two siblings already occupy 1 and 2');
+        bcm_Capability__c saved = [
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :child.Id
+        ];
+        Assert.areEqual(
+            3,
+            (Integer) saved.bcm_SortOrder__c,
+            'SortOrder should auto-assign as 3 when two siblings already occupy 1 and 2'
+        );
     }
 
     // @spec capability-object.md · "Level and Sort Order fill in automatically" · "Existing siblings shift down when I insert a Capability at a taken Sort Order"
@@ -609,17 +668,38 @@ private class bcm_CapabilityValidationTest {
         Test.stopTest();
 
         // Then — new child sits at 2; run [2,3] shifts up
-        bcm_Capability__c savedChild = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :child.Id];
-        Assert.areEqual(2, (Integer) savedChild.bcm_SortOrder__c,
-            'New child should land at the requested position 2');
+        bcm_Capability__c savedChild = [
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :child.Id
+        ];
+        Assert.areEqual(
+            2,
+            (Integer) savedChild.bcm_SortOrder__c,
+            'New child should land at the requested position 2'
+        );
 
-        bcm_Capability__c updatedSib2 = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :sib2.Id];
-        Assert.areEqual(3, (Integer) updatedSib2.bcm_SortOrder__c,
-            'Sibling originally at 2 should shift to 3');
+        bcm_Capability__c updatedSib2 = [
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :sib2.Id
+        ];
+        Assert.areEqual(
+            3,
+            (Integer) updatedSib2.bcm_SortOrder__c,
+            'Sibling originally at 2 should shift to 3'
+        );
 
-        bcm_Capability__c updatedSib3 = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :sib3.Id];
-        Assert.areEqual(4, (Integer) updatedSib3.bcm_SortOrder__c,
-            'Sibling originally at 3 should shift to 4');
+        bcm_Capability__c updatedSib3 = [
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :sib3.Id
+        ];
+        Assert.areEqual(
+            4,
+            (Integer) updatedSib3.bcm_SortOrder__c,
+            'Sibling originally at 3 should shift to 4'
+        );
     }
 
     // @spec capability-object.md · "Level and Sort Order fill in automatically" · "Inserting a Capability at a free Sort Order leaves siblings with higher Sort Orders unchanged"
@@ -639,11 +719,27 @@ private class bcm_CapabilityValidationTest {
         Test.stopTest();
 
         // Then — new record lands at 2; sibling at 6 is untouched
-        bcm_Capability__c saved = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :cap.Id];
-        Assert.areEqual(2, (Integer) saved.bcm_SortOrder__c, 'New record should sit at the free position 2');
+        bcm_Capability__c saved = [
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :cap.Id
+        ];
+        Assert.areEqual(
+            2,
+            (Integer) saved.bcm_SortOrder__c,
+            'New record should sit at the free position 2'
+        );
 
-        bcm_Capability__c updatedSib6 = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :sib6.Id];
-        Assert.areEqual(6, (Integer) updatedSib6.bcm_SortOrder__c, 'Sibling at 6 should not shift — there was a gap between 2 and 6');
+        bcm_Capability__c updatedSib6 = [
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :sib6.Id
+        ];
+        Assert.areEqual(
+            6,
+            (Integer) updatedSib6.bcm_SortOrder__c,
+            'Sibling at 6 should not shift — there was a gap between 2 and 6'
+        );
     }
 
     // @spec capability-object.md · "Level and Sort Order fill in automatically" · "Existing siblings shift down when I insert a Capability at a taken Sort Order"
@@ -665,19 +761,29 @@ private class bcm_CapabilityValidationTest {
         Test.stopTest();
 
         // Then — new record sits at 5; original positions 5–15 each shift up by 1
-        bcm_Capability__c saved = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :cap.Id];
-        Assert.areEqual(5, (Integer) saved.bcm_SortOrder__c,
-            'New record should sit at the explicitly requested position 5');
+        bcm_Capability__c saved = [
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :cap.Id
+        ];
+        Assert.areEqual(
+            5,
+            (Integer) saved.bcm_SortOrder__c,
+            'New record should sit at the explicitly requested position 5'
+        );
 
-        Map<Id, bcm_Capability__c> updatedSiblings = new Map<Id, bcm_Capability__c>([
-            SELECT Id, bcm_SortOrder__c FROM bcm_Capability__c WHERE Id IN :siblings
-        ]);
+        Map<Id, bcm_Capability__c> updatedSiblings = new Map<Id, bcm_Capability__c>(
+            [SELECT Id, bcm_SortOrder__c FROM bcm_Capability__c WHERE Id IN :siblings]
+        );
         for (Integer i = 0; i < siblings.size(); i++) {
             Integer originalPos = i + 1;
             Integer expectedPos = originalPos < 5 ? originalPos : originalPos + 1;
             Decimal actual = updatedSiblings.get(siblings[i].Id).bcm_SortOrder__c;
-            Assert.areEqual(expectedPos, (Integer) actual,
-                'Sibling originally at ' + originalPos + ' should now be at ' + expectedPos);
+            Assert.areEqual(
+                expectedPos,
+                (Integer) actual,
+                'Sibling originally at ' + originalPos + ' should now be at ' + expectedPos
+            );
         }
     }
 }

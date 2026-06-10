@@ -1,7 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Has_Parent_Must_Be_Level_2_Or_3</fullName>
     <active>true</active>
-    <errorConditionFormula>AND(NOT(ISBLANK(bcm_Parent__c)), NOT(OR(bcm_Level__c = 2, bcm_Level__c = 3)))</errorConditionFormula>
+    <errorConditionFormula
+    >AND(NOT(ISBLANK(bcm_Parent__c)), NOT(OR(bcm_Level__c = 2, bcm_Level__c = 3)))</errorConditionFormula>
     <errorMessage>A capability with a parent must be Level 2 or 3.</errorMessage>
 </ValidationRule>

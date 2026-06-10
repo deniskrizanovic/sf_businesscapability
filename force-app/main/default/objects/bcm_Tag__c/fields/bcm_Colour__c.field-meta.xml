@@ -1,9 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>bcm_Colour__c</fullName>
     <label>Colour</label>
-    <description>The display colour used to highlight Capabilities tagged with this Tag on the Business Capability Map diagram.</description>
-    <inlineHelpText>Hex colour applied as the highlight fill on Level 2 boxes and as a background tint behind Level 3 bullets when this tag is selected in the diagram. Use light/pastel shades — the bullet and box text colours are not auto-adjusted for contrast.</inlineHelpText>
+    <description
+    >The display colour used to highlight Capabilities tagged with this Tag on the Business Capability Map diagram.</description>
+    <inlineHelpText
+    >Hex colour applied as the highlight fill on Level 2 boxes and as a background tint behind Level 3 bullets when this tag is selected in the diagram. Use light/pastel shades — the bullet and box text colours are not auto-adjusted for contrast.</inlineHelpText>
     <type>Picklist</type>
     <required>true</required>
     <valueSet>
@@ -11,52 +13,52 @@
         <valueSetDefinition>
             <sorted>false</sorted>
             <value>
-                <fullName>#A8C7FF</fullName>
+                <fullName>#BDD0EE</fullName>
                 <default>false</default>
                 <label>Blue</label>
             </value>
             <value>
-                <fullName>#B8E0C8</fullName>
+                <fullName>#C8D9CE</fullName>
                 <default>false</default>
                 <label>Green</label>
             </value>
             <value>
-                <fullName>#F8B4B4</fullName>
+                <fullName>#E8C8C8</fullName>
                 <default>false</default>
                 <label>Red</label>
             </value>
             <value>
-                <fullName>#D8C4EC</fullName>
+                <fullName>#D5CEDF</fullName>
                 <default>false</default>
                 <label>Purple</label>
             </value>
             <value>
-                <fullName>#FFD4A8</fullName>
+                <fullName>#EDD9C2</fullName>
                 <default>false</default>
                 <label>Orange</label>
             </value>
             <value>
-                <fullName>#B8DCDC</fullName>
+                <fullName>#C6D5D5</fullName>
                 <default>false</default>
                 <label>Teal</label>
             </value>
             <value>
-                <fullName>#FFC8DC</fullName>
+                <fullName>#EDD0D9</fullName>
                 <default>false</default>
                 <label>Pink</label>
             </value>
             <value>
-                <fullName>#FFE4A8</fullName>
+                <fullName>#EDE0C2</fullName>
                 <default>false</default>
                 <label>Amber</label>
             </value>
             <value>
-                <fullName>#C4C8F0</fullName>
+                <fullName>#C9CCDF</fullName>
                 <default>false</default>
                 <label>Indigo</label>
             </value>
             <value>
-                <fullName>#B8E0C0</fullName>
+                <fullName>#C8D9CC</fullName>
                 <default>false</default>
                 <label>Emerald</label>
             </value>

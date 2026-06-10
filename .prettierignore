@@ -1,0 +1,3 @@
+# LWC HTML templates use {binding} and on*={handler} syntax that @prettier/plugin-xml
+# misparses — wraps bindings in quotes and reformats event handlers into multi-line blocks.
+**/lwc/**/*.html

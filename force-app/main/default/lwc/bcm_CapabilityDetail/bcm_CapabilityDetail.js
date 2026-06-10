@@ -6,7 +6,9 @@ export default class BcmCapabilityDetail extends NavigationMixin(LightningElemen
     _capability = null;
     _savePending = false;
     @api
-    get capability() { return this._capability; }
+    get capability() {
+        return this._capability;
+    }
     set capability(val) {
         const prev = this._capability;
         this._capability = val;
@@ -17,10 +19,10 @@ export default class BcmCapabilityDetail extends NavigationMixin(LightningElemen
         //   surfaces errorMessage; user keeps drafts to retry.
         const idChanged = val?.Id !== prev?.Id;
         if (idChanged) {
-            this.editMode    = false;
+            this.editMode = false;
             this._savePending = false;
         } else if (this._savePending && val && prev && !this.errorMessage) {
-            this.editMode    = false;
+            this.editMode = false;
             this._savePending = false;
         }
         if (idChanged) {
@@ -104,10 +106,10 @@ export default class BcmCapabilityDetail extends NavigationMixin(LightningElemen
 
     get tags() {
         const junctions = this.capability?.Tags__r || [];
-        return junctions.map(j => ({
+        return junctions.map((j) => ({
             id: j.bcm_Tag__c,
             name: j.bcm_Tag__r?.Name,
-            style: `background-color:${j.bcm_Tag__r?.bcm_Colour__c || BCM_TAG_SWATCH_FALLBACK};`,
+            style: `background-color:${j.bcm_Tag__r?.bcm_Colour__c || BCM_TAG_SWATCH_FALLBACK};`
         }));
     }
 
@@ -120,7 +122,7 @@ export default class BcmCapabilityDetail extends NavigationMixin(LightningElemen
         return arr.map((seg, idx) => ({
             ...seg,
             isLast: idx === arr.length - 1,
-            indentStyle: `padding-left:${idx * 12}px;`,
+            indentStyle: `padding-left:${idx * 12}px;`
         }));
     }
 
@@ -152,12 +154,12 @@ export default class BcmCapabilityDetail extends NavigationMixin(LightningElemen
         if (!this.canEdit || !this.capability) return;
         const panel = this.template.querySelector('.bcm-detail-panel');
         this._pendingGrowFrom = panel ? panel.getBoundingClientRect().height : null;
-        this.draftName       = this.capability.Name;
+        this.draftName = this.capability.Name;
         this.draftDefinition = this.capability.bcm_Definition__c;
-        this.draftStrategy   = this.capability.bcm_StrategySupport__c;
-        this.draftNuance     = this.capability.bcm_ArchitecturalNuance__c;
-        this.draftHide       = !!this.capability.bcm_HideFromDiagram__c;
-        this.editMode        = true;
+        this.draftStrategy = this.capability.bcm_StrategySupport__c;
+        this.draftNuance = this.capability.bcm_ArchitecturalNuance__c;
+        this.draftHide = !!this.capability.bcm_HideFromDiagram__c;
+        this.editMode = true;
     }
 
     renderedCallback() {
@@ -169,7 +171,8 @@ export default class BcmCapabilityDetail extends NavigationMixin(LightningElemen
         const toH = panel.scrollHeight;
         panel.style.maxHeight = fromH + 'px';
         panel.style.overflowY = 'hidden';
-        void panel.offsetHeight;
+        // Force reflow so transition sees the fromH value before changing to toH
+        const _reflow = panel.offsetHeight; // eslint-disable-line no-unused-vars
         panel.style.transition = 'max-height 320ms ease';
         panel.style.maxHeight = toH + 'px';
         let done = false;
@@ -185,14 +188,25 @@ export default class BcmCapabilityDetail extends NavigationMixin(LightningElemen
         };
         panel.addEventListener('transitionend', cleanup);
         // Fallback: transitionend may not fire if interrupted (panel close, rapid re-edit)
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
         this._growTimeout = setTimeout(cleanup, 400);
     }
 
-    handleNameChange(evt)        { this.draftName       = evt.target.value; }
-    handleDefinitionChange(evt)  { this.draftDefinition = evt.target.value; }
-    handleStrategyChange(evt)    { this.draftStrategy   = evt.target.value; }
-    handleNuanceChange(evt)      { this.draftNuance     = evt.target.value; }
-    handleHideChange(evt)        { this.draftHide       = evt.target.checked; }
+    handleNameChange(evt) {
+        this.draftName = evt.target.value;
+    }
+    handleDefinitionChange(evt) {
+        this.draftDefinition = evt.target.value;
+    }
+    handleStrategyChange(evt) {
+        this.draftStrategy = evt.target.value;
+    }
+    handleNuanceChange(evt) {
+        this.draftNuance = evt.target.value;
+    }
+    handleHideChange(evt) {
+        this.draftHide = evt.target.checked;
+    }
 
     handleCancel() {
         this.editMode = false;
@@ -202,16 +216,18 @@ export default class BcmCapabilityDetail extends NavigationMixin(LightningElemen
     handleSave() {
         if (!this.canEdit || !this.capability) return;
         this._savePending = true;
-        this.dispatchEvent(new CustomEvent('saved', {
-            detail: {
-                id                  : this.capability.Id,
-                name                : this.draftName,
-                definition          : this.draftDefinition,
-                strategySupport     : this.draftStrategy,
-                architecturalNuance : this.draftNuance,
-                hideFromDiagram     : this.draftHide,
-            },
-        }));
+        this.dispatchEvent(
+            new CustomEvent('saved', {
+                detail: {
+                    id: this.capability.Id,
+                    name: this.draftName,
+                    definition: this.draftDefinition,
+                    strategySupport: this.draftStrategy,
+                    architecturalNuance: this.draftNuance,
+                    hideFromDiagram: this.draftHide
+                }
+            })
+        );
         // editMode stays true until parent re-feeds the capability prop with
         // a successful save (handled in the capability setter).
     }
@@ -223,15 +239,14 @@ export default class BcmCapabilityDetail extends NavigationMixin(LightningElemen
         }
         this[NavigationMixin.GenerateUrl]({
             type: 'standard__recordPage',
-            attributes: { recordId, objectApiName: 'bcm_Capability__c', actionName: 'view' },
+            attributes: { recordId, objectApiName: 'bcm_Capability__c', actionName: 'view' }
         })
-            .then(url => {
+            .then((url) => {
                 if (this._capability?.Id === recordId) {
                     this.recordPageUrl = url;
                 }
             })
-            .catch(err => {
-                // eslint-disable-next-line no-console
+            .catch((err) => {
                 console.warn('GenerateUrl failed for record page link', err);
                 if (this._capability?.Id === recordId) {
                     this.recordPageUrl = null;

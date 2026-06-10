@@ -6,26 +6,29 @@
  */
 @IsTest
 private class bcm_CapabilityHandlerTest {
-
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     /** Insert a capability with null level AND null sort order so handler derives both. */
     private static bcm_Capability__c insertAuto(Id mapId, Id parentId) {
         bcm_Capability__c cap = new bcm_Capability__c(
-            Name          = 'Cap',
-            bcm_Map__c    = mapId,
+            Name = 'Cap',
+            bcm_Map__c = mapId,
             bcm_Parent__c = parentId
         );
         insert cap;
-        return [SELECT Id, bcm_Level__c, bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :cap.Id];
+        return [
+            SELECT Id, bcm_Level__c, bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :cap.Id
+        ];
     }
 
     /** Insert a capability with an explicit sort order so the shift path fires. */
     private static bcm_Capability__c insertExplicit(Id mapId, Id parentId, Integer sortOrder) {
         bcm_Capability__c cap = new bcm_Capability__c(
-            Name             = 'Cap',
-            bcm_Map__c       = mapId,
-            bcm_Parent__c    = parentId,
+            Name = 'Cap',
+            bcm_Map__c = mapId,
+            bcm_Parent__c = parentId,
             bcm_SortOrder__c = sortOrder
         );
         insert cap;
@@ -87,7 +90,11 @@ private class bcm_CapabilityHandlerTest {
         bcm_Capability__c fetched = [SELECT bcm_Level__c FROM bcm_Capability__c WHERE Id = :cap.Id];
         Test.stopTest();
 
-        Assert.areEqual(2, (Integer) fetched.bcm_Level__c, 'Explicit level should not be overwritten');
+        Assert.areEqual(
+            2,
+            (Integer) fetched.bcm_Level__c,
+            'Explicit level should not be overwritten'
+        );
     }
 
     // ─── SortOrder derivation — null parent (L1) ─────────────────────────────
@@ -127,7 +134,11 @@ private class bcm_CapabilityHandlerTest {
         bcm_Capability__c child = insertAuto(m.Id, parent.Id);
         Test.stopTest();
 
-        Assert.areEqual(1, (Integer) child.bcm_SortOrder__c, 'First child under parent should get SortOrder 1');
+        Assert.areEqual(
+            1,
+            (Integer) child.bcm_SortOrder__c,
+            'First child under parent should get SortOrder 1'
+        );
     }
 
     @IsTest
@@ -141,7 +152,11 @@ private class bcm_CapabilityHandlerTest {
         bcm_Capability__c child = insertAuto(m.Id, parent.Id);
         Test.stopTest();
 
-        Assert.areEqual(3, (Integer) child.bcm_SortOrder__c, 'Child SortOrder should be MAX sibling + 1');
+        Assert.areEqual(
+            3,
+            (Integer) child.bcm_SortOrder__c,
+            'Child SortOrder should be MAX sibling + 1'
+        );
     }
 
     @IsTest
@@ -157,13 +172,18 @@ private class bcm_CapabilityHandlerTest {
         Test.stopTest();
 
         List<bcm_Capability__c> saved = [
-            SELECT bcm_SortOrder__c FROM bcm_Capability__c
-            WHERE bcm_Map__c = :m.Id ORDER BY bcm_SortOrder__c ASC
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE bcm_Map__c = :m.Id
+            ORDER BY bcm_SortOrder__c ASC
         ];
         Assert.areEqual(5, saved.size(), 'All 5 caps should be inserted');
         for (Integer i = 0; i < 5; i++) {
-            Assert.areEqual(i + 1, (Integer) saved[i].bcm_SortOrder__c,
-                'SortOrder should be sequential starting at 1');
+            Assert.areEqual(
+                i + 1,
+                (Integer) saved[i].bcm_SortOrder__c,
+                'SortOrder should be sequential starting at 1'
+            );
         }
     }
 
@@ -178,8 +198,16 @@ private class bcm_CapabilityHandlerTest {
         insertExplicit(m.Id, null, 1); // clashes with existing at pos 1
         Test.stopTest();
 
-        bcm_Capability__c shifted = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :existing.Id];
-        Assert.areEqual(2, (Integer) shifted.bcm_SortOrder__c, 'Existing sibling should shift to pos 2');
+        bcm_Capability__c shifted = [
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :existing.Id
+        ];
+        Assert.areEqual(
+            2,
+            (Integer) shifted.bcm_SortOrder__c,
+            'Existing sibling should shift to pos 2'
+        );
     }
 
     @IsTest
@@ -191,8 +219,16 @@ private class bcm_CapabilityHandlerTest {
         insertExplicit(m.Id, null, 5); // position 5 is free
         Test.stopTest();
 
-        bcm_Capability__c unshifted = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :existing.Id];
-        Assert.areEqual(1, (Integer) unshifted.bcm_SortOrder__c, 'Existing sibling should not be shifted');
+        bcm_Capability__c unshifted = [
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :existing.Id
+        ];
+        Assert.areEqual(
+            1,
+            (Integer) unshifted.bcm_SortOrder__c,
+            'Existing sibling should not be shifted'
+        );
     }
 
     @IsTest
@@ -206,10 +242,13 @@ private class bcm_CapabilityHandlerTest {
         insertExplicit(m.Id, null, 1); // clashes → consecutive run 1,2,3 all shift
         Test.stopTest();
 
-        Map<Id, bcm_Capability__c> after = new Map<Id, bcm_Capability__c>([
-            SELECT Id, bcm_SortOrder__c FROM bcm_Capability__c
-            WHERE Id IN :new List<Id>{s1.Id, s2.Id, s3.Id}
-        ]);
+        Map<Id, bcm_Capability__c> after = new Map<Id, bcm_Capability__c>(
+            [
+                SELECT Id, bcm_SortOrder__c
+                FROM bcm_Capability__c
+                WHERE Id IN :new List<Id>{ s1.Id, s2.Id, s3.Id }
+            ]
+        );
         Assert.areEqual(2, (Integer) after.get(s1.Id).bcm_SortOrder__c, 's1 should shift to 2');
         Assert.areEqual(3, (Integer) after.get(s2.Id).bcm_SortOrder__c, 's2 should shift to 3');
         Assert.areEqual(4, (Integer) after.get(s3.Id).bcm_SortOrder__c, 's3 should shift to 4');
@@ -227,8 +266,16 @@ private class bcm_CapabilityHandlerTest {
         insertExplicit(m.Id, parent.Id, 1); // clashes with child at pos 1
         Test.stopTest();
 
-        bcm_Capability__c shifted = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :existing.Id];
-        Assert.areEqual(2, (Integer) shifted.bcm_SortOrder__c, 'Child sibling should shift to pos 2');
+        bcm_Capability__c shifted = [
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :existing.Id
+        ];
+        Assert.areEqual(
+            2,
+            (Integer) shifted.bcm_SortOrder__c,
+            'Child sibling should shift to pos 2'
+        );
     }
 
     // ─── Sibling shift — free-slot branch (lines 166-167) ────────────────────
@@ -243,8 +290,16 @@ private class bcm_CapabilityHandlerTest {
         insertExplicit(m.Id, null, 2); // pos 2 is free; pos 3 exists but should not shift
         Test.stopTest();
 
-        bcm_Capability__c s3After = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :s3.Id];
-        Assert.areEqual(3, (Integer) s3After.bcm_SortOrder__c, 'Sibling at pos 3 should not shift when incoming pos 2 is free');
+        bcm_Capability__c s3After = [
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :s3.Id
+        ];
+        Assert.areEqual(
+            3,
+            (Integer) s3After.bcm_SortOrder__c,
+            'Sibling at pos 3 should not shift when incoming pos 2 is free'
+        );
     }
 
     // ─── deriveSortOrder skip branch (line 277) — explicit sort order mixed with null ─
@@ -257,17 +312,29 @@ private class bcm_CapabilityHandlerTest {
         // Insert two caps in one DML: one explicit (skip branch) + one null (derive branch)
         List<bcm_Capability__c> batch = new List<bcm_Capability__c>{
             new bcm_Capability__c(Name = 'Explicit', bcm_Map__c = m.Id, bcm_SortOrder__c = 10),
-            new bcm_Capability__c(Name = 'Auto',     bcm_Map__c = m.Id)
+            new bcm_Capability__c(Name = 'Auto', bcm_Map__c = m.Id)
         };
         insert batch;
         Test.stopTest();
 
         Map<String, bcm_Capability__c> byName = new Map<String, bcm_Capability__c>();
-        for (bcm_Capability__c c : [SELECT Name, bcm_SortOrder__c FROM bcm_Capability__c WHERE bcm_Map__c = :m.Id]) {
+        for (bcm_Capability__c c : [
+            SELECT Name, bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE bcm_Map__c = :m.Id
+        ]) {
             byName.put(c.Name, c);
         }
-        Assert.areEqual(10, (Integer) byName.get('Explicit').bcm_SortOrder__c, 'Explicit SortOrder should be unchanged');
-        Assert.areEqual(1,  (Integer) byName.get('Auto').bcm_SortOrder__c,     'Auto SortOrder should be derived as 1');
+        Assert.areEqual(
+            10,
+            (Integer) byName.get('Explicit').bcm_SortOrder__c,
+            'Explicit SortOrder should be unchanged'
+        );
+        Assert.areEqual(
+            1,
+            (Integer) byName.get('Auto').bcm_SortOrder__c,
+            'Auto SortOrder should be derived as 1'
+        );
     }
 
     // ─── Update path (no shift) ───────────────────────────────────────────────
@@ -283,8 +350,16 @@ private class bcm_CapabilityHandlerTest {
         update s1;
         Test.stopTest();
 
-        bcm_Capability__c s2After = [SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :s2.Id];
-        Assert.areEqual(2, (Integer) s2After.bcm_SortOrder__c, 'Sibling SortOrder should be unchanged on update');
+        bcm_Capability__c s2After = [
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :s2.Id
+        ];
+        Assert.areEqual(
+            2,
+            (Integer) s2After.bcm_SortOrder__c,
+            'Sibling SortOrder should be unchanged on update'
+        );
     }
 
     @IsTest
@@ -300,6 +375,10 @@ private class bcm_CapabilityHandlerTest {
         Test.stopTest();
 
         bcm_Capability__c fetched = [SELECT bcm_Level__c FROM bcm_Capability__c WHERE Id = :cap.Id];
-        Assert.areEqual(1, (Integer) fetched.bcm_Level__c, 'Level should be re-derived to 1 on update when null');
+        Assert.areEqual(
+            1,
+            (Integer) fetched.bcm_Level__c,
+            'Level should be re-derived to 1 on update when null'
+        );
     }
 }

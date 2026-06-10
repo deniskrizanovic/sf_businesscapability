@@ -3,7 +3,7 @@ import { selectMap, openDiagram } from './fixtures/helpers';
 import { MAP_NAME, STRATEGY_CAP_NAME } from './diagram.seed';
 
 // Mirrored from c/bcm_VisualTokens (regression check, not imported)
-const EXPECTED_L1_FILL        = '#f7f7f7';
+const EXPECTED_L1_FILL        = '#ebebeb';
 const EXPECTED_L1_STROKE      = '#e0e0e0';
 const EXPECTED_L2_STROKE      = '#e0e0e0';
 const EXPECTED_TAG_FALLBACK   = '#ffffff';

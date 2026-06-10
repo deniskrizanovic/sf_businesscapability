@@ -3,7 +3,7 @@ import type { SeedSpec } from './fixtures/seeds';
 
 export const MAP_NAME = `E2E Diagram Map ${RUN_ID}`;
 export const DIAGRAM_TAG_NAME = `Diagram Tag ${RUN_ID}`;
-const DIAGRAM_TAG_COLOUR     = '#B8E0C8';
+const DIAGRAM_TAG_COLOUR     = '#C8D9CE';
 const DIAGRAM_TAG_CAP_NAME   = `Capability Alpha One One ${RUN_ID}`;
 export const STRATEGY_CAP_NAME = `Capability Alpha One One ${RUN_ID}`;
 
