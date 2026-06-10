@@ -43,6 +43,11 @@ jest.mock(
 
 let mockReorderImpl  = jest.fn().mockResolvedValue(undefined);
 let mockReparentImpl = jest.fn().mockResolvedValue(undefined);
+
+// Visual tokens — mirrored from c/bcm_VisualTokens (regression check, not imported)
+const TOKEN_L2_STROKE     = '#e0e0e0';
+const TOKEN_FOCUS_RING    = '#0070D2';
+const TOKEN_TAG_FALLBACK  = '#ffffff';
 jest.mock(
     '@salesforce/apex/bcm_DragDropController.reorderCapabilities',
     () => {
@@ -567,8 +572,8 @@ describe('BcmCapabilityMap L3 focus highlight rect', () => {
 
         const rect = getFocusRect(element);
         expect(rect).not.toBeNull();
-        expect(rect.getAttribute('fill')).toBe('#E8F4FF');
-        expect(rect.getAttribute('stroke')).toBe('#0070D2');
+        expect(rect.getAttribute('fill')).toBe('transparent');
+        expect(rect.getAttribute('stroke')).toBe(TOKEN_FOCUS_RING);
         // Only one rect total
         expect(getFocusRects(element).length).toBe(1);
     });
@@ -680,7 +685,7 @@ describe('BcmCapabilityMap canvas click clears focus', () => {
         expect(getNode(element, 'L2-A1').getAttribute('data-focused')).not.toBe('true');
         // Stroke reverts to default
         const rect = getNode(element, 'L2-A1').querySelector('rect');
-        expect(rect.getAttribute('stroke')).toBe('#CCCCCC');
+        expect(rect.getAttribute('stroke')).toBe(TOKEN_L2_STROKE);
         expect(rect.getAttribute('stroke-width')).toBe('1');
     });
 
@@ -1280,7 +1285,7 @@ describe('BcmCapabilityMap tag colour highlight', () => {
         getTagCombobox().dispatchEvent(new CustomEvent('change', { detail: { value: 'tag-1' } }));
         await flushPromises();
 
-        expect(getL2Rect(element, 'L2-A2').getAttribute('fill')).toBe('#FFFFFF');
+        expect(getL2Rect(element, 'L2-A2').getAttribute('fill')).toBe(TOKEN_TAG_FALLBACK);
     });
 
     it('L3 bullet group renders tag rect with selected tag colour', async () => {
@@ -1320,7 +1325,7 @@ describe('BcmCapabilityMap tag colour highlight', () => {
         getTagCombobox().dispatchEvent(new CustomEvent('change', { detail: { value: '' } }));
         await flushPromises();
 
-        expect(getL2Rect(element, 'L2-A1').getAttribute('fill')).toBe('#FFFFFF');
+        expect(getL2Rect(element, 'L2-A1').getAttribute('fill')).toBe(TOKEN_TAG_FALLBACK);
         expect(getTagRects(element).length).toBe(0);
     });
 });
@@ -1503,7 +1508,7 @@ describe('BcmCapabilityMap tag combobox refresh on focus', () => {
         });
         await flushPromises();
 
-        expect(getL2Rect(element, 'L2-A1').getAttribute('fill')).toBe('#FFFFFF');
+        expect(getL2Rect(element, 'L2-A1').getAttribute('fill')).toBe(TOKEN_TAG_FALLBACK);
     });
 
     it('Second wire emission with a new colour updates tagOptions colour entry', async () => {
