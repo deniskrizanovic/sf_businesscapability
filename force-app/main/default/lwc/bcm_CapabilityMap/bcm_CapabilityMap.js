@@ -38,6 +38,7 @@ const ZOOM_DEFAULT = 1.0;
 
 const SESSION_KEY_SELECTED_MAP = 'bcm.visualisation.selectedMapId';
 const SESSION_KEY_SELECTED_TAG = 'bcm.visualisation.selectedTagId';
+const SESSION_KEY_STRATEGIC = 'bcm.visualisation.strategicSupportOn';
 
 function safeSessionGet(key) {
     try { return sessionStorage.getItem(key); } catch (_) { return null; }
@@ -49,6 +50,13 @@ function safeSessionSet(key, value) {
 
 function safeSessionRemove(key) {
     try { sessionStorage.removeItem(key); } catch (_) { /* silent */ }
+}
+
+function isStrategic(html) {
+    return String(html || '')
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/gi, ' ')
+        .trim().length > 0;
 }
 
 // ── Text wrap helper ──────────────────────────────────────────────────────────
@@ -1344,3 +1352,5 @@ export default class BcmCapabilityMap extends LightningElement {
         this._buildLayout(this._capabilities);
     }
 }
+
+export { isStrategic };

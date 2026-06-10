@@ -8,6 +8,7 @@ const mockGetCapabilities = createTestWireAdapter();
 // require() (not import) ensures mockGetMaps/mockGetTags are constructed
 // before the component module's apex-scoped imports resolve to .default.
 const BcmCapabilityMap = require('c/bcm_CapabilityMap').default;
+const { isStrategic } = require('c/bcm_CapabilityMap');
 
 let mockGetCapabilityDetailImpl = jest.fn().mockResolvedValue(null);
 let mockUpdateCapabilityImpl = jest.fn().mockResolvedValue(undefined);
@@ -1666,5 +1667,14 @@ describe('BcmCapabilityMap tag session persistence', () => {
         } finally {
             removeItemSpy.mockRestore();
         }
+    });
+});
+
+describe('BcmCapabilityMap strategic support highlight', () => {
+    it('isStrategic normalisation — empty / whitespace / bare-tag inputs', () => {
+        [null, undefined, '', '   ', '<p></p>', '<p><br></p>', '<p>&nbsp;</p>', '<p>   </p>', '<div><br/></div>']
+            .forEach(v => expect(isStrategic(v)).toBe(false));
+        ['x', '<p>x</p>', '<p>Strategy text</p>', '<p>&nbsp;Strategy</p>']
+            .forEach(v => expect(isStrategic(v)).toBe(true));
     });
 });
