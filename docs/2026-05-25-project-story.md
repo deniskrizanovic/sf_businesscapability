@@ -1,6 +1,6 @@
 # The Story of Business Capability Map
 
-*Written 2026-05-25 — all times are Sydney time (AEST, UTC+10)*
+_Written 2026-05-25 — all times are Sydney time (AEST, UTC+10)_
 
 ---
 
@@ -26,34 +26,34 @@ The document had served its purpose: it was the seed, the real-world example tha
 
 At 8:05am AEST in the same session (these commits arrived out of order, with the Homes NSW removal following the foundation commit almost immediately), a much larger commit landed. It was the project's true beginning.
 
-In a single push, the repository went from a blank SFDC skeleton to a fully scaffolded, documented system. The commit message said it plainly: *"Add project config, docs, and tooling setup."* What it contained was more than that.
+In a single push, the repository went from a blank SFDC skeleton to a fully scaffolded, documented system. The commit message said it plainly: _"Add project config, docs, and tooling setup."_ What it contained was more than that.
 
 **The tooling arrived first.** ESLint was wired up with the SFDX-recommended ruleset, Jest was configured for LWC unit tests, and `package.json` carried the full dependency tree. The scratch org definition was written. The `.forceignore` was set to exclude IDE files, node modules, and the sensitive strategy document. These weren't afterthoughts — they were first things.
 
 **Then came the architecture.** Two Architecture Decision Records were written:
 
-*ADR-0001* addressed a fundamental problem: in a Salesforce org, if you store capability records directly without a container, every Level 1 root node is implicitly part of "the one map." Multiple business units, multiple versions, multiple clients — all contaminated together. The decision was to introduce `bcm_Map__c` as a first-class object. Every capability record would carry a required lookup to a Map. The diagram, import utility, and list views would all scope to a single selected Map. Tags, however, would be org-wide — a tag applied to one map's capabilities could conceptually apply across maps.
+_ADR-0001_ addressed a fundamental problem: in a Salesforce org, if you store capability records directly without a container, every Level 1 root node is implicitly part of "the one map." Multiple business units, multiple versions, multiple clients — all contaminated together. The decision was to introduce `bcm_Map__c` as a first-class object. Every capability record would carry a required lookup to a Map. The diagram, import utility, and list views would all scope to a single selected Map. Tags, however, would be org-wide — a tag applied to one map's capabilities could conceptually apply across maps.
 
-*ADR-0002* made the architecture call on the Apex layer. Enterprise frameworks like FFLIB (Apex Enterprise Patterns, with its Domain/UnitOfWork abstractions) were considered and rejected. The reason was proportionality: at three domain objects, the framework overhead exceeds the benefit. Instead, a clean four-layer architecture was specified — Trigger → TriggerHandler → Service → Selector — with a thin Controller for LWC-facing methods. The LWC conventions were equally deliberate: `@wire` for reads, imperative for mutations, and a strict container/presentational component split where no child calls Apex directly.
+_ADR-0002_ made the architecture call on the Apex layer. Enterprise frameworks like FFLIB (Apex Enterprise Patterns, with its Domain/UnitOfWork abstractions) were considered and rejected. The reason was proportionality: at three domain objects, the framework overhead exceeds the benefit. Instead, a clean four-layer architecture was specified — Trigger → TriggerHandler → Service → Selector — with a thin Controller for LWC-facing methods. The LWC conventions were equally deliberate: `@wire` for reads, imperative for mutations, and a strict container/presentational component split where no child calls Apex directly.
 
 **The design docs covered everything.** Six planning documents arrived in this commit:
 
 - `01-data-model.md` defined the four objects (`bcm_Map__c`, `bcm_Capability__c`, `bcm_Tag__c`, `bcm_CapabilityTag__c`), their fields, relationship types, delete constraints, and validation rules. The self-referencing parent lookup on `bcm_Capability__c` required a subtle decision: Salesforce does not allow `Restrict` or `Cascade` delete constraints on self-referencing lookups. The constraint must be `SetNull` — a deployment failure waiting to happen if hand-written and not caught. It was caught here, in the spec.
 - `02-import.md` designed the mechanism for loading data. A nested JSON tree would be pasted into a textarea component by an admin. An Apex controller would parse it, upsert the Map, upsert Tags, upsert Capabilities in two passes (first without parent links to avoid ordering issues, then a second pass to wire up the hierarchy), and finally rebuild the junction records for capability-tag associations. The two-pass upsert for capabilities was a deliberate design choice to avoid the problem of inserting a child before its parent exists.
 - `03-diagram-layout.md` worked out the SVG coordinate geometry — how to calculate column widths, row heights, chevron shapes for Level 1, rounded rectangles for Level 2, and bullet lists for Level 3.
-- `04-drag-drop.md` handled the interactive structural editing. Two operations were defined: *reorder* (drag within the same parent, updating `bcm_SortOrder__c` for all siblings) and *reparent* (drag to a different parent, updating `bcm_Parent__c`, `bcm_Level__c` for the moved node and all its descendants, and rewriting sort orders for both the old and new sibling groups).
+- `04-drag-drop.md` handled the interactive structural editing. Two operations were defined: _reorder_ (drag within the same parent, updating `bcm_SortOrder__c` for all siblings) and _reparent_ (drag to a different parent, updating `bcm_Parent__c`, `bcm_Level__c` for the moved node and all its descendants, and rewriting sort orders for both the old and new sibling groups).
 - `05-lwc-architecture.md` specified the component tree and every piece of tracked state in `bcm_CapabilityMap`. It also identified a known LWC constraint: child components cannot return SVG fragments directly into a parent SVG. The recommendation was to skip LWC child components for node rendering entirely, and instead implement node renderers as pure JavaScript classes called from the parent template. This keeps all SVG inside one component's single template and sidesteps the SVG-in-shadow-DOM problem.
 - `06-app-structure.md` defined the Lightning App (`bcm_BusinessCapabilityMap`), its tabs, and the two Permission Sets. `bcm_Viewer` gets read-only access, drag handles hidden. `bcm_Editor` gets full access, drag handles visible. The visibility of drag handles is controlled not by the permission set directly but by a Custom Permission (`bcm_CanEdit`) checked at runtime in the LWC — the idiomatic Salesforce approach for conditional UI.
 
 A `CONTEXT.md` was written as a domain glossary: Business Capability, Level, Tag, Sort Order, Diagram, Map, Import, External ID, Rendering Mode, Permission Sets, Diagram Page, and every LWC component — all defined precisely. This document became the shared vocabulary for the project.
 
-`CLAUDE.md` arrived alongside — the project rules file. Its central rule: *never hand-write Salesforce metadata XML.* A table mapped each metadata type to the skill that must be invoked first. The reasoning was pragmatic and painful: hand-written Salesforce XML fails deployment due to strict XSD element ordering, deprecated elements per API version, and org-specific values. Only one explicit exception was granted: the Custom Permission XML, which is simple enough to get right by hand.
+`CLAUDE.md` arrived alongside — the project rules file. Its central rule: _never hand-write Salesforce metadata XML._ A table mapped each metadata type to the skill that must be invoked first. The reasoning was pragmatic and painful: hand-written Salesforce XML fails deployment due to strict XSD element ordering, deprecated elements per API version, and org-specific values. Only one explicit exception was granted: the Custom Permission XML, which is simple enough to get right by hand.
 
 ---
 
 ## A False Start, Then Clarity
 
-At 1:04pm AEST, a commit arrived titled *"Remove botched build order docs."* Something had gone wrong with an earlier attempt to sequence the build steps. The details aren't in the commit message, but the removal was clean — no replacement yet, just the acknowledgement that the approach needed rethinking.
+At 1:04pm AEST, a commit arrived titled _"Remove botched build order docs."_ Something had gone wrong with an earlier attempt to sequence the build steps. The details aren't in the commit message, but the removal was clean — no replacement yet, just the acknowledgement that the approach needed rethinking.
 
 Five minutes later, the folder was renamed: `docs/plan` became `docs/design`. The design artefacts were design documents, not a plan. The naming distinction mattered.
 
@@ -79,7 +79,7 @@ This is a project that was being sized before it was being built.
 
 ## The Build Plan
 
-The final commit of the day landed at 7:20pm AEST: *"Add implementation plan, BDD specs, and update design docs."*
+The final commit of the day landed at 7:20pm AEST: _"Add implementation plan, BDD specs, and update design docs."_
 
 The implementation plan divided the work into eight deployable steps, each gated on the previous step's checkbox being ticked. The gate is enforced in the plan document itself, with an explicit instruction that work must stop and ask if a prior step isn't complete before the next one begins.
 

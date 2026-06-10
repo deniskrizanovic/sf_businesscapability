@@ -26,7 +26,6 @@ Playwright implements built-in actionability checks, verifying that a target ele
 3. **Element Destruction:** The LWC framework triggers a quick re-render, unmounting the validated element and instantly replacing it with an identical-looking node.11
 4. **Execution Failure:** Playwright attempts to execute the interaction (such as a click or keypress) on the original element node, which has now been detached from the active DOM tree.11 This results in an immediate Element is not attached to the DOM or Target closed error.11
 
-
 | Flakiness Manifestation               | Root Cause Pattern              | Causal Mechanism                                                                       | Primary Mitigation Strategy                                             |
 | :------------------------------------ | :------------------------------ | :------------------------------------------------------------------------------------- | :---------------------------------------------------------------------- |
 | **Element Is Detached** 11            | Auto-wait racing a re-render 11 | Framework state updates replace verified DOM nodes mid-action.11                       | Use stable container locators and chain state-readiness checks.11       |
@@ -55,6 +54,7 @@ To establish a highly reliable testing pipeline, engineering teams can use Sales
    Bash
    sf org open \--target-org targetSandboxOrg \--url-only \--json
 5. **Browser Navigation:** The test framework parses the CLI output, extracts the raw URL, and commands Playwright to navigate directly to it 16:
+
 ```TypeScript
    import { execSync } from 'child_process';
 
@@ -64,6 +64,7 @@ To establish a highly reliable testing pipeline, engineering teams can use Sales
    return JSON.parse(cleanJson).result.url;
    }
 ```
+
 ### **Enterprise OAuth 2.0 JWT Bearer Flow**
 
 For secure, server-to-server automated testing pipelines where storing static authentication files is prohibited, a programmatic JWT Bearer Flow is the industry standard.14 This architecture uses an asymmetric cryptographic key pair, a private key file, and a Salesforce Connected App configured with appropriate permissions 14:
@@ -71,7 +72,7 @@ For secure, server-to-server automated testing pipelines where storing static au
 1. **Create permission sets** and associate them with a dedicated integration Connected App.14
 2. **Decrypt the server key** within the CI/CD environment using a securely stored decryption key environment variable 14:
    Bash
-   openssl enc \-aes-256-cbc \-d \-in server.key.enc \-out server.key \-k $DECRYPTION\_KEY
+   openssl enc \-aes-256-cbc \-d \-in server.key.enc \-out server.key \-k $DECRYPTION_KEY
 3. **Generate a JWT token assertion** and send a POST request to the Salesforce token endpoint (/services/oauth2/token) to retrieve an ephemeral OAuth access token.14
 4. **Construct the targeted login URL** by appending the retrieved token and target destination 18: [https://companyDomain.my.salesforce.com/secur/frontdoor.jsp?sid=](https://companyDomain.my.salesforce.com/secur/frontdoor.jsp?sid)\&retURL=/lightning/page/home
 
@@ -101,8 +102,6 @@ await expect(page.getByRole('button', { name: 'View profile' })).toBeVisible();
 });
 ```
 
-
-
 ### **Authentication State Management and Playwright Session Reusability**
 
 To maximize execution efficiency, authentication should be managed as shared global configuration using Playwright's storageState API.15 Rather than performing authentication at the start of each test case, a dedicated global setup project is configured to run once, log in programmatically, and write a JSON snapshot of the authenticated cookies and local storage to a secure directory.15
@@ -121,12 +120,14 @@ dependencies: ['setup'],
 ],
 });
 ```
+
 While Playwright natively serializes cookies and local storage values, Salesforce applications may store critical session properties in other browser storage locations 15:
 
-* **IndexedDB State Capture:** Starting in Playwright 1.51, database storage environments can be preserved by setting the indexedDB flag to true within the storageState() method 15:
+- **IndexedDB State Capture:** Starting in Playwright 1.51, database storage environments can be preserved by setting the indexedDB flag to true within the storageState() method 15:
   TypeScript
   await page.context().storageState({ path: 'playwright/.auth/user.json', indexedDB: true });
-* **Session Storage Capture:** Because storageState ignores session storage, any application credentials stored in sessionStorage must be serialized and re-injected using initialization scripts 15:
+- **Session Storage Capture:** Because storageState ignores session storage, any application credentials stored in sessionStorage must be serialized and re-injected using initialization scripts 15:
+
 ```TypeScript
   // Capture session storage in global setup
   const sessionStorageData = await page.evaluate(() => JSON.stringify(sessionStorage));
@@ -140,6 +141,7 @@ While Playwright natively serializes cookies and local storage values, Salesforc
   }
   }, process.env.SERIALIZED_SESSION_STORAGE);
 ```
+
 ## **Semantic Locators and Shadow Root Resolution**
 
 To survive dynamic layout updates, test scripts must prioritize semantic accessibility markers over absolute DOM selectors.7 This strategy leverages the page's accessible design structure to locate elements reliably.8
@@ -151,6 +153,7 @@ await page.locator('div.slds-form-element\_\_control \> div \> slot \> input\#in
 // Resilient semantic selector: remains stable as long as the label exists
 await page.getByLabel('Title').fill('Sales Rep');
 ```
+
 ### **Implementing a Tiered Element Query Strategy**
 
 When authoring test scripts, locators should be prioritized in a structured hierarchy based on their resilience 8:
@@ -159,6 +162,7 @@ When authoring test scripts, locators should be prioritized in a structured hier
 2. **getByLabel:** This targets form fields by matching their associated textual label, which is highly stable across Salesforce design templates.8
 3. **getByPlaceholder:** Useful for search or input boxes lacking explicit labels but containing descriptive placeholder text.12
 4. **getByTestId:** Applied to custom, in-house Lightning Web Components where development teams can insert stable custom attributes.7 By default, Playwright targets the data-testid attribute, but it can be configured to map to Salesforce-specific attributes like data-id or data-target 12:
+
 ```TypeScript
    // Configure custom test ID selection in playwright.config.ts
    import { defineConfig } from '@playwright/test';
@@ -168,6 +172,7 @@ When authoring test scripts, locators should be prioritized in a structured hier
    },
    });
 ```
+
 ### **Managing Locator Ambiguity and Strict-Mode Violations**
 
 Because Salesforce Lightning renders complex dashboard pages with repeating tables, fields, and record highlights, loose locators often match multiple elements on a page, causing Playwright to throw a strict-mode violation error.12 To resolve this, locators should be scoped within stable parent containers 7:
@@ -177,12 +182,14 @@ Because Salesforce Lightning renders complex dashboard pages with repeating tabl
 const recordSection = page.locator('records-record-layout-section').filter({ hasText: 'System Information' });
 await recordSection.getByRole('button', { name: 'Edit Created By' }).click();
 ```
+
 When targeting identical elements where scoping is not possible, filters can isolate the interactive element based on visibility 12:
 
 ```TypeScript
 // Select only the visible button among duplicate DOM elements
 await page.getByRole('button', { name: 'Save' }).filter({ visible: true }).click();
 ```
+
 ### **Automating Dynamic Lookup Fields and Custom Comboboxes**
 
 Salesforce’s lookup and combobox components are not standard HTML \<select\> fields.24 They are complex custom components that load search results asynchronously as the user types.24 Interacting with them requires a sequential wait-and-click routine to handle dynamic elements reliably 24:
@@ -205,6 +212,7 @@ await targetOption.waitFor({ state: 'visible', timeout: 10000 });
 await targetOption.click();
 }
 ```
+
 ## **Synchronization, Smart Waits, and Visual Stabilization**
 
 Relying on hardcoded execution delays (waitForTimeout) introduces latency and fails to guarantee stability under variable network conditions.1 Instead, tests must employ state-driven synchronization to align execution steps with the application's underlying activity.1
@@ -225,6 +233,7 @@ await page.getByRole('button', { name: 'Save', exact: true }).click();
 // Wait for the network request to complete before verifying UI changes
 await saveResponsePromise;
 ```
+
 ### **Spinner and Loader Detachment Utilities**
 
 To prevent tests from attempting to interact with elements while the page is loading, scripts should wait for loading spinners and progress indicators to be fully detached from the DOM.13 This can be managed with a reusable utility function 13:
@@ -238,6 +247,7 @@ const loadingIndicators = page.locator('.slds-spinner_container,.loadingBox,.for
 await expect(loadingIndicators).toHaveCount(0, { timeout: 20000 });
 }
 ```
+
 ### **Visual and Screenshot Regression Stabilization**
 
 Visual regression testing is an effective way to catch usability regressions, but it is susceptible to minor rendering discrepancies and pixel drift from animations.1 To prevent visual test failures, transition animations should be disabled globally within the test environment 5:
@@ -255,38 +265,41 @@ args: ['--disable-blink-features=LayoutNGPrinting'],
 },
 });
 ```
+
 // Within individual visual test suites, pass animation options to the screenshot assertion
+
 ```Typescript
 await expect(page).toHaveScreenshot('opportunity-dashboard.png', {
 animations: 'disabled', // Fast-forwards active animations to a stable state
 mask: [page.locator('.slds-icon-standard-user')], // Mask dynamic user profile elements
 });
 ```
+
 ## **Hybrid Testing Architectures: Playwright and JSForce**
 
 Constructing test prerequisites and setting up data states purely through the browser UI is slow and prone to timing-related failures.1 A hybrid testing architecture addresses this by combining Playwright UI actions with direct API-driven data management using JSForce, a robust JavaScript client library for Salesforce.1
 
 ┌──────────────────────────────────────┐
-│  JSForce Direct REST API Call        │ Create Account & Opportunity records
-│  Connection.create('Opportunity')    │ in \< 1 second
+│ JSForce Direct REST API Call │ Create Account & Opportunity records
+│ Connection.create('Opportunity') │ in \< 1 second
 └──────────────────┬───────────────────┘
 │
 ▼
 ┌──────────────────────────────────────┐
-│  Playwright Direct Navigation        │ Navigate straight to target record:
-│  page.goto(/lightning/r/Account/id)  │ skips multiple login & menu UI steps
+│ Playwright Direct Navigation │ Navigate straight to target record:
+│ page.goto(/lightning/r/Account/id) │ skips multiple login & menu UI steps
 └──────────────────┬───────────────────┘
 │
 ▼
 ┌──────────────────────────────────────┐
-│  Playwright UI Assertions            │ Validate custom layout, business rules,
-│  expect(page.getByRole('heading'))   │ and access control permissions
+│ Playwright UI Assertions │ Validate custom layout, business rules,
+│ expect(page.getByRole('heading')) │ and access control permissions
 └──────────────────┬───────────────────┘
 │
 ▼
 ┌──────────────────────────────────────┐
-│  JSForce Direct REST API Call        │ Immediate teardown cleanup:
-│  Connection.destroy('Opportunity')   │ keeps testing environment clean
+│ JSForce Direct REST API Call │ Immediate teardown cleanup:
+│ Connection.destroy('Opportunity') │ keeps testing environment clean
 └──────────────────────────────────────┘
 
 ### **Programmatic Data Setup and Teardown via JSForce**
@@ -336,6 +349,7 @@ await conn.sobject('Opportunity').destroy(createdRecordId);
 }
 });
 ```
+
 ### **High-Volume Report Extraction**
 
 When tests require validating reports with more than 2,000 records, standard REST API responses are often capped.18 In these scenarios, the framework can retrieve an access token via JSForce's JWT bearer flow, send a secure request to /services/oauth2/singleaccess (or construct a programmatic frontdoor.jsp redirection URL), and use Playwright to navigate to the export page and capture the resulting CSV download stream 18:
@@ -361,9 +375,11 @@ const path = await download.path();
 expect(path).not.toBeNull();
 });
 ```
+
 ## **Architectural Analysis: Native Playwright vs. Salesforce UTAM**
 
 The UI Test Automation Model (UTAM) is an open-source page-object compiler developed by Salesforce to simplify UI automation of Lightning Web Components.2 It uses JSON schemas to describe component hierarchies and interactions, compiling them into strongly typed JavaScript or Java classes.2
+
 ```ascii
 ┌──────────────────────────────────────────────┐
 │  UTAM Page Object Definition (JSON Schema)   │
@@ -398,9 +414,9 @@ The UI Test Automation Model (UTAM) is an open-source page-object compiler devel
 
 UTAM's major benefit is maintenance delegation.6 When Salesforce modifies base Lightning components, teams do not need to update their test code; they simply update their compiled package dependencies, which contain the updated JSON definitions.30However, incorporating UTAM alongside Playwright adds complexity 6:
 
-* **Compilation Overhead:** JSON page-object schemas must be compiled before test execution, which can slow down local test creation and modify dev-test loops.6
-* **Tooling Conflicts:** Direct Playwright integrations are often wrapped inside compiled UTAM methods, which can limit the effectiveness of native Playwright features like the Trace Viewer and real-time locator generators.6
-* **Skill Requirements:** Writing custom JSON schemas using UTAM's grammar requires specialized training, whereas native Playwright scripts can be written directly in TypeScript or JavaScript.6
+- **Compilation Overhead:** JSON page-object schemas must be compiled before test execution, which can slow down local test creation and modify dev-test loops.6
+- **Tooling Conflicts:** Direct Playwright integrations are often wrapped inside compiled UTAM methods, which can limit the effectiveness of native Playwright features like the Trace Viewer and real-time locator generators.6
+- **Skill Requirements:** Writing custom JSON schemas using UTAM's grammar requires specialized training, whereas native Playwright scripts can be written directly in TypeScript or JavaScript.6
 
 For teams prioritizing rapid execution and direct control, a native Playwright framework utilizing semantic locators is often preferred.6 For teams managing highly customized, standard Salesforce Lightning deployments with minimal direct DOM adjustments, adopting UTAM can reduce the overhead of post-release selector maintenance.6
 
@@ -432,6 +448,7 @@ navigationTimeout: 30000, // Generous allocation for network redirection
 },
 });
 ```
+
 For complex record pages (such as CPQ Quote Line Editors or deep detail page layouts), tests can be marked as slow to dynamically double their timeout limits 33:
 
 ```TypeScript
@@ -443,6 +460,7 @@ test.slow();
 await page.goto('/lightning/r/SBQQ__Quote__c/a0H80000004yZ1EEAU/view');
 });
 ```
+
 ### **SSL and Security Flag Management**
 
 When running tests against local development environments or scratch organizations that lack updated SSL configurations, security handshakes can block automated browser execution.33 This can be managed by setting explicit environment flags within the test runner 33:
@@ -455,54 +473,57 @@ export NODE_TLS_REJECT_UNAUTHORIZED=0
 \# Execute Playwright tests with relaxed security validations
 npx playwright test
 ```
+
 ### **Standardizing the Execution Environment**
 
 To minimize "it works on my machine" issues and ensure consistent test runs, execution environments should be standardized across local development and CI pipelines 5:
 
-* **Docker Containerization:** Run tests inside Playwright's official Docker images to align local executions with the CI/CD environment.5
-* **System Dependencies:** Use the system dependency installer during environment initialization to ensure all necessary rendering libraries are present 5:
+- **Docker Containerization:** Run tests inside Playwright's official Docker images to align local executions with the CI/CD environment.5
+- **System Dependencies:** Use the system dependency installer during environment initialization to ensure all necessary rendering libraries are present 5:
+
 ```Bash
   npx playwright install-deps chromium
 ```
-* **Binary Caching:** Cache Playwright browser binaries inside the CI/CD pipeline configuration to reduce setup times and prevent external network dependencies during build runs.5
+
+- **Binary Caching:** Cache Playwright browser binaries inside the CI/CD pipeline configuration to reduce setup times and prevent external network dependencies during build runs.5
 
 ## **Establishing an Organizational Culture of Quality**
 
 Technical optimizations alone are rarely sufficient to eliminate test flakiness; teams must also adapt their processes to treat test stability as a core engineering concern.4
 
 ┌──────────────────────────────────────────────┐
-│  Test Failure in CI Pipeline                 │ Without code changes
+│ Test Failure in CI Pipeline │ Without code changes
 └──────────────────────┬───────────────────────┘
 │
 ▼
 ┌──────────────────────────────────────────────┐
-│  Create P2 Defect Ticket Immediately         │ Do not re-run and ignore
+│ Create P2 Defect Ticket Immediately │ Do not re-run and ignore
 └──────────────────────┬───────────────────────┘
 │
 ▼
 ┌──────────────────────────────────────────────┐
-│  Quarantine Dynamic Test                     │ Prevent pipeline blockage
+│ Quarantine Dynamic Test │ Prevent pipeline blockage
 └──────────────────────┬───────────────────────┘
 │
 ▼
 ┌──────────────────────────────────────────────┐
-│  Local Stress and Trace Diagnostics          │
-│  \- npx playwright test \--repeat-each=20       │ Diagnose failure
-│  \- Analyze DOM trace snapshots               │
+│ Local Stress and Trace Diagnostics │
+│ \- npx playwright test \--repeat-each=20 │ Diagnose failure
+│ \- Analyze DOM trace snapshots │
 └──────────────────────┬───────────────────────┘
 │
 ▼
 ┌──────────────────────────────────────────────┐
-│  Resolve Root Cause                          │ Apply stable locators and wait
+│ Resolve Root Cause │ Apply stable locators and wait
 └──────────────────────────────────────────────┘
 
 ### **Treating Flakiness as a First-Class Defect**
 
 Teams should implement a clear rule for handling test failures: any automated test that fails in the CI pipeline without an associated code change must be logged as a P2 defect, rather than being ignored or re-run until it passes.4 When teams adopt this process, flakiness can be addressed systematically 4:
 
-* **Failure Isolation:** Quarantine the failing test case immediately to keep the main pipeline blocking gates functional.5
-* **Root-Cause Tracking:** Investigate the failure using trace files to locate the exact point where timing issues, selector drift, or shared state assumptions caused the failure.4
-* **Stabilization Validation:** Run the fix locally multiple times under simulated load before re-enabling the test in the main build pipeline.4
+- **Failure Isolation:** Quarantine the failing test case immediately to keep the main pipeline blocking gates functional.5
+- **Root-Cause Tracking:** Investigate the failure using trace files to locate the exact point where timing issues, selector drift, or shared state assumptions caused the failure.4
+- **Stabilization Validation:** Run the fix locally multiple times under simulated load before re-enabling the test in the main build pipeline.4
 
 ### **Local Diagnostics and Stress Testing**
 
@@ -512,6 +533,7 @@ Before committing test updates to source control, engineers should stress-test t
 # Execute the target test file 20 times consecutively
 npx playwright test tests/opportunities.spec.ts --repeat-each=20 --workers=4 --reporter=line
 ```
+
 If a test fails even once during this sequence, it indicates an unresolved timing dependency or race condition that must be addressed before the script is merged into the master branch.4 Using these diagnostic methods and programmatic approaches allows teams to build highly resilient automated test suites that maintain their stability across Salesforce platform updates.1
 
 #### **Works cited**
@@ -522,13 +544,13 @@ If a test fails even once during this sequence, it indicates an unresolved timin
 4. Eliminating Flaky Tests in Playwright: Root Causes and Proven Fixes | by Abdulkadir Akyurt, accessed on June 9, 2026, [https://medium.com/@abdulkadirakyurt.de/eliminating-flaky-tests-in-playwright-root-causes-and-proven-fixes-be3b8f907150](https://medium.com/@abdulkadirakyurt.de/eliminating-flaky-tests-in-playwright-root-causes-and-proven-fixes-be3b8f907150)
 5. How to Reduce Playwright Test Flakiness (Hands-On Guide) \- Decipher AI, accessed on June 9, 2026, [https://getdecipher.com/blog/how-to-reduce-playwright-test-flakiness](https://getdecipher.com/blog/how-to-reduce-playwright-test-flakiness)
 6. Salesforce UI testing tools: UTAM framework vs third-party solutions \- Gearset, accessed on June 9, 2026, [https://gearset.com/blog/salesforce-ui-testing-tools/](https://gearset.com/blog/salesforce-ui-testing-tools/)
-7. Playwright with Salesforce ? : r/Playwright \- Reddit, accessed on June 9, 2026, [https://www.reddit.com/r/Playwright/comments/1to831y/playwright\_with\_salesforce/](https://www.reddit.com/r/Playwright/comments/1to831y/playwright_with_salesforce/)
+7. Playwright with Salesforce ? : r/Playwright \- Reddit, accessed on June 9, 2026, [https://www.reddit.com/r/Playwright/comments/1to831y/playwright_with_salesforce/](https://www.reddit.com/r/Playwright/comments/1to831y/playwright_with_salesforce/)
 8. Playwright Locators: Strategy, Best Practices, and the Flake Tax | Bug0, accessed on June 9, 2026, [https://bug0.com/knowledge-base/playwright-locators](https://bug0.com/knowledge-base/playwright-locators)
 9. Automated Shadow DOM Testing: The AI-Native Approach, accessed on June 9, 2026, [https://www.virtuosoqa.com/post/automated-shadow-dom-testing](https://www.virtuosoqa.com/post/automated-shadow-dom-testing)
 10. Shadow DOM Testing: Conquering Web Components in Modern Automation | desplega.ai, accessed on June 9, 2026, [https://www.desplega.ai/blog/2026-01-12-deep-dive-shadow-dom-testing](https://www.desplega.ai/blog/2026-01-12-deep-dive-shadow-dom-testing)
 11. Flaky tests in Playwright. Named, fixed, and quarantined. \- Mergify, accessed on June 9, 2026, [https://mergify.com/learn/flaky-tests/playwright](https://mergify.com/learn/flaky-tests/playwright)
 12. Locators \- Playwright, accessed on June 9, 2026, [https://playwright.dev/docs/locators](https://playwright.dev/docs/locators)
-13. What's your \#1 trick to reduce flakiness in Playwright tests? Let's build a community list., accessed on June 9, 2026, [https://www.reddit.com/r/Playwright/comments/1pbz01q/whats\_your\_1\_trick\_to\_reduce\_flakiness\_in/](https://www.reddit.com/r/Playwright/comments/1pbz01q/whats_your_1_trick_to_reduce_flakiness_in/)
+13. What's your \#1 trick to reduce flakiness in Playwright tests? Let's build a community list., accessed on June 9, 2026, [https://www.reddit.com/r/Playwright/comments/1pbz01q/whats_your_1_trick_to_reduce_flakiness_in/](https://www.reddit.com/r/Playwright/comments/1pbz01q/whats_your_1_trick_to_reduce_flakiness_in/)
 14. How to bypass UI login for Salesforce UI automation \- Discussions ..., accessed on June 9, 2026, [https://club.ministryoftesting.com/t/how-to-bypass-ui-login-for-salesforce-ui-automation/86857](https://club.ministryoftesting.com/t/how-to-bypass-ui-login-for-salesforce-ui-automation/86857)
 15. Testing Authentication with Playwright: The Complete Guide | Apr 2026 \- Currents.dev, accessed on June 9, 2026, [https://currents.dev/posts/testing-authentication-with-playwright-the-complete-guide](https://currents.dev/posts/testing-authentication-with-playwright-the-complete-guide)
 16. How To Optimize Automated Tests and Securely Log in to ... \- ENWAY, accessed on June 9, 2026, [https://enway.com/journal/salesforce-developers/how-to-optimize-automated-tests-and-securely-log-in-to-salesforce-without-verification-code-or-mfa/](https://enway.com/journal/salesforce-developers/how-to-optimize-automated-tests-and-securely-log-in-to-salesforce-without-verification-code-or-mfa/)

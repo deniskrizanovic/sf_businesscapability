@@ -14,27 +14,29 @@ Built for enterprise architects who want a simple tool to manage a BCM without s
 
 ## Why this, not the usual options?
 
-| | SF Capability Mapper | LeanIX / Ardoq / Bizzdesign | Visio / Lucidchart | Spreadsheet |
-|---|---|---|---|---|
-| Lives where your business already runs | Inside Salesforce | Separate platform | Separate file | Separate file |
-| Data-driven (records, not shapes) | Yes | Yes | No | Partial |
-| Drag-drop hierarchy editing | Yes | Yes | Manual | No |
-| Extensible with custom fields / Apex / Flow | Yes | Limited | No | No |
-| Per-user permissions (Viewer / Editor) | Yes (perm sets) | Yes | Filesystem | Filesystem |
-| Cost | Existing SF licence | Per-seat SaaS | Per-seat SaaS | Free |
-| Vendor lock-in | None — your org, your data | High | Medium | None |
+|                                             | SF Capability Mapper       | LeanIX / Ardoq / Bizzdesign | Visio / Lucidchart | Spreadsheet   |
+| ------------------------------------------- | -------------------------- | --------------------------- | ------------------ | ------------- |
+| Lives where your business already runs      | Inside Salesforce          | Separate platform           | Separate file      | Separate file |
+| Data-driven (records, not shapes)           | Yes                        | Yes                         | No                 | Partial       |
+| Drag-drop hierarchy editing                 | Yes                        | Yes                         | Manual             | No            |
+| Extensible with custom fields / Apex / Flow | Yes                        | Limited                     | No                 | No            |
+| Per-user permissions (Viewer / Editor)      | Yes (perm sets)            | Yes                         | Filesystem         | Filesystem    |
+| Cost                                        | Existing SF licence        | Per-seat SaaS               | Per-seat SaaS      | Free          |
+| Vendor lock-in                              | None — your org, your data | High                        | Medium             | None          |
 
 ---
 
 ## Features
 
 **Modelling**
+
 - 3-level capability hierarchy (L1 / L2 / L3) per BABOK
 - Cross-cutting capabilities rendered as a separate band
 - Multiple Maps in one org (business units, versions, clients)
 - Tags with colour swatches for categorisation
 
 **Visualisation**
+
 - SVG diagram with chevrons (L1), boxes (L2), bullets (L3)
 - Drag-and-drop reordering and reparenting
 - Zoom, pan, and pinned top row / bottom band
@@ -42,12 +44,14 @@ Built for enterprise architects who want a simple tool to manage a BCM without s
 - Slide-in Detail Panel for any node
 
 **Data**
+
 - Standard Salesforce sObjects — reportable, queryable, automatable
 - JSON import utility for bulk loading or migration
 - External ID upsert for repeatable refreshes
 - Inline edit of capability fields with permission gating
 
 **Extensibility**
+
 - Add custom fields to `bcm_Capability__c` like any sObject
 - Hook Apex triggers, Flows, Validation Rules
 - Layered Apex architecture (see ADR 0002) — Selector / Service / Controller separation

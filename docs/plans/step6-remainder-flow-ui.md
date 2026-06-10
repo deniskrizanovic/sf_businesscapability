@@ -11,13 +11,13 @@ references `bcm_ImportUtility` LWC — that approach is abandoned in favour of a
 
 ## What's Left to Build
 
-| # | File | Action |
-|---|---|---|
-| 1 | `force-app/main/default/flows/bcm_Import_Flow.flow-meta.xml` | Create via `generating-flow` skill |
-| 2 | `force-app/main/default/lwc/bcm_ImportButton/bcm_ImportButton.html` | Replace placeholder with `<lightning-flow>` |
-| 3 | `force-app/main/default/lwc/bcm_ImportButton/bcm_ImportButton.js` | Replace `close()` with `handleStatusChange()` |
-| 4 | `docs/plan/implementation-plan.md` (Step 6 block, lines 280–310) | Rewrite to reflect Flow approach |
-| 5 | `docs/specs/import.md` | Add `invocable_viewer_returnsAccessDenied` marker |
+| #   | File                                                                | Action                                            |
+| --- | ------------------------------------------------------------------- | ------------------------------------------------- |
+| 1   | `force-app/main/default/flows/bcm_Import_Flow.flow-meta.xml`        | Create via `generating-flow` skill                |
+| 2   | `force-app/main/default/lwc/bcm_ImportButton/bcm_ImportButton.html` | Replace placeholder with `<lightning-flow>`       |
+| 3   | `force-app/main/default/lwc/bcm_ImportButton/bcm_ImportButton.js`   | Replace `close()` with `handleStatusChange()`     |
+| 4   | `docs/plan/implementation-plan.md` (Step 6 block, lines 280–310)    | Rewrite to reflect Flow approach                  |
+| 5   | `docs/specs/import.md`                                              | Add `invocable_viewer_returnsAccessDenied` marker |
 
 ## Step-by-Step
 
@@ -28,6 +28,7 @@ Invoke `generating-flow` skill. Use the three-step MCP pipeline.
 Flow type: Screen Flow, API name `bcm_Import_Flow`, label "Import Capability Map".
 
 Design:
+
 - **Screen 1** — Long Text Area input variable `jsonPayload` (label "Paste JSON", required)
 - **Apex Action** — calls `bcm_ImportController.execute`, passing `jsonPayload`; outputs stored
   as `importSuccess` (Boolean), `importErrorMessage` (Text), `capabilitiesInserted` (Number),
@@ -44,11 +45,10 @@ Write result to `force-app/main/default/flows/bcm_Import_Flow.flow-meta.xml`.
 ### 2 — LWC `bcm_ImportButton.html`
 
 Replace entire template:
+
 ```html
 <template>
-    <lightning-flow
-        flow-api-name="bcm_Import_Flow"
-        onstatuschange={handleStatusChange}>
+    <lightning-flow flow-api-name="bcm_Import_Flow" onstatuschange="{handleStatusChange}">
     </lightning-flow>
 </template>
 ```
@@ -56,6 +56,7 @@ Replace entire template:
 ### 3 — LWC `bcm_ImportButton.js`
 
 Replace `close()` with:
+
 ```js
 import { LightningElement } from 'lwc';
 
@@ -82,6 +83,7 @@ Rewrite the Step 6 section (lines ~280–310):
 ### 5 — `docs/specs/import.md`
 
 Add marker after "Import panel is not accessible to Viewers" scenario (after existing `permission_viewer_cannotCallImport` line):
+
 ```
 > Tested by: bcm_ImportControllerTest.invocable_viewer_returnsAccessDenied
 ```

@@ -21,12 +21,12 @@ Current bug: `handleSvgMouseDown` sets `this.focusedNodeId = null` but never reb
 
 ## Decisions
 
-| Decision | Choice |
-|---|---|
-| Where to rebuild | `handleSvgMouseDown`, only if a node was focused before the click — avoids unnecessary rebuild on every pan-start drag |
-| Pan still works | Pan state (`_isDragging`, `_dragStartX/Y`, `_panStartX/Y`) set unconditionally as before |
-| L1/L3 also benefit | Same fix clears any focused level — no level-specific branching needed |
-| Spec marker | New scenario under existing **Feature: Node click UX — focus then menu**. Tested-by jest tests |
+| Decision           | Choice                                                                                                                 |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Where to rebuild   | `handleSvgMouseDown`, only if a node was focused before the click — avoids unnecessary rebuild on every pan-start drag |
+| Pan still works    | Pan state (`_isDragging`, `_dragStartX/Y`, `_panStartX/Y`) set unconditionally as before                               |
+| L1/L3 also benefit | Same fix clears any focused level — no level-specific branching needed                                                 |
+| Spec marker        | New scenario under existing **Feature: Node click UX — focus then menu**. Tested-by jest tests                         |
 
 ---
 
@@ -56,12 +56,12 @@ handleSvgMouseDown(evt) {
 
 New `describe('BcmCapabilityMap canvas click clears focus', ...)` block:
 
-| Test | Assertion |
-|---|---|
+| Test                                                            | Assertion                                                                      |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | Clicking SVG background after focusing L2 clears `data-focused` | Click L2, mousedown SVG bg, `[data-node-id="L2-A1"]` `data-focused !== 'true'` |
-| Clicking SVG background after focusing L2 reverts strokeColour | Inspect layout-derived `<rect stroke>` matches default `#CCCCCC` |
-| Clicking SVG background while no node focused does not throw | Just dispatch mousedown on bare canvas |
-| Pan still works after canvas mousedown | mousedown -> mousemove -> panX changes |
+| Clicking SVG background after focusing L2 reverts strokeColour  | Inspect layout-derived `<rect stroke>` matches default `#CCCCCC`               |
+| Clicking SVG background while no node focused does not throw    | Just dispatch mousedown on bare canvas                                         |
+| Pan still works after canvas mousedown                          | mousedown -> mousemove -> panX changes                                         |
 
 ### 3. Spec — `docs/specs/diagram.md`
 

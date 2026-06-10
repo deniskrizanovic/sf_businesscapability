@@ -18,11 +18,11 @@ considered and rejected — is recorded in
 Every scenario in `docs/specs/` carries a coverage marker immediately below its
 heading. Three forms are valid:
 
-| Marker | When to use |
-|---|---|
-| `> Tested by: ClassName.methodName` | Apex or e2e test exists and passes |
-| `> Tested by: ClassName.methodName (not yet written — see docs/handoff/<file>.md)` | Method name agreed, test not written yet; handoff doc must exist |
-| `> Deferred: <one-line reason>` | Consciously skipped — platform-enforced constraint, genuinely out of scope |
+| Marker                                                                             | When to use                                                                |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `> Tested by: ClassName.methodName`                                                | Apex or e2e test exists and passes                                         |
+| `> Tested by: ClassName.methodName (not yet written — see docs/handoff/<file>.md)` | Method name agreed, test not written yet; handoff doc must exist           |
+| `> Deferred: <one-line reason>`                                                    | Consciously skipped — platform-enforced constraint, genuinely out of scope |
 
 `UI only` is not valid. Every scenario that requires browser verification must be
 covered by a named Playwright test and marked with its test reference.
@@ -62,6 +62,7 @@ and redundant.
 **Tooling:** Playwright (`@playwright/test`), run against a deployed Salesforce org.
 
 **Owns:** Any behaviour only verifiable through a real browser session:
+
 - Field presence and layout on Lightning record forms
 - UI permission enforcement — button/tab presence or absence based on permission set
 - Related list visibility and content
@@ -96,10 +97,10 @@ implemented.
 Two static users exist in the target org. They are created once and never recreated
 by the test suite.
 
-| User | Permission Set | Purpose |
-|---|---|---|
-| `bcm-editor-test@...` | `bcm_Editor` | Full access — creates, edits, and deletes records |
-| `bcm-viewer-test@...` | `bcm_Viewer` | Read-only — verifies that write controls are absent |
+| User                  | Permission Set | Purpose                                             |
+| --------------------- | -------------- | --------------------------------------------------- |
+| `bcm-editor-test@...` | `bcm_Editor`   | Full access — creates, edits, and deletes records   |
+| `bcm-viewer-test@...` | `bcm_Viewer`   | Read-only — verifies that write controls are absent |
 
 Static users are used rather than programmatic provisioning because Salesforce user
 creation from Apex is slow and unreliable in automated contexts. The usernames and
@@ -139,7 +140,7 @@ then discards the substituted file. Credentials are never written to disk
 permanently.
 
 ```bash
-./scripts/create-e2e-users.sh [org-alias] 
+./scripts/create-e2e-users.sh [org-alias]
 ```
 
 The Apex script uses `Database.upsert` on `User.Fields.Username`, so re-running it
@@ -233,6 +234,3 @@ sf apex run test --test-level RunLocalTests --target-org <alias>
 ```
 
 ---
-
-
-

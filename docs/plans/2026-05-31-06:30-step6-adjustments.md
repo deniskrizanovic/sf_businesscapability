@@ -39,13 +39,13 @@ The original quick action (`quickActions/bcm_Map__c.Import.quickAction-meta.xml`
 
 ## Files Changed
 
-| File | Change |
-|---|---|
-| `objects/bcm_Map__c/webLinks/JSON_Import.webLink-meta.xml` | new — list view button opening `/flow/bcm_Import_Flow` |
-| `flexipages/bcm_MapRecordPage.flexipage-meta.xml` | removed Import action from record page |
-| `objects/bcm_Map__c/bcm_Map__c.object-meta.xml` | updated (org retrieve) |
-| `objects/bcm_Map__c/listViews/All.listView-meta.xml` | updated (org retrieve) |
-| `tests/e2e/import.spec.ts` | updated — all flow selectors via `frameLocator('iframe')`; 40s wait for slow sandbox |
+| File                                                       | Change                                                                               |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `objects/bcm_Map__c/webLinks/JSON_Import.webLink-meta.xml` | new — list view button opening `/flow/bcm_Import_Flow`                               |
+| `flexipages/bcm_MapRecordPage.flexipage-meta.xml`          | removed Import action from record page                                               |
+| `objects/bcm_Map__c/bcm_Map__c.object-meta.xml`            | updated (org retrieve)                                                               |
+| `objects/bcm_Map__c/listViews/All.listView-meta.xml`       | updated (org retrieve)                                                               |
+| `tests/e2e/import.spec.ts`                                 | updated — all flow selectors via `frameLocator('iframe')`; 40s wait for slow sandbox |
 
 ---
 

@@ -47,11 +47,11 @@ Add 13 Jest unit tests and 2 Playwright e2e tests covering 15 of the 21 new scen
 
 - **What makes a good test here**: Assert observable external state — context menu presence/absence, `zoom` value, `panX`/`panY` value, navigation call args. Do not assert internal property names or implementation-private state variables.
 - **Jest modules under test**:
-  - `bcm_CapabilityMap` — click UX, keyboard nav, zoom/pan state machine, map-switch reset
-  - `bcm_ContextMenu` — permission gating ("Hide" visibility) is better tested in `bcm_ContextMenu.__tests__` since `hasPermission` is a prop of that component
+    - `bcm_CapabilityMap` — click UX, keyboard nav, zoom/pan state machine, map-switch reset
+    - `bcm_ContextMenu` — permission gating ("Hide" visibility) is better tested in `bcm_ContextMenu.__tests__` since `hasPermission` is a prop of that component
 - **Prior art**:
-  - Playwright: `tests/e2e/diagram.spec.ts` (379 lines, 19 tests) — wire mock pattern, auth fixtures, SVG selector patterns
-  - Jest: none yet in this project; `@salesforce/sfdx-lwc-jest` standard patterns apply
+    - Playwright: `tests/e2e/diagram.spec.ts` (379 lines, 19 tests) — wire mock pattern, auth fixtures, SVG selector patterns
+    - Jest: none yet in this project; `@salesforce/sfdx-lwc-jest` standard patterns apply
 
 ## Out of Scope
 

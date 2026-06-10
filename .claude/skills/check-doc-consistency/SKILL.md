@@ -8,6 +8,7 @@ description: Use when a plan, design doc, or spec has been added or changed — 
 ## When to invoke
 
 After any session that changes:
+
 - `docs/plans/*.md` (new feature plan)
 - `docs/design/05-lwc-architecture.md` (new component or Apex method)
 - `docs/design/99-cosmic-function-point-count.md` (new FPs)
@@ -80,13 +81,13 @@ A new FP is required whenever new code introduces a data movement across the sof
 
 **Triggers for a new FP:**
 
-| New code | Data movement type | Requires FP? |
-|---|---|---|
-| New `@AuraEnabled` read method | E (trigger) + R (query) + X (data to UI) | Yes |
-| New `@AuraEnabled` write method | E (trigger) + W (DML) + X (confirmation to UI) | Yes |
-| New LWC component that displays data from Apex | X (data sent to human) | Covered by controller's FP — no new FP if same trigger |
-| Pure client-side JS (zoom, pan, layout) | No boundary crossing | No FP needed |
-| New field added to existing SOQL query | Additional R in existing FP | Update existing FP, not new one |
+| New code                                       | Data movement type                             | Requires FP?                                           |
+| ---------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------ |
+| New `@AuraEnabled` read method                 | E (trigger) + R (query) + X (data to UI)       | Yes                                                    |
+| New `@AuraEnabled` write method                | E (trigger) + W (DML) + X (confirmation to UI) | Yes                                                    |
+| New LWC component that displays data from Apex | X (data sent to human)                         | Covered by controller's FP — no new FP if same trigger |
+| Pure client-side JS (zoom, pan, layout)        | No boundary crossing                           | No FP needed                                           |
+| New field added to existing SOQL query         | Additional R in existing FP                    | Update existing FP, not new one                        |
 
 **Steps:**
 
@@ -135,6 +136,7 @@ Group by layer. For each violation, quote the exact text and state what is wrong
 ### Pending items (always shown at bottom)
 
 List test files referenced in spec markers that do not yet exist:
+
 ```
 ## Pending (test files not yet written)
 - tests/e2e/capability-detail.spec.ts — referenced by N scenarios in diagram.md

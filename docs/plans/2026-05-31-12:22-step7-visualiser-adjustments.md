@@ -26,9 +26,9 @@ New checkbox field `bcm_HideFromDiagram__c` on `bcm_Capability__c`. JS filters h
 - Default: toggle OFF — hidden capabilities not rendered
 - Toggle ON: hidden capabilities rendered with dashed border (`stroke-dasharray="4 2"`) on both L1 polygon and L2 rect; normal nodes keep solid border
 - Cascade: node hidden → entire subtree hidden. Implemented two-pass in `_buildLayout`:
-  1. Collect all IDs where `bcm_HideFromDiagram__c = true`
-  2. Walk tree; mark any node as hidden if itself OR any ancestor is hidden
-  3. Skip hidden nodes from `l1Nodes` / `l2Nodes` / `bulletLines` when toggle is OFF
+    1. Collect all IDs where `bcm_HideFromDiagram__c = true`
+    2. Walk tree; mark any node as hidden if itself OR any ancestor is hidden
+    3. Skip hidden nodes from `l1Nodes` / `l2Nodes` / `bulletLines` when toggle is OFF
 - Toggle available to both Editor and Viewer roles (no `canEdit` gate)
 - Toggle state: `@track showHidden = false`
 
@@ -57,16 +57,19 @@ Arrow keys pan viewport when no node focused; column-aware navigation between no
 ### Behaviour
 
 **No node focused (pan mode):**
+
 - Arrow keys pan `panX`/`panY` by ±50px per keypress
 - SVG element must be `tabIndex="0"` and `onkeydown={handleKeyDown}`
 
 **Node focused (navigate mode):**
+
 - `focusedNodeId` tracked as `@track focusedNodeId = null`
 - Left/Right: move between L1 columns (change focused L1, focus its first L2 child)
 - Up/Down: move between L2 boxes within current column
 - Escape: clear focus → return to pan mode
 
 **Focus indicator:**
+
 - Ring: `stroke="#0070D2" stroke-width="3"` on focused node's rect/polygon
 - Fill: L1 chevron fill darkens (`#2A2A2A` instead of `#4A4A4A`); L2 box fill lightens to `#E8F4FF`
 - Both computed in layout node: `node.isFocused` flag
@@ -75,23 +78,23 @@ Arrow keys pan viewport when no node focused; column-aware navigation between no
 
 - Add `@track focusedNodeId = null`
 - Add `handleKeyDown(evt)`:
-  ```js
-  handleKeyDown(evt) {
-      if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(evt.key)) {
-          evt.preventDefault();
-      }
-      if (!this.focusedNodeId) {
-          // pan mode
-          const PAN_STEP = 50;
-          if (evt.key === 'ArrowLeft')  this.panX += PAN_STEP;
-          if (evt.key === 'ArrowRight') this.panX -= PAN_STEP;
-          if (evt.key === 'ArrowUp')    this.panY += PAN_STEP;
-          if (evt.key === 'ArrowDown')  this.panY -= PAN_STEP;
-      } else {
-          this._navigateFromKey(evt.key);
-      }
-  }
-  ```
+    ```js
+    handleKeyDown(evt) {
+        if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(evt.key)) {
+            evt.preventDefault();
+        }
+        if (!this.focusedNodeId) {
+            // pan mode
+            const PAN_STEP = 50;
+            if (evt.key === 'ArrowLeft')  this.panX += PAN_STEP;
+            if (evt.key === 'ArrowRight') this.panX -= PAN_STEP;
+            if (evt.key === 'ArrowUp')    this.panY += PAN_STEP;
+            if (evt.key === 'ArrowDown')  this.panY -= PAN_STEP;
+        } else {
+            this._navigateFromKey(evt.key);
+        }
+    }
+    ```
 - `_navigateFromKey(key)`: resolves next node ID from column/row index maps built in `_buildLayout`
 - `_buildLayout`: attach `colIdx` to L1 nodes, `rowIdx` to L2 nodes; build `_colMap` (colIdx → L1 id) and `_l2ByCol` (colIdx → [L2 ids]) for navigation lookup
 - Node click (`handleNodeClick`) → sets `focusedNodeId = nodeId`
@@ -118,16 +121,16 @@ L1 chevrons stay visible at top when user pans vertically. SVG splits into two `
 
 ```html
 <!-- L1 layer: pan horizontally, not vertically -->
-<g transform={l1Transform}>
-  <!-- L1 chevrons -->
+<g transform="{l1Transform}">
+    <!-- L1 chevrons -->
 </g>
 
 <!-- L2 layer: full pan + zoom, clipped -->
 <clipPath id="bcm-l2-clip">
-  <rect x="0" y={l2ClipY} width={canvasWidth} height="9999"></rect>
+    <rect x="0" y="{l2ClipY}" width="{canvasWidth}" height="9999"></rect>
 </clipPath>
-<g transform={viewportTransform} clip-path="url(#bcm-l2-clip)">
-  <!-- L2 boxes -->
+<g transform="{viewportTransform}" clip-path="url(#bcm-l2-clip)">
+    <!-- L2 boxes -->
 </g>
 ```
 
@@ -175,7 +178,7 @@ L2 header and L3 bullets wrap to fit content. Box heights grow dynamically. L1 u
 
 ```js
 // Per L3 item: count wrapped lines
-const l3Lines = l2.children.map(l3 => wrapText('• ' + l3.Name, maxBullet, FONT_SIZE_L3, 5));
+const l3Lines = l2.children.map((l3) => wrapText('• ' + l3.Name, maxBullet, FONT_SIZE_L3, 5));
 const l3TotalLines = l3Lines.reduce((sum, lines) => sum + lines.length, 0);
 
 // L2 header height
@@ -196,15 +199,15 @@ Recommended: flatten in JS, keep template simple. Each entry in `bulletLines`: `
 
 ## File Inventory
 
-| Action | Path |
-|--------|------|
-| NEW field (via skill) | `force-app/main/default/objects/bcm_Capability__c/fields/bcm_HideFromDiagram__c.field-meta.xml` |
-| EDIT | `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js` |
-| EDIT | `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.html` |
-| EDIT | `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.css` |
-| EDIT | `force-app/main/default/classes/bcm_CapabilityController.cls` — add `bcm_HideFromDiagram__c` to SELECT |
-| EDIT | `tests/e2e/diagram.spec.ts` — add tests for toggle + keyboard nav |
-| EDIT | `docs/specs/diagram.md` — add acceptance criteria + Tested by markers |
+| Action                | Path                                                                                                   |
+| --------------------- | ------------------------------------------------------------------------------------------------------ |
+| NEW field (via skill) | `force-app/main/default/objects/bcm_Capability__c/fields/bcm_HideFromDiagram__c.field-meta.xml`        |
+| EDIT                  | `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js`                                    |
+| EDIT                  | `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.html`                                  |
+| EDIT                  | `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.css`                                   |
+| EDIT                  | `force-app/main/default/classes/bcm_CapabilityController.cls` — add `bcm_HideFromDiagram__c` to SELECT |
+| EDIT                  | `tests/e2e/diagram.spec.ts` — add tests for toggle + keyboard nav                                      |
+| EDIT                  | `docs/specs/diagram.md` — add acceptance criteria + Tested by markers                                  |
 
 ---
 
@@ -263,8 +266,8 @@ Fix any failures before handing off. Do not progress to next adjustment with a b
 
 After completing each adjustment, append a row to `docs/plans/2026-05-31-step7-status.md`:
 
-| Adjustment | Status | Notes |
-|---|---|---|
-| 4 — Text wrapping | ✅ done / 🔴 blocked | … |
+| Adjustment        | Status               | Notes |
+| ----------------- | -------------------- | ----- |
+| 4 — Text wrapping | ✅ done / 🔴 blocked | …     |
 
 Create file if absent. Include: what changed, deviations from plan, Playwright result (pass/fail count), open issues.

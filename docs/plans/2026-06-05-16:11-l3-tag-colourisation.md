@@ -18,21 +18,21 @@
 
 ## 2. Decisions Locked During Interview
 
-| # | Decision |
-|---|---|
-| 1 | Symptom: L3 doesn't colourise (L1 stays neutral by design) |
-| 2 | L3 highlight = tinted background rect behind bullet text |
-| 3 | Single-select tag — match `selectedTagId` only |
-| 4 | Focus rect wins over tag rect when L3 focused |
-| 5 | Tag rect spans full bullet column width (matches focus rect geometry) |
-| 6 | Hidden L3s with selected tag still get the rect |
-| 7 | Tag rect z-order: behind bullet text, same layer as focus rect |
-| 8 | No luminance auto-flip; admin authors light tag colours (document via field help text) |
-| 9 | Apex query already returns L3 `Tags__r` — no controller change |
-| 10 | Add Jest test + new spec scenario |
-| 11 | Also upgrade existing L2 deferred scenarios to Jest-tested |
-| 12 | Keep full layout rebuild on tag change |
-| 13 | Render in `bcm_CapabilityMap.html` directly, no new component |
+| #   | Decision                                                                               |
+| --- | -------------------------------------------------------------------------------------- |
+| 1   | Symptom: L3 doesn't colourise (L1 stays neutral by design)                             |
+| 2   | L3 highlight = tinted background rect behind bullet text                               |
+| 3   | Single-select tag — match `selectedTagId` only                                         |
+| 4   | Focus rect wins over tag rect when L3 focused                                          |
+| 5   | Tag rect spans full bullet column width (matches focus rect geometry)                  |
+| 6   | Hidden L3s with selected tag still get the rect                                        |
+| 7   | Tag rect z-order: behind bullet text, same layer as focus rect                         |
+| 8   | No luminance auto-flip; admin authors light tag colours (document via field help text) |
+| 9   | Apex query already returns L3 `Tags__r` — no controller change                         |
+| 10  | Add Jest test + new spec scenario                                                      |
+| 11  | Also upgrade existing L2 deferred scenarios to Jest-tested                             |
+| 12  | Keep full layout rebuild on tag change                                                 |
+| 13  | Render in `bcm_CapabilityMap.html` directly, no new component                          |
 
 ---
 
@@ -70,15 +70,16 @@ Geometry must match `focusRect` exactly so the two are visually drop-in.
 **Location:** Inside the bulletGroup `<g>` block (around line 130), immediately after the focusRect `<template>` and before the `<text>` lines loop:
 
 ```html
-<template if:true={group.tagRect}>
+<template if:true="{group.tagRect}">
     <rect
-        x={group.tagRect.x}
-        y={group.tagRect.y}
-        width={group.tagRect.width}
-        height={group.tagRect.height}
+        x="{group.tagRect.x}"
+        y="{group.tagRect.y}"
+        width="{group.tagRect.width}"
+        height="{group.tagRect.height}"
         rx="3"
-        fill={group.tagRect.fill}
-        class="bcm-l3-tag-rect">
+        fill="{group.tagRect.fill}"
+        class="bcm-l3-tag-rect"
+    >
     </rect>
 </template>
 ```
@@ -88,7 +89,7 @@ The mutual exclusion (focus suppresses tag) is enforced in JS at Step 1 (`!l3Foc
 ### Step 3 — Document tag colour authoring guidance
 
 **File:** `force-app/main/default/objects/bcm_Tag__c/fields/bcm_Colour__c.field-meta.xml`
-**Change:** Update `<inlineHelpText>` (or add if absent) to: *"Hex colour applied as the highlight fill on Level 2 boxes and as a background tint behind Level 3 bullets when this tag is selected in the diagram. Use light/pastel shades — the bullet and box text colours are not auto-adjusted for contrast."*
+**Change:** Update `<inlineHelpText>` (or add if absent) to: _"Hex colour applied as the highlight fill on Level 2 boxes and as a background tint behind Level 3 bullets when this tag is selected in the diagram. Use light/pastel shades — the bullet and box text colours are not auto-adjusted for contrast."_
 
 Use `generating-custom-field` skill for any XML change here.
 
@@ -148,16 +149,16 @@ Given a Map with at least one Level 1 Capability carrying the selected Tag
 When the user selects that Tag in the dropdown
 Then the L1 chevron fill remains the default dark grey
 
-> Deferred: L1 fill is hard-coded in _buildLayout (lines 309–310) and never reads tag data — invariant by code construction
+> Deferred: L1 fill is hard-coded in \_buildLayout (lines 309–310) and never reads tag data — invariant by code construction
 ```
 
 ### Step 6 — Update CONTEXT.md
 
-Already done — see commit prior to this plan. The Tag entry now reads: *"highlights matching Capabilities using the Tag's stored colour: Level 2 boxes take the colour as their full fill; Level 3 bullets render a tinted background rectangle behind their text (suppressed when the L3 is focused — focus styling wins). Level 1 chevrons are unaffected by tag selection."*
+Already done — see commit prior to this plan. The Tag entry now reads: _"highlights matching Capabilities using the Tag's stored colour: Level 2 boxes take the colour as their full fill; Level 3 bullets render a tinted background rectangle behind their text (suppressed when the L3 is focused — focus styling wins). Level 1 chevrons are unaffected by tag selection."_
 
 ### Step 7 — COSMIC function point table
 
-No change. Tag colour-highlight rendering is already excluded from the FP count (line 605 of `99-cosmic-function-point-count.md`): *"Client-side filter on already-loaded data (no new Apex call). Data was moved in FP2; re-colouring is internal data manipulation, not a new data movement."* This work does not introduce a new data movement.
+No change. Tag colour-highlight rendering is already excluded from the FP count (line 605 of `99-cosmic-function-point-count.md`): _"Client-side filter on already-loaded data (no new Apex call). Data was moved in FP2; re-colouring is internal data manipulation, not a new data movement."_ This work does not introduce a new data movement.
 
 ---
 
@@ -166,6 +167,7 @@ No change. Tag colour-highlight rendering is already excluded from the FP count 
 **No spec file changes for `diagram.spec.ts` or `capability-detail.spec.ts`.**
 
 Reason: Playwright tag-highlight assertions remain deferred per the existing `> Deferred: requires seeding a CapabilityTag junction in Playwright which adds significant setup complexity` rationale. Jest is the right layer because:
+
 - It mocks Apex `getCapabilities` directly (the existing test already does)
 - No org-side junction seeding is required
 - The renderer logic is the unit under test, not user navigation

@@ -14,12 +14,11 @@ Step 6 complete (deployed 2026-05-30). Step 7 delivers the read-only SVG diagram
 
 ### 1. Apex Controllers (skill: `generating-apex`)
 
-
-| Class                      | Method                                                     | SOQL                                                                                    |
-| -------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `bcm_MapController`        | `getMaps()` `@AuraEnabled(cacheable=true)`                 | `SELECT Id, Name FROM bcm_Map__c ORDER BY Name ASC`                                     |
+| Class                      | Method                                                     | SOQL                                                                                   |
+| -------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `bcm_MapController`        | `getMaps()` `@AuraEnabled(cacheable=true)`                 | `SELECT Id, Name FROM bcm_Map__c ORDER BY Name ASC`                                    |
 | `bcm_CapabilityController` | `getCapabilities(Id mapId)` `@AuraEnabled(cacheable=true)` | See design doc query — includes subquery on`bcm_CapabilityTags__r` for tag colour data |
-| `bcm_TagController`        | `getTags()` `@AuraEnabled(cacheable=true)`                 | `SELECT Id, Name, bcm_Colour__c FROM bcm_Tag__c ORDER BY Name ASC`                      |
+| `bcm_TagController`        | `getTags()` `@AuraEnabled(cacheable=true)`                 | `SELECT Id, Name, bcm_Colour__c FROM bcm_Tag__c ORDER BY Name ASC`                     |
 
 All `with sharing`. Thin controllers — no business logic. `AuraHandledException` catch at controller boundary only.
 
@@ -38,9 +37,18 @@ All `with sharing`. Thin controllers — no business logic. `AuraHandledExceptio
 **Layout constants** (from `docs/design/03-diagram-layout.md`):
 
 ```js
-COLUMN_WIDTH=220, COLUMN_GAP=16, CHEVRON_HEIGHT=60, CHEVRON_NOTCH=16,
-BOX_PADDING=12, BOX_HEADER_HEIGHT=40, LINE_HEIGHT=20, BOX_GAP=12,
-DIAGRAM_PADDING=24, FONT_SIZE_L1=13, FONT_SIZE_L2=12, FONT_SIZE_L3=11
+((COLUMN_WIDTH = 220),
+    (COLUMN_GAP = 16),
+    (CHEVRON_HEIGHT = 60),
+    (CHEVRON_NOTCH = 16),
+    (BOX_PADDING = 12),
+    (BOX_HEADER_HEIGHT = 40),
+    (LINE_HEIGHT = 20),
+    (BOX_GAP = 12),
+    (DIAGRAM_PADDING = 24),
+    (FONT_SIZE_L1 = 13),
+    (FONT_SIZE_L2 = 12),
+    (FONT_SIZE_L3 = 11));
 ```
 
 **Apex imports:**
@@ -81,14 +89,13 @@ Replace placeholder HTML in `bcm_VisualisationButton.html` (line 3) with `<c-bcm
 
 Pattern mirrors `tests/e2e/import.spec.ts`. Cover all spec scenarios from `docs/specs/diagram.md`:
 
-
-| describe block       | scenarios                                              |
-| -------------------- | ------------------------------------------------------ |
-| Map selector         | dropdown populated, empty canvas before selection      |
-| Diagram structure    | L1 chevrons, L2 boxes, L3 bullets, sort order columns  |
-| Zoom & pan           | wheel zoom in/out, zoom clamp, click-drag pan          |
-| Tag highlight        | tag highlights L2, non-tagged stays white, None clears |
-| Context menu         | node click opens menu, dismiss closes it               |
+| describe block      | scenarios                                              |
+| ------------------- | ------------------------------------------------------ |
+| Map selector        | dropdown populated, empty canvas before selection      |
+| Diagram structure   | L1 chevrons, L2 boxes, L3 bullets, sort order columns  |
+| Zoom & pan          | wheel zoom in/out, zoom clamp, click-drag pan          |
+| Tag highlight       | tag highlights L2, non-tagged stays white, None clears |
+| Context menu        | node click opens menu, dismiss closes it               |
 | Permission — viewer | no drag handles visible                                |
 
 Use `editor.json` and `viewer.json` storage states. Use `RUN_ID` for unique map names. Seed diagram data in `beforeAll` using the SAMPLE_JSON import pattern from `import.spec.ts`.
@@ -96,7 +103,6 @@ Use `editor.json` and `viewer.json` storage states. Use `RUN_ID` for unique map 
 ---
 
 ## File Inventory
-
 
 | Action | Path                                                                              |
 | ------ | --------------------------------------------------------------------------------- |
@@ -110,8 +116,8 @@ Use `editor.json` and `viewer.json` storage states. Use `RUN_ID` for unique map 
 | NEW    | `force-app/main/default/lwc/bcm_ContextMenu/` (html, js, meta.xml)                |
 | EDIT   | `force-app/main/default/lwc/bcm_VisualisationButton/bcm_VisualisationButton.html` |
 | NEW    | `tests/e2e/diagram.spec.ts`                                                       |
-| EDIT   | `docs/plan/implementation-plan.md` — tick Step 7 checkbox + date                 |
-| EDIT   | `docs/specs/diagram.md` — add `> Tested by:` markers                             |
+| EDIT   | `docs/plan/implementation-plan.md` — tick Step 7 checkbox + date                  |
+| EDIT   | `docs/specs/diagram.md` — add `> Tested by:` markers                              |
 
 ---
 

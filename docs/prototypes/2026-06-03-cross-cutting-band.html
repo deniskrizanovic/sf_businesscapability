@@ -7,331 +7,393 @@
   Open file:// directly in any browser. No server, no build.
 -->
 <html lang="en">
-<head>
-<meta charset="utf-8" />
-<title>Cross-cutting band — prototype</title>
-<style>
-  body { font-family: 'Salesforce Sans', Arial, sans-serif; margin: 0; background: #f3f3f3; }
-  .frame { padding: 16px; }
-  .canvas {
-    background: #ffffff;
-    border: 1px solid #d8dde6;
-    overflow: auto;
-    position: relative;
-    height: calc(100vh - 90px);
-  }
-  svg { display: block; }
+    <head>
+        <meta charset="utf-8" />
+        <title>Cross-cutting band — prototype</title>
+        <style>
+            body {
+                font-family: 'Salesforce Sans', Arial, sans-serif;
+                margin: 0;
+                background: #f3f3f3;
+            }
+            .frame {
+                padding: 16px;
+            }
+            .canvas {
+                background: #ffffff;
+                border: 1px solid #d8dde6;
+                overflow: auto;
+                position: relative;
+                height: calc(100vh - 90px);
+            }
+            svg {
+                display: block;
+            }
 
-  /* Floating switcher */
-  .switcher {
-    position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
-    background: #16325c; color: #fff; border-radius: 999px;
-    padding: 8px 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-    display: flex; align-items: center; gap: 12px; z-index: 10;
-    font-size: 13px; font-weight: 600;
-  }
-  .switcher button {
-    background: transparent; color: #fff; border: 1px solid #fff5;
-    border-radius: 999px; width: 28px; height: 28px; cursor: pointer;
-    font-size: 16px; line-height: 1; padding: 0;
-  }
-  .switcher button:hover { background: #fff2; }
-  .switcher .label { min-width: 280px; text-align: center; }
-  .hint { font-size: 11px; opacity: 0.7; font-weight: normal; margin-left: 8px; }
+            /* Floating switcher */
+            .switcher {
+                position: fixed;
+                left: 50%;
+                bottom: 16px;
+                transform: translateX(-50%);
+                background: #16325c;
+                color: #fff;
+                border-radius: 999px;
+                padding: 8px 14px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                z-index: 10;
+                font-size: 13px;
+                font-weight: 600;
+            }
+            .switcher button {
+                background: transparent;
+                color: #fff;
+                border: 1px solid #fff5;
+                border-radius: 999px;
+                width: 28px;
+                height: 28px;
+                cursor: pointer;
+                font-size: 16px;
+                line-height: 1;
+                padding: 0;
+            }
+            .switcher button:hover {
+                background: #fff2;
+            }
+            .switcher .label {
+                min-width: 280px;
+                text-align: center;
+            }
+            .hint {
+                font-size: 11px;
+                opacity: 0.7;
+                font-weight: normal;
+                margin-left: 8px;
+            }
 
-  /* Title */
-  h1 { font-size: 13px; margin: 0 0 8px 0; color: #444; font-weight: 600; }
-  h1 small { color: #888; font-weight: normal; }
-</style>
-</head>
-<body>
+            /* Title */
+            h1 {
+                font-size: 13px;
+                margin: 0 0 8px 0;
+                color: #444;
+                font-weight: 600;
+            }
+            h1 small {
+                color: #888;
+                font-weight: normal;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="frame">
+            <h1>Cross-cutting band prototype <small id="variant-title"></small></h1>
+            <div class="canvas" id="canvas"></div>
+        </div>
 
-<div class="frame">
-  <h1>Cross-cutting band prototype <small id="variant-title"></small></h1>
-  <div class="canvas" id="canvas"></div>
-</div>
+        <div class="switcher">
+            <button id="prev" aria-label="previous">←</button>
+            <span class="label" id="label">A</span>
+            <button id="next" aria-label="next">→</button>
+            <span class="hint">←/→ keys</span>
+        </div>
 
-<div class="switcher">
-  <button id="prev" aria-label="previous">←</button>
-  <span class="label" id="label">A</span>
-  <button id="next" aria-label="next">→</button>
-  <span class="hint">←/→ keys</span>
-</div>
+        <script>
+            /* ── Mock data — mirrors the screenshot ─────────────────────────────────── */
+            const L1_COLUMNS = [
+                { name: 'Portfolio Planning & Development', caps: 5 },
+                { name: 'Property Acquisition & Construction', caps: 4 },
+                { name: 'Applicant & Tenancy Management', caps: 6 },
+                { name: 'Property & Asset Management', caps: 5 },
+                { name: 'Community & Stakeholder Engagement', caps: 3 },
+                { name: 'Direction Setting & Governance', caps: 3 },
+                { name: 'System Stewardship & Ecosystem Management', caps: 4 },
+                { name: 'Investment & Performance Management', caps: 2 },
+                { name: 'Information & Technology', caps: 4 },
+                { name: 'People & Culture', caps: 2 }
+            ];
+            const CC_ROWS = [
+                'Cross Cutting',
+                'Access Control & Security',
+                'Cross System Workflow',
+                'Unified Reporting'
+            ];
 
-<script>
-/* ── Mock data — mirrors the screenshot ─────────────────────────────────── */
-const L1_COLUMNS = [
-  { name: 'Portfolio Planning & Development',         caps: 5 },
-  { name: 'Property Acquisition & Construction',      caps: 4 },
-  { name: 'Applicant & Tenancy Management',           caps: 6 },
-  { name: 'Property & Asset Management',              caps: 5 },
-  { name: 'Community & Stakeholder Engagement',       caps: 3 },
-  { name: 'Direction Setting & Governance',           caps: 3 },
-  { name: 'System Stewardship & Ecosystem Management',caps: 4 },
-  { name: 'Investment & Performance Management',      caps: 2 },
-  { name: 'Information & Technology',                 caps: 4 },
-  { name: 'People & Culture',                         caps: 2 },
-];
-const CC_ROWS = [
-  'Cross Cutting',
-  'Access Control & Security',
-  'Cross System Workflow',
-  'Unified Reporting',
-];
+            /* ── Layout constants (match LWC where relevant) ────────────────────────── */
+            const COL_W = 220,
+                COL_GAP = 16,
+                PAD = 24;
+            const CHEV_H = 44,
+                CHEV_NOTCH = 14;
+            const BOX_H = 18,
+                BOX_GAP_Y = 6,
+                BOX_PAD_X = 8;
+            const BAND_ROW_H = 44,
+                BAND_ROW_GAP = 8;
 
-/* ── Layout constants (match LWC where relevant) ────────────────────────── */
-const COL_W = 220, COL_GAP = 16, PAD = 24;
-const CHEV_H = 44, CHEV_NOTCH = 14;
-const BOX_H = 18, BOX_GAP_Y = 6, BOX_PAD_X = 8;
-const BAND_ROW_H = 44, BAND_ROW_GAP = 8;
+            /* Compute width that spans first to last column */
+            const TOTAL_COLS = L1_COLUMNS.length;
+            const COL_AREA_W = TOTAL_COLS * COL_W + (TOTAL_COLS - 1) * COL_GAP;
+            const CANVAS_W = PAD * 2 + COL_AREA_W;
 
-/* Compute width that spans first to last column */
-const TOTAL_COLS = L1_COLUMNS.length;
-const COL_AREA_W = TOTAL_COLS * COL_W + (TOTAL_COLS - 1) * COL_GAP;
-const CANVAS_W   = PAD * 2 + COL_AREA_W;
+            /* ── Render the regular column layout (shared across variants) ─────────── */
+            function renderColumns() {
+                const parts = [];
+                // Top L1 chevron row
+                L1_COLUMNS.forEach((c, i) => {
+                    const x = PAD + i * (COL_W + COL_GAP);
+                    const y = PAD;
+                    const w = COL_W,
+                        h = CHEV_H,
+                        n = CHEV_NOTCH;
+                    const points = [
+                        `${x},${y}`,
+                        `${x + w - n},${y}`,
+                        `${x + w},${y + h / 2}`,
+                        `${x + w - n},${y + h}`,
+                        `${x},${y + h}`
+                    ].join(' ');
+                    parts.push(
+                        `<polygon points="${points}" fill="#4A4A4A" stroke="#333" />` +
+                            `<text x="${x + w / 2}" y="${y + h / 2}" text-anchor="middle" dominant-baseline="middle" ` +
+                            `fill="#fff" font-size="12" font-weight="700">${escape(c.name)}</text>`
+                    );
+                });
+                // L2 boxes
+                L1_COLUMNS.forEach((c, i) => {
+                    const x = PAD + i * (COL_W + COL_GAP);
+                    let y = PAD + CHEV_H + 12;
+                    for (let k = 0; k < c.caps; k++) {
+                        const groupH = 60;
+                        parts.push(
+                            `<rect x="${x}" y="${y}" width="${COL_W}" height="${groupH}" ` +
+                                `fill="#fff" stroke="#c9c9c9"/>` +
+                                `<text x="${x + 10}" y="${y + 18}" font-size="11" font-weight="700" fill="#333">L2 capability ${k + 1}</text>` +
+                                `<text x="${x + 10}" y="${y + 34}" font-size="10" fill="#777">• detail one</text>` +
+                                `<text x="${x + 10}" y="${y + 48}" font-size="10" fill="#777">• detail two</text>`
+                        );
+                        y += groupH + 8;
+                    }
+                });
+                return parts.join('');
+            }
 
-/* ── Render the regular column layout (shared across variants) ─────────── */
-function renderColumns() {
-  const parts = [];
-  // Top L1 chevron row
-  L1_COLUMNS.forEach((c, i) => {
-    const x = PAD + i * (COL_W + COL_GAP);
-    const y = PAD;
-    const w = COL_W, h = CHEV_H, n = CHEV_NOTCH;
-    const points = [
-      `${x},${y}`,
-      `${x+w-n},${y}`,
-      `${x+w},${y+h/2}`,
-      `${x+w-n},${y+h}`,
-      `${x},${y+h}`,
-    ].join(' ');
-    parts.push(
-      `<polygon points="${points}" fill="#4A4A4A" stroke="#333" />` +
-      `<text x="${x+w/2}" y="${y+h/2}" text-anchor="middle" dominant-baseline="middle" ` +
-      `fill="#fff" font-size="12" font-weight="700">${escape(c.name)}</text>`
-    );
-  });
-  // L2 boxes
-  L1_COLUMNS.forEach((c, i) => {
-    const x = PAD + i * (COL_W + COL_GAP);
-    let y = PAD + CHEV_H + 12;
-    for (let k = 0; k < c.caps; k++) {
-      const groupH = 60;
-      parts.push(
-        `<rect x="${x}" y="${y}" width="${COL_W}" height="${groupH}" ` +
-        `fill="#fff" stroke="#c9c9c9"/>` +
-        `<text x="${x+10}" y="${y+18}" font-size="11" font-weight="700" fill="#333">L2 capability ${k+1}</text>` +
-        `<text x="${x+10}" y="${y+34}" font-size="10" fill="#777">• detail one</text>` +
-        `<text x="${x+10}" y="${y+48}" font-size="10" fill="#777">• detail two</text>`
-      );
-      y += groupH + 8;
-    }
-  });
-  return parts.join('');
-}
+            /* Determine where the column area ends vertically */
+            function columnsBottomY() {
+                const tallestCaps = Math.max(...L1_COLUMNS.map((c) => c.caps));
+                return PAD + CHEV_H + 12 + tallestCaps * (60 + 8) + 8;
+            }
 
-/* Determine where the column area ends vertically */
-function columnsBottomY() {
-  const tallestCaps = Math.max(...L1_COLUMNS.map(c => c.caps));
-  return PAD + CHEV_H + 12 + tallestCaps * (60 + 8) + 8;
-}
+            /* ── Variant A: stacked full-width chevrons, label centred ─────────────── */
+            function variantA(bandTopY) {
+                const parts = [];
+                const x = PAD;
+                const w = COL_AREA_W;
+                const n = CHEV_NOTCH;
+                CC_ROWS.forEach((name, i) => {
+                    const y = bandTopY + i * (BAND_ROW_H + BAND_ROW_GAP);
+                    const h = BAND_ROW_H;
+                    const points = [
+                        `${x},${y}`,
+                        `${x + w - n},${y}`,
+                        `${x + w},${y + h / 2}`,
+                        `${x + w - n},${y + h}`,
+                        `${x},${y + h}`
+                    ].join(' ');
+                    parts.push(
+                        `<polygon points="${points}" fill="#4A4A4A" stroke="#333"/>` +
+                            `<text x="${x + w / 2}" y="${y + h / 2}" text-anchor="middle" dominant-baseline="middle" ` +
+                            `fill="#fff" font-size="13" font-weight="700">${escape(name)}</text>`
+                    );
+                });
+                return parts.join('');
+            }
 
-/* ── Variant A: stacked full-width chevrons, label centred ─────────────── */
-function variantA(bandTopY) {
-  const parts = [];
-  const x = PAD;
-  const w = COL_AREA_W;
-  const n = CHEV_NOTCH;
-  CC_ROWS.forEach((name, i) => {
-    const y = bandTopY + i * (BAND_ROW_H + BAND_ROW_GAP);
-    const h = BAND_ROW_H;
-    const points = [
-      `${x},${y}`,
-      `${x+w-n},${y}`,
-      `${x+w},${y+h/2}`,
-      `${x+w-n},${y+h}`,
-      `${x},${y+h}`,
-    ].join(' ');
-    parts.push(
-      `<polygon points="${points}" fill="#4A4A4A" stroke="#333"/>` +
-      `<text x="${x+w/2}" y="${y+h/2}" text-anchor="middle" dominant-baseline="middle" ` +
-      `fill="#fff" font-size="13" font-weight="700">${escape(name)}</text>`
-    );
-  });
-  return parts.join('');
-}
-
-/* ── Variant B: full-width chevrons, label left-aligned, gradient ──────── */
-function variantB(bandTopY) {
-  const parts = [];
-  const x = PAD;
-  const w = COL_AREA_W;
-  const n = CHEV_NOTCH;
-  parts.push(
-    `<defs>
+            /* ── Variant B: full-width chevrons, label left-aligned, gradient ──────── */
+            function variantB(bandTopY) {
+                const parts = [];
+                const x = PAD;
+                const w = COL_AREA_W;
+                const n = CHEV_NOTCH;
+                parts.push(
+                    `<defs>
       <linearGradient id="ccgrad" x1="0" x2="1" y1="0" y2="0">
         <stop offset="0%"  stop-color="#2b3a55"/>
         <stop offset="100%" stop-color="#5d6d8a"/>
       </linearGradient>
     </defs>`
-  );
-  CC_ROWS.forEach((name, i) => {
-    const y = bandTopY + i * (BAND_ROW_H + BAND_ROW_GAP);
-    const h = BAND_ROW_H;
-    const points = [
-      `${x},${y}`,
-      `${x+w-n},${y}`,
-      `${x+w},${y+h/2}`,
-      `${x+w-n},${y+h}`,
-      `${x},${y+h}`,
-    ].join(' ');
-    parts.push(
-      `<polygon points="${points}" fill="url(#ccgrad)" stroke="#1a2030"/>` +
-      `<text x="${x+18}" y="${y+h/2}" dominant-baseline="middle" ` +
-      `fill="#fff" font-size="13" font-weight="700" letter-spacing="0.4">${escape(name.toUpperCase())}</text>`
-    );
-  });
-  return parts.join('');
-}
+                );
+                CC_ROWS.forEach((name, i) => {
+                    const y = bandTopY + i * (BAND_ROW_H + BAND_ROW_GAP);
+                    const h = BAND_ROW_H;
+                    const points = [
+                        `${x},${y}`,
+                        `${x + w - n},${y}`,
+                        `${x + w},${y + h / 2}`,
+                        `${x + w - n},${y + h}`,
+                        `${x},${y + h}`
+                    ].join(' ');
+                    parts.push(
+                        `<polygon points="${points}" fill="url(#ccgrad)" stroke="#1a2030"/>` +
+                            `<text x="${x + 18}" y="${y + h / 2}" dominant-baseline="middle" ` +
+                            `fill="#fff" font-size="13" font-weight="700" letter-spacing="0.4">${escape(name.toUpperCase())}</text>`
+                    );
+                });
+                return parts.join('');
+            }
 
-/* ── Variant C: overlapping layered chevrons (depth) ───────────────────── */
-function variantC(bandTopY) {
-  const parts = [];
-  const x = PAD;
-  const w = COL_AREA_W;
-  const n = CHEV_NOTCH * 2;
-  const rowH = BAND_ROW_H;
-  const overlap = 12; // each row sits 12px up from the next, overlapping
-  const palette = ['#1a3d6b','#2b4f7a','#3f6492','#587bad'];
-  // draw bottom-up so bottom rows are behind
-  for (let i = CC_ROWS.length - 1; i >= 0; i--) {
-    const name = CC_ROWS[i];
-    const y = bandTopY + i * (rowH - overlap);
-    const h = rowH;
-    const points = [
-      `${x},${y}`,
-      `${x+w-n},${y}`,
-      `${x+w},${y+h/2}`,
-      `${x+w-n},${y+h}`,
-      `${x},${y+h}`,
-    ].join(' ');
-    parts.push(
-      `<polygon points="${points}" fill="${palette[i % palette.length]}" stroke="#0e2342" stroke-width="1.2"/>` +
-      `<text x="${x+w/2}" y="${y+h/2 - overlap/2 + 2}" text-anchor="middle" dominant-baseline="middle" ` +
-      `fill="#fff" font-size="13" font-weight="700">${escape(name)}</text>`
-    );
-  }
-  return parts.join('');
-}
+            /* ── Variant C: overlapping layered chevrons (depth) ───────────────────── */
+            function variantC(bandTopY) {
+                const parts = [];
+                const x = PAD;
+                const w = COL_AREA_W;
+                const n = CHEV_NOTCH * 2;
+                const rowH = BAND_ROW_H;
+                const overlap = 12; // each row sits 12px up from the next, overlapping
+                const palette = ['#1a3d6b', '#2b4f7a', '#3f6492', '#587bad'];
+                // draw bottom-up so bottom rows are behind
+                for (let i = CC_ROWS.length - 1; i >= 0; i--) {
+                    const name = CC_ROWS[i];
+                    const y = bandTopY + i * (rowH - overlap);
+                    const h = rowH;
+                    const points = [
+                        `${x},${y}`,
+                        `${x + w - n},${y}`,
+                        `${x + w},${y + h / 2}`,
+                        `${x + w - n},${y + h}`,
+                        `${x},${y + h}`
+                    ].join(' ');
+                    parts.push(
+                        `<polygon points="${points}" fill="${palette[i % palette.length]}" stroke="#0e2342" stroke-width="1.2"/>` +
+                            `<text x="${x + w / 2}" y="${y + h / 2 - overlap / 2 + 2}" text-anchor="middle" dominant-baseline="middle" ` +
+                            `fill="#fff" font-size="13" font-weight="700">${escape(name)}</text>`
+                    );
+                }
+                return parts.join('');
+            }
 
-/* ── Variant D: overlapping layered + left-aligned uppercase labels ─────── */
-function variantD(bandTopY) {
-  const parts = [];
-  const x = PAD;
-  const w = COL_AREA_W;
-  const n = CHEV_NOTCH * 2;
-  const rowH = BAND_ROW_H;
-  const overlap = 12;
-  const palette = ['#1a3d6b','#2b4f7a','#3f6492','#587bad'];
-  parts.push(
-    `<defs>
+            /* ── Variant D: overlapping layered + left-aligned uppercase labels ─────── */
+            function variantD(bandTopY) {
+                const parts = [];
+                const x = PAD;
+                const w = COL_AREA_W;
+                const n = CHEV_NOTCH * 2;
+                const rowH = BAND_ROW_H;
+                const overlap = 12;
+                const palette = ['#1a3d6b', '#2b4f7a', '#3f6492', '#587bad'];
+                parts.push(
+                    `<defs>
       <linearGradient id="ccgradD" x1="0" x2="1" y1="0" y2="0">
         <stop offset="0%"  stop-color="#1a3d6b"/>
         <stop offset="100%" stop-color="#587bad"/>
       </linearGradient>
     </defs>`
-  );
-  for (let i = CC_ROWS.length - 1; i >= 0; i--) {
-    const name = CC_ROWS[i];
-    const y = bandTopY + i * (rowH - overlap);
-    const h = rowH;
-    const points = [
-      `${x},${y}`,
-      `${x+w-n},${y}`,
-      `${x+w},${y+h/2}`,
-      `${x+w-n},${y+h}`,
-      `${x},${y+h}`,
-    ].join(' ');
-    parts.push(
-      `<polygon points="${points}" fill="${palette[i % palette.length]}" stroke="#0e2342" stroke-width="1.2"/>` +
-      `<text x="${x+18}" y="${y + h - 8}" dominant-baseline="alphabetic" ` +
-      `fill="#fff" font-size="13" font-weight="700" letter-spacing="0.4">${escape(name.toUpperCase())}</text>`
-    );
-  }
-  return parts.join('');
-}
+                );
+                for (let i = CC_ROWS.length - 1; i >= 0; i--) {
+                    const name = CC_ROWS[i];
+                    const y = bandTopY + i * (rowH - overlap);
+                    const h = rowH;
+                    const points = [
+                        `${x},${y}`,
+                        `${x + w - n},${y}`,
+                        `${x + w},${y + h / 2}`,
+                        `${x + w - n},${y + h}`,
+                        `${x},${y + h}`
+                    ].join(' ');
+                    parts.push(
+                        `<polygon points="${points}" fill="${palette[i % palette.length]}" stroke="#0e2342" stroke-width="1.2"/>` +
+                            `<text x="${x + 18}" y="${y + h - 8}" dominant-baseline="alphabetic" ` +
+                            `fill="#fff" font-size="13" font-weight="700" letter-spacing="0.4">${escape(name.toUpperCase())}</text>`
+                    );
+                }
+                return parts.join('');
+            }
 
-/* ── Page composition ───────────────────────────────────────────────────── */
-function render(variant) {
-  const bandTopY = columnsBottomY() + 16;
-  let bandSvg;
-  let nrows = CC_ROWS.length;
-  let bandHeight;
-  if (variant === 'B') {
-    bandHeight = nrows * (BAND_ROW_H + BAND_ROW_GAP);
-    bandSvg = variantB(bandTopY);
-  } else if (variant === 'C') {
-    bandHeight = nrows * BAND_ROW_H + 16;
-    bandSvg = variantC(bandTopY);
-  } else if (variant === 'D') {
-    bandHeight = nrows * BAND_ROW_H + 16;
-    bandSvg = variantD(bandTopY);
-  } else {
-    bandHeight = nrows * (BAND_ROW_H + BAND_ROW_GAP);
-    bandSvg = variantA(bandTopY);
-  }
-  const canvasH = bandTopY + bandHeight + PAD;
-  const svg = `
+            /* ── Page composition ───────────────────────────────────────────────────── */
+            function render(variant) {
+                const bandTopY = columnsBottomY() + 16;
+                let bandSvg;
+                let nrows = CC_ROWS.length;
+                let bandHeight;
+                if (variant === 'B') {
+                    bandHeight = nrows * (BAND_ROW_H + BAND_ROW_GAP);
+                    bandSvg = variantB(bandTopY);
+                } else if (variant === 'C') {
+                    bandHeight = nrows * BAND_ROW_H + 16;
+                    bandSvg = variantC(bandTopY);
+                } else if (variant === 'D') {
+                    bandHeight = nrows * BAND_ROW_H + 16;
+                    bandSvg = variantD(bandTopY);
+                } else {
+                    bandHeight = nrows * (BAND_ROW_H + BAND_ROW_GAP);
+                    bandSvg = variantA(bandTopY);
+                }
+                const canvasH = bandTopY + bandHeight + PAD;
+                const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS_W}" height="${canvasH}"
          viewBox="0 0 ${CANVAS_W} ${canvasH}">
       ${renderColumns()}
       ${bandSvg}
     </svg>
   `;
-  document.getElementById('canvas').innerHTML = svg;
-  const titles = {
-    A: 'A — Stacked full-width chevrons, centred labels',
-    B: 'B — Stacked full-width, left-aligned uppercase, gradient',
-    C: 'C — Overlapping layered chevrons (depth)',
-    D: 'D — Overlapping layered + left-aligned uppercase labels',
-  };
-  document.getElementById('label').textContent = titles[variant];
-  document.getElementById('variant-title').textContent = '— ' + titles[variant];
-  // Print state
-  console.log('[prototype] variant=' + variant + ' canvasW=' + CANVAS_W + ' canvasH=' + canvasH);
-}
+                document.getElementById('canvas').innerHTML = svg;
+                const titles = {
+                    A: 'A — Stacked full-width chevrons, centred labels',
+                    B: 'B — Stacked full-width, left-aligned uppercase, gradient',
+                    C: 'C — Overlapping layered chevrons (depth)',
+                    D: 'D — Overlapping layered + left-aligned uppercase labels'
+                };
+                document.getElementById('label').textContent = titles[variant];
+                document.getElementById('variant-title').textContent = '— ' + titles[variant];
+                // Print state
+                console.log(
+                    '[prototype] variant=' +
+                        variant +
+                        ' canvasW=' +
+                        CANVAS_W +
+                        ' canvasH=' +
+                        canvasH
+                );
+            }
 
-function escape(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
+            function escape(s) {
+                return String(s).replace(
+                    /[&<>"']/g,
+                    (c) =>
+                        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
+                );
+            }
 
-/* ── Switcher wiring ────────────────────────────────────────────────────── */
-const VARIANTS = ['A','B','C','D'];
-function getVariant() {
-  const p = new URLSearchParams(location.search).get('variant');
-  return VARIANTS.includes(p) ? p : 'A';
-}
-function setVariant(v) {
-  const url = new URL(location.href);
-  url.searchParams.set('variant', v);
-  history.replaceState(null, '', url);
-  render(v);
-}
-function cycle(delta) {
-  const cur = getVariant();
-  const i = VARIANTS.indexOf(cur);
-  const next = VARIANTS[(i + delta + VARIANTS.length) % VARIANTS.length];
-  setVariant(next);
-}
-document.getElementById('prev').addEventListener('click', () => cycle(-1));
-document.getElementById('next').addEventListener('click', () => cycle(+1));
-window.addEventListener('keydown', (e) => {
-  const t = e.target;
-  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-  if (e.key === 'ArrowLeft')  cycle(-1);
-  if (e.key === 'ArrowRight') cycle(+1);
-});
-render(getVariant());
-</script>
-</body>
+            /* ── Switcher wiring ────────────────────────────────────────────────────── */
+            const VARIANTS = ['A', 'B', 'C', 'D'];
+            function getVariant() {
+                const p = new URLSearchParams(location.search).get('variant');
+                return VARIANTS.includes(p) ? p : 'A';
+            }
+            function setVariant(v) {
+                const url = new URL(location.href);
+                url.searchParams.set('variant', v);
+                history.replaceState(null, '', url);
+                render(v);
+            }
+            function cycle(delta) {
+                const cur = getVariant();
+                const i = VARIANTS.indexOf(cur);
+                const next = VARIANTS[(i + delta + VARIANTS.length) % VARIANTS.length];
+                setVariant(next);
+            }
+            document.getElementById('prev').addEventListener('click', () => cycle(-1));
+            document.getElementById('next').addEventListener('click', () => cycle(+1));
+            window.addEventListener('keydown', (e) => {
+                const t = e.target;
+                if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable))
+                    return;
+                if (e.key === 'ArrowLeft') cycle(-1);
+                if (e.key === 'ArrowRight') cycle(+1);
+            });
+            render(getVariant());
+        </script>
+    </body>
 </html>

@@ -56,12 +56,11 @@ that can fail. This approach is to be formalised as a process rule.
 Every scenario in `docs/specs/` carries a coverage marker immediately below its
 heading. Three forms are valid:
 
-
-| Marker                                                                              | When to use                                                                 |
-| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `> Tested by: ClassName.methodName`                                                 | Apex or e2e test exists and passes                                          |
-| `> Tested by: ClassName.methodName (not yet written — see docs/handoff/<file>.md)` | Method name agreed, test not written yet; handoff doc must exist            |
-| `> Deferred: <one-line reason>`                                                     | Consciously skipped — platform-enforced constraint, genuinely out of scope |
+| Marker                                                                             | When to use                                                                |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `> Tested by: ClassName.methodName`                                                | Apex or e2e test exists and passes                                         |
+| `> Tested by: ClassName.methodName (not yet written — see docs/handoff/<file>.md)` | Method name agreed, test not written yet; handoff doc must exist           |
+| `> Deferred: <one-line reason>`                                                    | Consciously skipped — platform-enforced constraint, genuinely out of scope |
 
 `UI only` and `not yet covered` are banned.
 
@@ -80,7 +79,7 @@ The feature and scenario titles must match the exact wording in the spec file.
 Running `grep -r "@spec"` across the codebase produces the full Apex reverse
 traceability map.
 
-For Playwright tests, the test description string *is* the reverse link. No
+For Playwright tests, the test description string _is_ the reverse link. No
 `// spec:` comment is required. Instead, the test description must exactly match
 the string in the spec's `Tested by:` marker:
 
@@ -104,10 +103,9 @@ applies to all test methods from that point forward.
 Every `git commit` triggers a Husky pre-commit hook that runs lint-staged over the
 staged files:
 
-
 | Files                   | Tool                                                 | What it enforces                                 |
 | ----------------------- | ---------------------------------------------------- | ------------------------------------------------ |
-| `**/*.{cls,trigger}`    | `sf code-analyzer run -s 2`                          | PMD + CPD rules at severity ≥ 2                 |
+| `**/*.{cls,trigger}`    | `sf code-analyzer run -s 2`                          | PMD + CPD rules at severity ≥ 2                  |
 | `**/{aura,lwc}/**/*.js` | ESLint (`@salesforce/eslint-config-lwc`)             | LWC component quality rules                      |
 | `**/lwc/**`             | Jest (`--bail --findRelatedTests --passWithNoTests`) | Related LWC unit tests must pass                 |
 | All source files        | Prettier                                             | Consistent formatting (auto-fixed before commit) |
@@ -200,9 +198,8 @@ because Salesforce user creation from Apex is slow and unreliable in automated
 contexts. The usernames and passwords are stored in `.env` (gitignored);
 `.env.example` documents the required variables.
 
-
-| User                  | Permission Set | Purpose                                         |
-| --------------------- | -------------- | ----------------------------------------------- |
+| User                  | Permission Set | Purpose                                        |
+| --------------------- | -------------- | ---------------------------------------------- |
 | `bcm-editor-test@...` | `bcm_Editor`   | Full access — creates, edits, deletes records  |
 | `bcm-viewer-test@...` | `bcm_Viewer`   | Read-only — verifies write controls are absent |
 
@@ -213,9 +210,9 @@ Both users are assigned the `AutomatedTester - Minimum Access Clone` profile wit
 
 Both users are assigned the `AutomatedTester - Minimum Access Clone` profile (committed to source at `force-app/main/default/profiles/AutomatedTester - Minimum Access Clone.profile-meta.xml`). This profile is a clone of Minimum Access — the lowest-privilege standard profile — with three deliberate additions:
 
-* **`BypassMFAForUiLogins`** — prevents Salesforce from prompting for a second factor during username/password login. Without this, Playwright's login flow stalls at the MFA screen.
-* **`SkipIdentityConfirmation`** — suppresses the "Verify your identity" interstitial that Salesforce shows for logins from unfamiliar IP addresses. Without this, the test runner would be blocked on first login from any new CI machine or developer laptop.
-* **`ActivitiesAccess` and `ChatterInternalUser`** — standard permissions required for Lightning Experience to load correctly.
+- **`BypassMFAForUiLogins`** — prevents Salesforce from prompting for a second factor during username/password login. Without this, Playwright's login flow stalls at the MFA screen.
+- **`SkipIdentityConfirmation`** — suppresses the "Verify your identity" interstitial that Salesforce shows for logins from unfamiliar IP addresses. Without this, the test runner would be blocked on first login from any new CI machine or developer laptop.
+- **`ActivitiesAccess` and `ChatterInternalUser`** — standard permissions required for Lightning Experience to load correctly.
 
 All `bcm_` tabs (`bcm_Map__c`, `bcm_Capability__c`, `bcm_Tag__c`) are set to `Hidden` at the profile level. Tab visibility for these objects is granted exclusively via the `bcm_Editor` and `bcm_Viewer` permission sets. This is intentional: it means the Playwright tests for tab visibility are genuinely testing that the permission sets do their job, not that the profile grants access.
 
@@ -228,7 +225,7 @@ then discards the substituted file. Credentials are never written to disk
 permanently.
 
 ```bash
-./scripts/create-e2e-users.sh [org-alias] 
+./scripts/create-e2e-users.sh [org-alias]
 ```
 
 The Apex script uses `Database.upsert` on `User.Fields.Username`, so re-running it
@@ -294,7 +291,6 @@ Violating this rule causes ordering-dependent failures that are hard to diagnose
 
 ---
 
-
 ## 4. Measurement
 
 ### Apex coverage
@@ -346,10 +342,10 @@ before closing any implementation step. It does two things in sequence:
 
 1. **Calls `/check-traceability`** — full output, unchanged (see below)
 2. **Executes tests and reports results:**
-   - Runs the Apex test class(es) for the step via
-     `sf apex run test --synchronous --code-coverage` against `SF_ORG_ALIAS`
-     from `.env`, then reports pass/fail and per-class coverage
-   - Runs the Playwright e2e spec for the step and reports pass/fail and test counts
+    - Runs the Apex test class(es) for the step via
+      `sf apex run test --synchronous --code-coverage` against `SF_ORG_ALIAS`
+      from `.env`, then reports pass/fail and per-class coverage
+    - Runs the Playwright e2e spec for the step and reports pass/fail and test counts
 
 The skill derives the Apex class name(s) and e2e spec path directly from the
 manual inspection checklist in `docs/plan/implementation-plan.md` — there is no
@@ -383,14 +379,13 @@ Output shape:
 Run this when you want traceability verification without triggering test
 execution (faster, no org connection required).
 
-
-| # | Direction | What is checked                                                                |
-| - | --------- | ------------------------------------------------------------------------------ |
-| 1 | Forward   | Every spec scenario has a`> Tested by:` or `> Deferred:` marker                |
-| 2 | Forward   | Every`Tested by:` Apex reference resolves to a real method in the `.cls` file  |
-| 3 | Forward   | Every`Tested by:` e2e reference resolves to a test with that exact description |
-| 4 | Reverse   | Every`// @spec` comment in Apex resolves to a real feature + scenario          |
-| 5 | Format    | Any banned marker (`not yet covered`, `UI only`) is flagged                    |
+| #   | Direction | What is checked                                                                |
+| --- | --------- | ------------------------------------------------------------------------------ |
+| 1   | Forward   | Every spec scenario has a`> Tested by:` or `> Deferred:` marker                |
+| 2   | Forward   | Every`Tested by:` Apex reference resolves to a real method in the `.cls` file  |
+| 3   | Forward   | Every`Tested by:` e2e reference resolves to a test with that exact description |
+| 4   | Reverse   | Every`// @spec` comment in Apex resolves to a real feature + scenario          |
+| 5   | Format    | Any banned marker (`not yet covered`, `UI only`) is flagged                    |
 
 By default, only spec files for steps marked `[x]` complete in the implementation
 plan are checked. Pass an optional filename to check a single spec regardless of
@@ -412,10 +407,10 @@ Before marking any implementation step complete:
 
 **Then verify the remaining items manually:**
 
-- [ ]  Org: objects, fields, and permission grants visible in Setup → Object Manager
-- [ ]  Org: manual CRUD and cascade-delete scenarios verified in the browser
-- [ ]  FP count updated in `docs/design/99-cosmic-function-point-count.md` if new functional processes were added
-- [ ]  Implementation plan row marked complete with date in `docs/plan/implementation-plan.md`
+- [ ] Org: objects, fields, and permission grants visible in Setup → Object Manager
+- [ ] Org: manual CRUD and cascade-delete scenarios verified in the browser
+- [ ] FP count updated in `docs/design/99-cosmic-function-point-count.md` if new functional processes were added
+- [ ] Implementation plan row marked complete with date in `docs/plan/implementation-plan.md`
 
 ---
 

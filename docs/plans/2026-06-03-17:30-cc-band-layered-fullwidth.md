@@ -29,6 +29,7 @@ Out of scope: any change to band click behaviour, focus / nav, or column-area la
 **canvasWidth** — band naturally fits inside `colWidth`; remove the per-cc-col bandWidth calc, keep `Math.max(colWidth, 600)`.
 
 **Template** — replace band `<g>` block in `bcm_CapabilityMap.html` (lines 180-204):
+
 - Polygon `fill={node.fill}` and `stroke="#0e2342"` `stroke-width="1.2"`.
 - Single `<text>` (no inner `for:each`) with `x={node.labelX}` `y={node.labelY}` `dominant-baseline="alphabetic"` `font-size="13"` `font-weight="700"` `letter-spacing="0.4"` `fill="#FFFFFF"`. No `text-anchor` (default = start = left).
 - Text content `{node.label}` (already uppercased in JS).
@@ -46,6 +47,7 @@ Out of scope: any change to band click behaviour, focus / nav, or column-area la
 - **Modify** `docs/specs/diagram.md` — extend Cross-cutting band section: full-width spans, stacked overlap, sort order on top.
 
 E2e: existing `Cross-cutting Foo ${RUN_ID}` already created; add a second `Cross-cutting Bar ${RUN_ID}` with sort order 100 to verify stacking. New test asserts:
+
 - both `g.bcm-band-node` rendered.
 - the second-rendered (DOM-last) band node's `data-node-name` matches the lowest-sort-order cc (rendered on top of stack).
 
@@ -104,4 +106,4 @@ E2e: existing `Cross-cutting Foo ${RUN_ID}` already created; add a second `Cross
 - No new FP — pure SVG re-layout of band data already loaded via `getCapabilities` (FP2). Existing FP exclusion row in §6 covers this.
 - No data-model change. No Apex change. No new permission.
 - Stack order: drawing reverse-order ensures sort-order 1 paints last → on top. Palette index keeps the darkest shade on top regardless of stack count.
-- Width: band width tracks `canvasWidth - 2*DIAGRAM_PADDING`; if regular columns expand, band expands with them; if zero regular columns (cc-only), band falls back to canvas floor (600 - 2*pad).
+- Width: band width tracks `canvasWidth - 2*DIAGRAM_PADDING`; if regular columns expand, band expands with them; if zero regular columns (cc-only), band falls back to canvas floor (600 - 2\*pad).

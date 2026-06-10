@@ -12,13 +12,13 @@
 
 ## File Structure
 
-| File | Reason |
-|------|--------|
-| `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.html` | Add `data-bcm-saving` attr on root for Playwright wait condition. |
-| `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js` | Move `_ghostX/_ghostY` into `this.ghost`. Extract `_dispatchSaveApex`. Clear `_capabilities` on combobox unselect. |
-| `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js` | Update Jest expectations matching new ghost shape + new helper boundary. |
-| `tests/e2e/drag-drop.spec.ts` | Replace `waitForTimeout(1500)` w/ wait on `data-bcm-saving`. Capture pre-drag SortOrder. Parse `DRAG_DROP_RESULT:` and assert order changed. |
-| `docs/plans/2026-06-06-11:47-step8-drag-drop.md` | Reconcile `WITH SECURITY_ENFORCED` → `WITH USER_MODE` (matches code). |
+| File                                                                               | Reason                                                                                                                                       |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.html`              | Add `data-bcm-saving` attr on root for Playwright wait condition.                                                                            |
+| `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js`                | Move `_ghostX/_ghostY` into `this.ghost`. Extract `_dispatchSaveApex`. Clear `_capabilities` on combobox unselect.                           |
+| `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js` | Update Jest expectations matching new ghost shape + new helper boundary.                                                                     |
+| `tests/e2e/drag-drop.spec.ts`                                                      | Replace `waitForTimeout(1500)` w/ wait on `data-bcm-saving`. Capture pre-drag SortOrder. Parse `DRAG_DROP_RESULT:` and assert order changed. |
+| `docs/plans/2026-06-06-11:47-step8-drag-drop.md`                                   | Reconcile `WITH SECURITY_ENFORCED` → `WITH USER_MODE` (matches code).                                                                        |
 
 No new files. No Apex code changes.
 
@@ -36,6 +36,7 @@ No new files. No Apex code changes.
 ## Task 1: Add `data-bcm-saving` attribute to canvas root
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.html` (around line 88-99 — `.bcm-canvas-container` wrapper)
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js` (add `savingAttr` getter)
 
@@ -56,13 +57,13 @@ Add right after `get canEdit()` (around line 192):
 In `bcm_CapabilityMap.html`, change line 88 from:
 
 ```html
-    <div class="bcm-canvas-container">
+<div class="bcm-canvas-container"></div>
 ```
 
 to:
 
 ```html
-    <div class="bcm-canvas-container" data-bcm-saving={savingAttr}>
+<div class="bcm-canvas-container" data-bcm-saving="{savingAttr}"></div>
 ```
 
 - [ ] **Step 3: Run Jest to verify nothing broke**
@@ -82,9 +83,11 @@ git commit -m "feat(drag-drop): expose data-bcm-saving for e2e wait condition (P
 ## Task 2: Strengthen Playwright gesture test (blockers #1 + #2)
 
 **Files:**
+
 - Modify: `tests/e2e/drag-drop.spec.ts` (the `L2 reorder within column (gesture)` test — currently lines 166-217)
 
 Two blockers fold together because they touch the same test. We:
+
 1. Capture pre-drag SortOrder via apex (so we have a baseline).
 2. Replace `page.waitForTimeout(1500)` with `waitForDragDropSettled(page)` polling `[data-bcm-saving="false"]`.
 3. Parse the post-drag `DRAG_DROP_RESULT:` line and assert it differs from pre-drag (i.e. swap actually happened, not just names persisted).
@@ -95,7 +98,9 @@ Add right after `selectMap` helper (around line 110):
 
 ```ts
 async function waitForDragDropSettled(page: import('@playwright/test').Page) {
-    await page.locator('.bcm-canvas-container[data-bcm-saving="false"]').waitFor({ state: 'attached', timeout: 15000 });
+    await page
+        .locator('.bcm-canvas-container[data-bcm-saving="false"]')
+        .waitFor({ state: 'attached', timeout: 15000 });
 }
 ```
 
@@ -121,7 +126,11 @@ System.debug('DRAG_DROP_RESULT:' + result);
     const apexFile = path.resolve(`tests/e2e/.dd_order_${RUN_ID}_${Date.now()}.apex`);
     fs.writeFileSync(apexFile, apex, 'utf-8');
     try {
-        const out = execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], { encoding: 'utf-8' });
+        const out = execFileSync(
+            'sf',
+            ['apex', 'run', '--file', apexFile, '--target-org', orgAlias],
+            { encoding: 'utf-8' }
+        );
         const match = out.match(/DRAG_DROP_RESULT:([^\n]*)/);
         if (!match) throw new Error('DRAG_DROP_RESULT marker not found in apex output');
         return match[1].trim();
@@ -136,43 +145,43 @@ System.debug('DRAG_DROP_RESULT:' + result);
 Replace the entire `L2 reorder within column (gesture)` test (lines 166-217) with:
 
 ```ts
-    test('L2 reorder within column (gesture)', async ({ page }) => {
-        const orgAlias = getOrgAlias();
-        await openDiagram(page);
-        await selectMap(page);
+test('L2 reorder within column (gesture)', async ({ page }) => {
+    const orgAlias = getOrgAlias();
+    await openDiagram(page);
+    await selectMap(page);
 
-        // Baseline: capture order BEFORE the drag
-        const orderBefore = parseDragDropOrder(orgAlias, MAP_NAME, L1A_NAME);
-        expect(orderBefore).toContain(L2A1_NAME);
-        expect(orderBefore).toContain(L2A2_NAME);
+    // Baseline: capture order BEFORE the drag
+    const orderBefore = parseDragDropOrder(orgAlias, MAP_NAME, L1A_NAME);
+    expect(orderBefore).toContain(L2A1_NAME);
+    expect(orderBefore).toContain(L2A2_NAME);
 
-        // Locate L2A1 + L2A2 handles
-        const l2a1 = page.locator(`[data-bcm-drag-handle="true"][data-node-level="2"]`).nth(0);
-        const l2a2 = page.locator(`[data-bcm-drag-handle="true"][data-node-level="2"]`).nth(1);
-        const a1Box = await l2a1.boundingBox();
-        const a2Box = await l2a2.boundingBox();
-        if (!a1Box || !a2Box) throw new Error('Could not locate L2 handle bounding boxes');
+    // Locate L2A1 + L2A2 handles
+    const l2a1 = page.locator(`[data-bcm-drag-handle="true"][data-node-level="2"]`).nth(0);
+    const l2a2 = page.locator(`[data-bcm-drag-handle="true"][data-node-level="2"]`).nth(1);
+    const a1Box = await l2a1.boundingBox();
+    const a2Box = await l2a2.boundingBox();
+    if (!a1Box || !a2Box) throw new Error('Could not locate L2 handle bounding boxes');
 
-        // Drag L2A1 down past L2A2's midpoint to swap order
-        await page.mouse.move(a1Box.x + a1Box.width / 2, a1Box.y + a1Box.height / 2);
-        await page.mouse.down();
-        const targetY = a2Box.y + a2Box.height + 10;
-        const steps = 8;
-        for (let i = 1; i <= steps; i++) {
-            const yi = a1Box.y + ((targetY - a1Box.y) * i) / steps;
-            await page.mouse.move(a1Box.x + a1Box.width / 2, yi);
-        }
-        await page.mouse.up();
+    // Drag L2A1 down past L2A2's midpoint to swap order
+    await page.mouse.move(a1Box.x + a1Box.width / 2, a1Box.y + a1Box.height / 2);
+    await page.mouse.down();
+    const targetY = a2Box.y + a2Box.height + 10;
+    const steps = 8;
+    for (let i = 1; i <= steps; i++) {
+        const yi = a1Box.y + ((targetY - a1Box.y) * i) / steps;
+        await page.mouse.move(a1Box.x + a1Box.width / 2, yi);
+    }
+    await page.mouse.up();
 
-        // Wait for the optimistic re-layout + Apex round-trip to settle
-        await waitForDragDropSettled(page);
+    // Wait for the optimistic re-layout + Apex round-trip to settle
+    await waitForDragDropSettled(page);
 
-        // Verify the order CHANGED — gesture must have swapped L2A1 ↔ L2A2
-        const orderAfter = parseDragDropOrder(orgAlias, MAP_NAME, L1A_NAME);
-        expect(orderAfter).not.toBe(orderBefore);
-        expect(orderAfter).toContain(L2A1_NAME);
-        expect(orderAfter).toContain(L2A2_NAME);
-    });
+    // Verify the order CHANGED — gesture must have swapped L2A1 ↔ L2A2
+    const orderAfter = parseDragDropOrder(orgAlias, MAP_NAME, L1A_NAME);
+    expect(orderAfter).not.toBe(orderBefore);
+    expect(orderAfter).toContain(L2A1_NAME);
+    expect(orderAfter).toContain(L2A2_NAME);
+});
 ```
 
 - [ ] **Step 4: Run the gesture test in isolation**
@@ -192,6 +201,7 @@ git commit -m "test(drag-drop): strengthen gesture test - assert order changed, 
 ## Task 3: Fix `_ghostX`/`_ghostY` reactivity hack
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js` (around lines 162-163, 640-643, 665-668, 682-688, 835-882)
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.html` (no change expected — already binds `ghostTransform`)
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js` (only if it references `_ghostX/_ghostY` directly)
@@ -208,8 +218,8 @@ Expected: no matches (Jest checks DOM via `ghostTransform`, not private fields).
 In `bcm_CapabilityMap.js`, around lines 162-163, delete:
 
 ```js
-    _ghostX             = 0;
-    _ghostY             = 0;
+_ghostX = 0;
+_ghostY = 0;
 ```
 
 - [ ] **Step 3: Update `ghostTransform` getter to read from `this.ghost`**
@@ -237,21 +247,21 @@ with:
 Replace lines 665-669:
 
 ```js
-        this._ghostOffsetX     = viewportPoint.x - ghost.originX;
-        this._ghostOffsetY     = viewportPoint.y - ghost.originY;
-        this._ghostX           = ghost.originX;
-        this._ghostY           = ghost.originY;
-        this.ghost             = ghost;
+this._ghostOffsetX = viewportPoint.x - ghost.originX;
+this._ghostOffsetY = viewportPoint.y - ghost.originY;
+this._ghostX = ghost.originX;
+this._ghostY = ghost.originY;
+this.ghost = ghost;
 ```
 
 with:
 
 ```js
-        this._ghostOffsetX     = viewportPoint.x - ghost.originX;
-        this._ghostOffsetY     = viewportPoint.y - ghost.originY;
-        ghost.x                = ghost.originX;
-        ghost.y                = ghost.originY;
-        this.ghost             = ghost;
+this._ghostOffsetX = viewportPoint.x - ghost.originX;
+this._ghostOffsetY = viewportPoint.y - ghost.originY;
+ghost.x = ghost.originX;
+ghost.y = ghost.originY;
+this.ghost = ghost;
 ```
 
 - [ ] **Step 5: Update `_handleDragMouseMove` to mutate-and-reassign reactively**
@@ -306,6 +316,7 @@ git commit -m "refactor(drag-drop): inline ghost coords into tracked object (PR 
 ## Task 4: Extract `_dispatchSaveApex` from `_handleDragMouseUp`
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js` (lines 693-797)
 
 Goal: split out the Apex-call + revert-on-error path so `_handleDragMouseUp` reads as `compute → optimistic update → dispatch save`.
@@ -399,7 +410,7 @@ Note: `newParentId` derivation reads from current optimistic state (post-`_apply
 In `_handleDragMouseUp`, replace lines 765-797 (everything from `const apexCall = sameParent` through the `console.warn(...)` end of `.catch`) with:
 
 ```js
-        this._dispatchSaveApex(movedId, newParentId, sameParent, newSiblings, oldSiblings);
+this._dispatchSaveApex(movedId, newParentId, sameParent, newSiblings, oldSiblings);
 ```
 
 Result: `_handleDragMouseUp` ends with the `cleanup()` call (already present) and then the dispatch line.
@@ -421,6 +432,7 @@ git commit -m "refactor(drag-drop): extract _dispatchSaveApex helper (PR #51)"
 ## Task 5: Clear `_capabilities` on combobox unselect
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js` (lines 555-567 — `handleMapChange`)
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js` (add a test)
 
@@ -431,21 +443,21 @@ When the user clears the map combobox, the prior diagram lingers because `_capab
 Add to `bcm_CapabilityMap.test.js` inside the existing describe block:
 
 ```js
-    it('clears diagram when map combobox is unselected', async () => {
-        const element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
-        document.body.appendChild(element);
-        // Simulate already-loaded map with capabilities
-        element.selectedMapId = 'a01xxx';
-        element._capabilities = [{ Id: 'a02xxx', Name: 'Foo', bcm_Level__c: 1, bcm_SortOrder__c: 1 }];
-        await Promise.resolve();
+it('clears diagram when map combobox is unselected', async () => {
+    const element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+    document.body.appendChild(element);
+    // Simulate already-loaded map with capabilities
+    element.selectedMapId = 'a01xxx';
+    element._capabilities = [{ Id: 'a02xxx', Name: 'Foo', bcm_Level__c: 1, bcm_SortOrder__c: 1 }];
+    await Promise.resolve();
 
-        const combobox = element.shadowRoot.querySelector('lightning-combobox[label="Map"]');
-        combobox.dispatchEvent(new CustomEvent('change', { detail: { value: '' } }));
-        await Promise.resolve();
+    const combobox = element.shadowRoot.querySelector('lightning-combobox[label="Map"]');
+    combobox.dispatchEvent(new CustomEvent('change', { detail: { value: '' } }));
+    await Promise.resolve();
 
-        expect(element._capabilities).toEqual([]);
-        expect(element._layoutL1).toEqual([]);
-    });
+    expect(element._capabilities).toEqual([]);
+    expect(element._layoutL1).toEqual([]);
+});
 ```
 
 (If the existing Jest file uses different conventions for the imports / describe structure, follow those — the assertion content is what matters.)
@@ -501,6 +513,7 @@ git commit -m "fix(drag-drop): clear capabilities when map unselected (PR #51)"
 ## Task 6: Reconcile ADR/plan SOQL wording
 
 **Files:**
+
 - Modify: `docs/plans/2026-06-06-11:47-step8-drag-drop.md` (lines 22, 78)
 
 Code uses `WITH USER_MODE` (Apex 56+ idiom). Plan still says `WITH SECURITY_ENFORCED` in two spots. Update plan to match code; add a one-line note explaining the equivalence.
@@ -561,6 +574,7 @@ git push origin sf_businesscapability-48
 ```
 
 Reply on the PR review thread (top-level reply to comment 4640472694) summarising:
+
 - Blockers fixed: gesture test now asserts swap; `data-bcm-saving` replaces `waitForTimeout`.
 - Optional follow-ups all done: ghost reactivity, helper extracted, combobox-clear bug fixed, plan wording reconciled.
 
@@ -573,6 +587,7 @@ Spec coverage: only `docs/specs/drag-drop.md` is touched indirectly via the gest
 Placeholder scan: every step has explicit code. No `// TODO`, no `similar to Task N`.
 
 Type consistency:
+
 - `data-bcm-saving` written in HTML, `savingAttr` getter on JS — names consistent.
 - `waitForDragDropSettled`, `parseDragDropOrder` defined once each, called once each.
 - `_dispatchSaveApex(movedId, newParentId, sameParent, newSiblings, oldSiblings)` — signature matches the call site in `_handleDragMouseUp`.

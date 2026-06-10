@@ -34,6 +34,7 @@ No new functional process. The exclusion-table row in `docs/design/99-cosmic-fun
 ## Task 1: Persist `selectedTagId` to sessionStorage on tag change
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js` (constants block + `handleTagChange`)
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js` (new describe)
 
@@ -59,12 +60,17 @@ describe('BcmCapabilityMap tag session persistence', () => {
 
     it('Writes selectedTagId to sessionStorage on tag change', async () => {
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
-        mockGetTags.emit({ data: [
-            { Id: 'TAG-1', Name: 'Red',   bcm_Colour__c: '#FF0000' },
-            { Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' },
-        ], error: undefined });
+        mockGetTags.emit({
+            data: [
+                { Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' },
+                { Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' }
+            ],
+            error: undefined
+        });
         await flushPromises();
-        const tagCombobox = element.shadowRoot.querySelector('lightning-combobox[label="Colour by Tag"]');
+        const tagCombobox = element.shadowRoot.querySelector(
+            'lightning-combobox[label="Colour by Tag"]'
+        );
         tagCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'TAG-2' } }));
         await flushPromises();
         expect(sessionStorage.getItem('bcm.visualisation.selectedTagId')).toBe('TAG-2');
@@ -73,9 +79,14 @@ describe('BcmCapabilityMap tag session persistence', () => {
     it('Removes persisted selectedTagId when user selects None', async () => {
         sessionStorage.setItem('bcm.visualisation.selectedTagId', 'TAG-2');
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
-        mockGetTags.emit({ data: [{ Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' }], error: undefined });
+        mockGetTags.emit({
+            data: [{ Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' }],
+            error: undefined
+        });
         await flushPromises();
-        const tagCombobox = element.shadowRoot.querySelector('lightning-combobox[label="Colour by Tag"]');
+        const tagCombobox = element.shadowRoot.querySelector(
+            'lightning-combobox[label="Colour by Tag"]'
+        );
         tagCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: '' } }));
         await flushPromises();
         expect(sessionStorage.getItem('bcm.visualisation.selectedTagId')).toBeNull();
@@ -132,6 +143,7 @@ git commit -m "feat(visualisation): persist selectedTagId to sessionStorage on t
 ## Task 2: Restore selectedTagId on init when id present in tagOptions
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js` (`wiredTags` + new `_tagRestoreAttempted` field + `_maybeRestoreSelectedTag` helper)
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js`
 
@@ -146,12 +158,17 @@ it('Restores selectedTagId from sessionStorage on init when id is in tagOptions'
     element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
     document.body.appendChild(element);
     mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
-    mockGetTags.emit({ data: [
-        { Id: 'TAG-1', Name: 'Red',   bcm_Colour__c: '#FF0000' },
-        { Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' },
-    ], error: undefined });
+    mockGetTags.emit({
+        data: [
+            { Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' },
+            { Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' }
+        ],
+        error: undefined
+    });
     await flushPromises();
-    const tagCombobox = element.shadowRoot.querySelector('lightning-combobox[label="Colour by Tag"]');
+    const tagCombobox = element.shadowRoot.querySelector(
+        'lightning-combobox[label="Colour by Tag"]'
+    );
     expect(tagCombobox.value).toBe('TAG-2');
 });
 ```
@@ -228,6 +245,7 @@ git commit -m "feat(visualisation): restore selectedTagId from sessionStorage on
 ## Task 3: Stale-id guard — drop key when persisted id no longer in tagOptions
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js`
 
 (Implementation already in `_maybeRestoreSelectedTag` from Task 2 — this task adds the proof.)
@@ -243,9 +261,14 @@ it('Clears persisted tag id and leaves selector at None when id is not in tagOpt
     element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
     document.body.appendChild(element);
     mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
-    mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
+    mockGetTags.emit({
+        data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }],
+        error: undefined
+    });
     await flushPromises();
-    const tagCombobox = element.shadowRoot.querySelector('lightning-combobox[label="Colour by Tag"]');
+    const tagCombobox = element.shadowRoot.querySelector(
+        'lightning-combobox[label="Colour by Tag"]'
+    );
     expect(tagCombobox.value).toBeFalsy();
     expect(sessionStorage.getItem('bcm.visualisation.selectedTagId')).toBeNull();
 });
@@ -268,6 +291,7 @@ git commit -m "test(visualisation): assert stale persisted tag id is dropped (GH
 ## Task 4: sessionStorage unavailable — silent fallback for tag
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js`
 
 (Implementation already in the `safeSession*` helpers — these tests prove it.)
@@ -278,13 +302,19 @@ Add inside `BcmCapabilityMap tag session persistence`:
 
 ```javascript
 it('Silent fallback when sessionStorage.setItem throws on tag change', async () => {
-    const setItemSpy = jest.spyOn(Storage.prototype, 'setItem')
-        .mockImplementation(() => { throw new Error('QuotaExceeded'); });
+    const setItemSpy = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('QuotaExceeded');
+    });
     try {
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
-        mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
+        mockGetTags.emit({
+            data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }],
+            error: undefined
+        });
         await flushPromises();
-        const tagCombobox = element.shadowRoot.querySelector('lightning-combobox[label="Colour by Tag"]');
+        const tagCombobox = element.shadowRoot.querySelector(
+            'lightning-combobox[label="Colour by Tag"]'
+        );
         expect(() => {
             tagCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'TAG-1' } }));
         }).not.toThrow();
@@ -297,18 +327,24 @@ it('Silent fallback when sessionStorage.setItem throws on tag change', async () 
 });
 
 it('Silent fallback when sessionStorage.getItem throws on init (tag restore)', async () => {
-    const getItemSpy = jest.spyOn(Storage.prototype, 'getItem')
-        .mockImplementation(() => { throw new Error('SecurityError'); });
+    const getItemSpy = jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw new Error('SecurityError');
+    });
     try {
         document.body.removeChild(element);
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
         document.body.appendChild(element);
         expect(() => {
             mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
-            mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
+            mockGetTags.emit({
+                data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }],
+                error: undefined
+            });
         }).not.toThrow();
         await flushPromises();
-        const tagCombobox = element.shadowRoot.querySelector('lightning-combobox[label="Colour by Tag"]');
+        const tagCombobox = element.shadowRoot.querySelector(
+            'lightning-combobox[label="Colour by Tag"]'
+        );
         expect(tagCombobox.value).toBeFalsy();
     } finally {
         getItemSpy.mockRestore();
@@ -317,18 +353,24 @@ it('Silent fallback when sessionStorage.getItem throws on init (tag restore)', a
 
 it('Silent fallback when sessionStorage.removeItem throws on stale tag path', async () => {
     sessionStorage.setItem('bcm.visualisation.selectedTagId', 'TAG-DELETED');
-    const removeItemSpy = jest.spyOn(Storage.prototype, 'removeItem')
-        .mockImplementation(() => { throw new Error('SecurityError'); });
+    const removeItemSpy = jest.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+        throw new Error('SecurityError');
+    });
     try {
         document.body.removeChild(element);
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
         document.body.appendChild(element);
         expect(() => {
             mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
-            mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
+            mockGetTags.emit({
+                data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }],
+                error: undefined
+            });
         }).not.toThrow();
         await flushPromises();
-        const tagCombobox = element.shadowRoot.querySelector('lightning-combobox[label="Colour by Tag"]');
+        const tagCombobox = element.shadowRoot.querySelector(
+            'lightning-combobox[label="Colour by Tag"]'
+        );
         expect(tagCombobox.value).toBeFalsy();
     } finally {
         removeItemSpy.mockRestore();
@@ -353,6 +395,7 @@ git commit -m "test(visualisation): silent fallback when sessionStorage throws o
 ## Task 5: Update spec — `docs/specs/diagram.md`
 
 **Files:**
+
 - Modify: `docs/specs/diagram.md`
 
 - [x] **Step 1: Insert new feature block after the existing map-persistence scenarios** (2026-06-10)
@@ -360,7 +403,6 @@ git commit -m "test(visualisation): silent fallback when sessionStorage throws o
 Insert after the "Scenario: sessionStorage unavailable does not crash the page" block (currently ends at line 46) and before the `---` separator on line 48:
 
 ```markdown
-
 ## Feature: Colour-by-tag selection persists for session
 
 **Scenario: Colour-by-tag selection is restored after navigation/reload**
@@ -403,9 +445,11 @@ git commit -m "docs(specs): add session-persistence scenarios for Colour by Tag 
 ## Task 6: e2e seed — provision a Tag + CapabilityTag junction in `diagramSeed`
 
 **Files:**
+
 - Modify: `tests/e2e/diagram.seed.ts`
 
 The current `diagramSeed` does not create any Tag. To prove "tag colour is reapplied after reload" at the e2e layer the seed must:
+
 1. Insert one `bcm_Tag__c` named `Diagram Tag <RUN_ID>` with a known colour.
 2. Make the tag owned by the editor user (mirrors `capability-tag.seed.ts` ownership requirement so the editor session can read/write the junction).
 3. Insert one `bcm_CapabilityTag__c` linking that tag to one of the seeded capabilities (use `Capability Alpha One One ${RUN_ID}` — the L3 leaf — so the L3 tag-rect path is exercised).
@@ -416,8 +460,8 @@ In `tests/e2e/diagram.seed.ts`, add after the existing `MAP_NAME` export (line 4
 
 ```typescript
 export const DIAGRAM_TAG_NAME = `Diagram Tag ${RUN_ID}`;
-const DIAGRAM_TAG_COLOUR     = '#B8E0C8';
-const DIAGRAM_TAG_CAP_NAME   = `Capability Alpha One One ${RUN_ID}`;
+const DIAGRAM_TAG_COLOUR = '#B8E0C8';
+const DIAGRAM_TAG_CAP_NAME = `Capability Alpha One One ${RUN_ID}`;
 ```
 
 - [x] **Step 2: Extend `POST_SEED_APEX` to insert the tag + junction** (2026-06-10)
@@ -467,6 +511,7 @@ git commit -m "test(e2e): seed Tag + CapabilityTag for diagram persistence test 
 ## Task 7: e2e — assert tag selection + colouring persist across reload
 
 **Files:**
+
 - Modify: `tests/e2e/diagram.spec.ts`
 
 - [x] **Step 1: Add e2e test to the `Tag highlight — editor project` describe** (2026-06-10)
@@ -474,7 +519,9 @@ git commit -m "test(e2e): seed Tag + CapabilityTag for diagram persistence test 
 Append after the existing `'Selecting None in tag dropdown does not crash the diagram'` test in `tests/e2e/diagram.spec.ts` (currently around line 261):
 
 ```typescript
-test('Colour-by-Tag selection persists across page reload within same session', async ({ page }) => {
+test('Colour-by-Tag selection persists across page reload within same session', async ({
+    page
+}) => {
     await openDiagram(page);
     await selectMap(page, MAP_NAME);
 
@@ -486,8 +533,9 @@ test('Colour-by-Tag selection persists across page reload within same session', 
     }).toPass({ timeout: 20000, intervals: [500, 1000, 1500] });
 
     // L3 tag rect should appear with non-default fill (pre-reload sanity)
-    await expect(page.locator('.bcm-canvas rect.bcm-l3-tag-rect').first())
-        .toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.bcm-canvas rect.bcm-l3-tag-rect').first()).toBeVisible({
+        timeout: 10000
+    });
 
     // Reload reuses tab — sessionStorage retained for both Map + Tag
     await page.reload();
@@ -496,14 +544,17 @@ test('Colour-by-Tag selection persists across page reload within same session', 
 
     // Tag combobox displays the seeded tag name
     const restored = page.getByRole('combobox', { name: 'Colour by Tag' }).first();
-    await expect(restored).toHaveValue(DIAGRAM_TAG_NAME).catch(async () => {
-        // lightning-combobox surfaces selection via aria-activedescendant; fall back to text
-        await expect(restored).toContainText(DIAGRAM_TAG_NAME);
-    });
+    await expect(restored)
+        .toHaveValue(DIAGRAM_TAG_NAME)
+        .catch(async () => {
+            // lightning-combobox surfaces selection via aria-activedescendant; fall back to text
+            await expect(restored).toContainText(DIAGRAM_TAG_NAME);
+        });
 
     // Canvas re-applies tag colouring on the tagged L3 capability
-    await expect(page.locator('.bcm-canvas rect.bcm-l3-tag-rect').first())
-        .toBeVisible({ timeout: 20000 });
+    await expect(page.locator('.bcm-canvas rect.bcm-l3-tag-rect').first()).toBeVisible({
+        timeout: 20000
+    });
 });
 ```
 
@@ -530,6 +581,7 @@ git commit -m "test(e2e): assert Colour-by-Tag selection persists across page re
 ## Task 8: Update COSMIC FP exclusion table — broaden the existing row
 
 **Files:**
+
 - Modify: `docs/design/99-cosmic-function-point-count.md`
 
 - [x] **Step 1: Edit the existing exclusion row** (2026-06-10)

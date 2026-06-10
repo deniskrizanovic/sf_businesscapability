@@ -8,20 +8,20 @@ This plan documents the design only — the hook itself lives in `~/.claude/`, n
 
 ## Design Decisions
 
-| Branch | Decision | Why |
-|---|---|---|
-| Hook events | `SessionEnd` (finalize) + `SessionStart` (backfill) | Hybrid: SessionEnd for clean exits; SessionStart backfills sessions killed by Ctrl-C. |
-| Cost source | `ccusage` CLI (npm, installed globally) with `--offline` | Purpose-built, no rate-table maintenance; offline avoids npm registry hit. |
-| Project root | `$CLAUDE_PROJECT_DIR` env var | Official, handles worktrees, no `.git` walking. |
-| CSV location | `<project_root>/tokencost/cost.csv`, committed | Per-project, auto-created by hook. User decides per-project gitignore. |
-| Schema | `session_id,started_at,ended_at,end_reason,total_cost_usd,input_tokens,output_tokens,cache_creation_tokens,cache_read_tokens,total_tokens,models,git_branch` | Self-contained per-session view. Subagent costs rolled into total. |
-| Dedup | Read existing `session_id` set from CSV; overwrite row on resume | Single source of truth; resumed sessions get updated totals. |
-| Backfill scope | All orphans in `~/.claude/projects/<encoded-cwd>/`, every `SessionStart` source | Cheap when caught up; first run heals all gaps. Skip the starting `session_id` only. |
-| Concurrency | `fcntl.flock` on CSV | Prevents interleaved rows from concurrent sessions. |
-| Failure mode | On ccusage failure: write row with `total_cost_usd=ERROR`, tokens parsed directly from JSONL | Preserves session existence + token counts → dedup still works. |
-| Timestamps | UTC ISO8601 (raw from JSONL) | Sortable, unambiguous, spreadsheet-convertible. |
-| Language | Python 3 (stdlib only) | Robust CSV escaping, no extra deps. |
-| Script layout | Single `~/.claude/hooks/cost-tracker.py`, mode arg (`finalize` / `backfill`) | Shared dedup/CSV logic. |
+| Branch         | Decision                                                                                                                                                     | Why                                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Hook events    | `SessionEnd` (finalize) + `SessionStart` (backfill)                                                                                                          | Hybrid: SessionEnd for clean exits; SessionStart backfills sessions killed by Ctrl-C. |
+| Cost source    | `ccusage` CLI (npm, installed globally) with `--offline`                                                                                                     | Purpose-built, no rate-table maintenance; offline avoids npm registry hit.            |
+| Project root   | `$CLAUDE_PROJECT_DIR` env var                                                                                                                                | Official, handles worktrees, no `.git` walking.                                       |
+| CSV location   | `<project_root>/tokencost/cost.csv`, committed                                                                                                               | Per-project, auto-created by hook. User decides per-project gitignore.                |
+| Schema         | `session_id,started_at,ended_at,end_reason,total_cost_usd,input_tokens,output_tokens,cache_creation_tokens,cache_read_tokens,total_tokens,models,git_branch` | Self-contained per-session view. Subagent costs rolled into total.                    |
+| Dedup          | Read existing `session_id` set from CSV; overwrite row on resume                                                                                             | Single source of truth; resumed sessions get updated totals.                          |
+| Backfill scope | All orphans in `~/.claude/projects/<encoded-cwd>/`, every `SessionStart` source                                                                              | Cheap when caught up; first run heals all gaps. Skip the starting `session_id` only.  |
+| Concurrency    | `fcntl.flock` on CSV                                                                                                                                         | Prevents interleaved rows from concurrent sessions.                                   |
+| Failure mode   | On ccusage failure: write row with `total_cost_usd=ERROR`, tokens parsed directly from JSONL                                                                 | Preserves session existence + token counts → dedup still works.                       |
+| Timestamps     | UTC ISO8601 (raw from JSONL)                                                                                                                                 | Sortable, unambiguous, spreadsheet-convertible.                                       |
+| Language       | Python 3 (stdlib only)                                                                                                                                       | Robust CSV escaping, no extra deps.                                                   |
+| Script layout  | Single `~/.claude/hooks/cost-tracker.py`, mode arg (`finalize` / `backfill`)                                                                                 | Shared dedup/CSV logic.                                                               |
 
 ## Prereqs
 
@@ -35,11 +35,13 @@ This plan documents the design only — the hook itself lives in `~/.claude/`, n
 Single Python 3 script. Invoked by both hooks with mode arg.
 
 **Inputs**:
+
 - stdin: hook event JSON (Claude Code passes payload here)
 - argv[1]: `finalize` | `backfill`
 - env: `$CLAUDE_PROJECT_DIR`
 
 **Behavior — `finalize` (SessionEnd)**:
+
 1. Parse stdin JSON → `session_id`, `transcript_path`, `cwd`, `reason`
 2. Resolve `project_root = $CLAUDE_PROJECT_DIR`
 3. `csv_path = <project_root>/tokencost/cost.csv` — `mkdir -p`, write header if absent
@@ -47,13 +49,14 @@ Single Python 3 script. Invoked by both hooks with mode arg.
 5. Acquire `flock` on CSV → upsert row by `session_id` → release
 
 **Behavior — `backfill` (SessionStart)**:
+
 1. Parse stdin → `session_id` (the starting session — to skip), `cwd`
 2. Resolve `project_root = $CLAUDE_PROJECT_DIR`
 3. Encoded transcript dir: replace `/` with `-` in `project_root` → `~/.claude/projects/<encoded>/`
 4. List `*.jsonl` in that dir
 5. Read CSV `session_id` set (or empty if missing)
 6. For each JSONL session id not in CSV and != starting session id:
-   - Compute row → upsert under flock
+    - Compute row → upsert under flock
 
 ### Row computation
 
@@ -78,22 +81,28 @@ Add under `hooks` key (merge with existing `notify-stop.sh` config):
 
 ```json
 {
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          { "type": "command", "command": "python3 ~/.claude/hooks/cost-tracker.py backfill" }
+    "hooks": {
+        "SessionStart": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "python3 ~/.claude/hooks/cost-tracker.py backfill"
+                    }
+                ]
+            }
+        ],
+        "SessionEnd": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "python3 ~/.claude/hooks/cost-tracker.py finalize"
+                    }
+                ]
+            }
         ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          { "type": "command", "command": "python3 ~/.claude/hooks/cost-tracker.py finalize" }
-        ]
-      }
-    ]
-  }
+    }
 }
 ```
 

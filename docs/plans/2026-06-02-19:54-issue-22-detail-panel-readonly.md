@@ -12,6 +12,7 @@
 Vertical end-to-end slice: "View detail" context-menu action on any L1/L2/L3 node opens a 400px slide-out panel that shows the full capability record read-only. Apex query, LWC, container wiring, Apex tests, Jest tests, Playwright e2e tests.
 
 **Out of scope (#3):**
+
 - Save / Cancel buttons
 - Inline edit fields
 - `bcm_CapabilityService` class
@@ -23,33 +24,33 @@ Vertical end-to-end slice: "View detail" context-menu action on any L1/L2/L3 nod
 
 ## Decisions
 
-| Decision | Choice |
-|---|---|
-| Layout | Overlay (fixed 400px, right edge, full canvas height) |
-| Levels that trigger panel | L1, L2, L3 |
-| Data source | Fresh Apex call (`getCapabilityDetail`), not cacheable, USER_MODE |
-| Apex method location | Add to existing `bcm_CapabilityController` |
-| LWC | New `bcm_CapabilityDetail` (presentational; no Apex imports) |
-| ID flow | `viewdetail` event payload `{id, level, name}` already fired by `bcm_ContextMenu`; container reads `evt.detail.id` |
-| Close gestures | X button + Escape key |
-| Panel-already-open behaviour | Update in place (same handler reassigns state) |
-| Edit affordances | None in this slice (FP30 deferred to #3) |
-| Breadcrumb | Built client-side from `_capabilities` parent chain in container |
-| Animation | CSS `transform: translateX(100%)` → `translateX(0)`, 250ms ease |
-| Rich text display | `lightning-formatted-rich-text` (read-only render of HTML fields) |
-| Hide From Diagram display | Plain "Yes" / "No" text |
-| Existing `handleViewDetail` (NavigationMixin) | Replaced — panel supersedes record-page navigation |
-| Spec scenario "View detail navigates to record page" | Removed from `docs/specs/diagram.md` (was a stop-gap) |
-| Edit-mode spec scenarios | Marked `> Deferred: edit affordances out of scope for #22; FP30 in #3` |
+| Decision                                             | Choice                                                                                                             |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Layout                                               | Overlay (fixed 400px, right edge, full canvas height)                                                              |
+| Levels that trigger panel                            | L1, L2, L3                                                                                                         |
+| Data source                                          | Fresh Apex call (`getCapabilityDetail`), not cacheable, USER_MODE                                                  |
+| Apex method location                                 | Add to existing `bcm_CapabilityController`                                                                         |
+| LWC                                                  | New `bcm_CapabilityDetail` (presentational; no Apex imports)                                                       |
+| ID flow                                              | `viewdetail` event payload `{id, level, name}` already fired by `bcm_ContextMenu`; container reads `evt.detail.id` |
+| Close gestures                                       | X button + Escape key                                                                                              |
+| Panel-already-open behaviour                         | Update in place (same handler reassigns state)                                                                     |
+| Edit affordances                                     | None in this slice (FP30 deferred to #3)                                                                           |
+| Breadcrumb                                           | Built client-side from `_capabilities` parent chain in container                                                   |
+| Animation                                            | CSS `transform: translateX(100%)` → `translateX(0)`, 250ms ease                                                    |
+| Rich text display                                    | `lightning-formatted-rich-text` (read-only render of HTML fields)                                                  |
+| Hide From Diagram display                            | Plain "Yes" / "No" text                                                                                            |
+| Existing `handleViewDetail` (NavigationMixin)        | Replaced — panel supersedes record-page navigation                                                                 |
+| Spec scenario "View detail navigates to record page" | Removed from `docs/specs/diagram.md` (was a stop-gap)                                                              |
+| Edit-mode spec scenarios                             | Marked `> Deferred: edit affordances out of scope for #22; FP30 in #3`                                             |
 
 ---
 
 ## Function Points (COSMIC)
 
-| FP | Process | CFP | Status this slice |
-|---|---|---|---|
-| FP29 | View Capability Detail via Panel | 5 | **Delivered in #22 (2026-06-02)** |
-| FP30 | Edit Capability via Panel — Save | 3 | Deferred (#3) |
+| FP   | Process                          | CFP | Status this slice                 |
+| ---- | -------------------------------- | --- | --------------------------------- |
+| FP29 | View Capability Detail via Panel | 5   | **Delivered in #22 (2026-06-02)** |
+| FP30 | Edit Capability via Panel — Save | 3   | Deferred (#3)                     |
 
 `docs/design/99-cosmic-function-point-count.md` already enumerates FP29 + FP30 + FP31 with running total **122 CFP** — no arithmetic change in this slice.
 
@@ -75,27 +76,27 @@ bcm_CapabilityMap (container)
 
 ## Files to create
 
-| File | Purpose |
-|---|---|
-| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.js` | Panel JS (props + close + Escape handler) |
-| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.html` | Panel template |
-| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.css` | Slide-in animation + layout |
-| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.js-meta.xml` | LWC metadata (`isExposed` false; matches existing LWCs) |
-| `force-app/main/default/lwc/bcm_CapabilityDetail/__tests__/bcm_CapabilityDetail.test.js` | Jest unit tests for the new LWC |
-| `tests/e2e/capability-detail.spec.ts` | Playwright e2e tests for FP29 |
+| File                                                                                     | Purpose                                                 |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.js`                | Panel JS (props + close + Escape handler)               |
+| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.html`              | Panel template                                          |
+| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.css`               | Slide-in animation + layout                             |
+| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.js-meta.xml`       | LWC metadata (`isExposed` false; matches existing LWCs) |
+| `force-app/main/default/lwc/bcm_CapabilityDetail/__tests__/bcm_CapabilityDetail.test.js` | Jest unit tests for the new LWC                         |
+| `tests/e2e/capability-detail.spec.ts`                                                    | Playwright e2e tests for FP29                           |
 
 ## Files to modify
 
-| File | Change |
-|---|---|
-| `force-app/main/default/classes/bcm_CapabilityController.cls` | Add `getCapabilityDetail(Id capabilityId)` (USER_MODE, not cacheable) |
-| `force-app/main/default/classes/bcm_CapabilityControllerTest.cls` | Add `getCapabilityDetail_returnsRecord` and `getCapabilityDetail_nullId_throws` |
-| `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js` | Replace `handleViewDetail` (NavigationMixin → state + Apex); add detail state, `_buildBreadcrumb`, `handleDetailClose`; import `getCapabilityDetail`; remove `NavigationMixin` import if unused elsewhere |
-| `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.html` | Add `<c-bcm_-capability-detail>` alongside context menu |
-| `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.css` | Verify canvas container has `position: relative` (add if missing — required for overlay panel positioning) |
-| `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js` | Drop "View detail click calls NavigationMixin.Navigate with record page"; add "View detail loads capability and opens panel" |
-| `docs/specs/diagram.md` | Remove "View detail navigates to the Capability record page" scenario; mark edit scenarios as Deferred (#3) |
-| `docs/design/05-lwc-architecture.md` | Add `bcm_CapabilityDetail` row; add `getCapabilityDetail` import + `detail*` state in container; rewrite `bcm_ContextMenu` "View detail" target from NavigationMixin to panel |
+| File                                                                               | Change                                                                                                                                                                                                    |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `force-app/main/default/classes/bcm_CapabilityController.cls`                      | Add `getCapabilityDetail(Id capabilityId)` (USER_MODE, not cacheable)                                                                                                                                     |
+| `force-app/main/default/classes/bcm_CapabilityControllerTest.cls`                  | Add `getCapabilityDetail_returnsRecord` and `getCapabilityDetail_nullId_throws`                                                                                                                           |
+| `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js`                | Replace `handleViewDetail` (NavigationMixin → state + Apex); add detail state, `_buildBreadcrumb`, `handleDetailClose`; import `getCapabilityDetail`; remove `NavigationMixin` import if unused elsewhere |
+| `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.html`              | Add `<c-bcm_-capability-detail>` alongside context menu                                                                                                                                                   |
+| `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.css`               | Verify canvas container has `position: relative` (add if missing — required for overlay panel positioning)                                                                                                |
+| `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js` | Drop "View detail click calls NavigationMixin.Navigate with record page"; add "View detail loads capability and opens panel"                                                                              |
+| `docs/specs/diagram.md`                                                            | Remove "View detail navigates to the Capability record page" scenario; mark edit scenarios as Deferred (#3)                                                                                               |
+| `docs/design/05-lwc-architecture.md`                                               | Add `bcm_CapabilityDetail` row; add `getCapabilityDetail` import + `detail*` state in container; rewrite `bcm_ContextMenu` "View detail" target from NavigationMixin to panel                             |
 
 No change required in `docs/design/99-cosmic-function-point-count.md` (FP29/FP30/FP31 already enumerated; total 122 unchanged).
 
@@ -136,7 +137,7 @@ public static bcm_Capability__c getCapabilityDetail(Id capabilityId) {
 - `getCapabilityDetail_returnsRecord` — seed Map + L1 + L2 + L3 capabilities with definition / strategy / nuance values; assert returned record contains all fields.
 - `getCapabilityDetail_nullId_throws` — call with `null`; assert `AuraHandledException` thrown.
 
-> Tag-junction sub-query path verified at controller level only — full Tags__r subquery path is part of the SOQL signature; e2e/Jest do not cover tag swatches in this slice (already deferred in spec).
+> Tag-junction sub-query path verified at controller level only — full Tags\_\_r subquery path is part of the SOQL signature; e2e/Jest do not cover tag swatches in this slice (already deferred in spec).
 
 ### Step 2 — LWC: `bcm_CapabilityDetail`
 
@@ -164,11 +165,11 @@ export default class BcmCapabilityDetail extends LightningElement {
 
     get tags() {
         const junctions = this.capability?.Tags__r || [];
-        return junctions.map(j => ({
+        return junctions.map((j) => ({
             id: j.bcm_Tag__c,
             name: j.bcm_Tag__r?.Name,
             colour: j.bcm_Tag__r?.bcm_Colour__c,
-            style: `background-color:${j.bcm_Tag__r?.bcm_Colour__c || '#ccc'};`,
+            style: `background-color:${j.bcm_Tag__r?.bcm_Colour__c || '#ccc'};`
         }));
     }
 
@@ -200,8 +201,10 @@ export default class BcmCapabilityDetail extends LightningElement {
 ```css
 .bcm-detail-panel {
     position: absolute;
-    top: 0; right: 0;
-    width: 400px; height: 100%;
+    top: 0;
+    right: 0;
+    width: 400px;
+    height: 100%;
     transform: translateX(100%);
     transition: transform 250ms ease;
     z-index: 100;
@@ -209,7 +212,7 @@ export default class BcmCapabilityDetail extends LightningElement {
     box-shadow: -4px 0 16px rgba(0, 0, 0, 0.12);
     overflow-y: auto;
 }
-.bcm-detail-panel[data-open="true"] {
+.bcm-detail-panel[data-open='true'] {
     transform: translateX(0);
 }
 ```
@@ -275,10 +278,11 @@ Drop `NavigationMixin` import + class wrap if no other handler uses it (verify b
 
 ```html
 <c-bcm_-capability-detail
-    capability={detailCapability}
-    breadcrumb={detailBreadcrumb}
-    is-loading={detailIsLoading}
-    onclose={handleDetailClose}>
+    capability="{detailCapability}"
+    breadcrumb="{detailBreadcrumb}"
+    is-loading="{detailIsLoading}"
+    onclose="{handleDetailClose}"
+>
 </c-bcm_-capability-detail>
 ```
 

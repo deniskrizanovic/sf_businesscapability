@@ -1,14 +1,17 @@
 # ADR 0005: Visual language for the capability map
 
 ## Status
+
 Accepted
 
 ## Context
+
 Visual surfaces in the BCM diagram evolved ad-hoc per feature. The cross-cutting band ramp used `#1a3d6b–#587bad`. L1 chevrons used `#4A4A4A–#2A2A2A`. Tag swatches held arbitrary user-picked colours. The strategy stripe used `#E8A33D`. No single visual system connected these choices. The diagram read as four unrelated UIs stacked.
 
 Issue #43 called for cohesion: a unified palette, focus model, strategy mark, and cross-cutting band ramp that presents as one diagram, not disconnected surfaces.
 
 ## Decision
+
 Adopt an **SLDS-aligned chrome** + **bespoke canvas tokens** stance. SLDS owns toolbar buttons, comboboxes, and detail-panel form fields. Custom tokens own the SVG canvas and diagram-specific surfaces. Tokens are centralised in `bcm_VisualTokens` LWC module (`BCM_*` JS exports + `--bcm-*` CSS mirror).
 
 **Chosen aesthetic direction: A — Editorial Monochrome.** Greyscale base with Georgia serif for L1 labels, system sans for L2/L3, SLDS blue focus ring, and muted gold strategy accent.
