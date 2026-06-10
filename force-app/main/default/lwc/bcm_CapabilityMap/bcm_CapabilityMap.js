@@ -46,6 +46,15 @@ const BAND_NOTCH          = CHEVRON_NOTCH * 2;
 const BAND_LABEL_PAD_X    = 18;
 const BAND_LABEL_PAD_BOTTOM = 8;
 
+// Returns relative luminance (0–1) for a 6-digit hex color.
+function hexLuminance(hex) {
+    const c = hex.replace('#', '');
+    return [0, 2, 4].reduce((sum, i) => {
+        const v = parseInt(c.slice(i, i + 2), 16) / 255;
+        return sum + (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4) * [0.2126, 0.7152, 0.0722][i / 2];
+    }, 0);
+}
+
 const ZOOM_MIN   = 0.2;
 const ZOOM_MAX   = 3.0;
 const ZOOM_STEP  = 0.1;
@@ -272,7 +281,6 @@ export default class BcmCapabilityMap extends LightningElement {
     get focusRingColour()   { return BCM_FOCUS_RING; }
     get l1LabelColour()     { return BCM_L1_LABEL; }
     get l2LabelColour()     { return BCM_L2_LABEL; }
-    get bandLabelLight()    { return BCM_BAND_LABEL_LIGHT; }
     get bandStroke()        { return BCM_BAND_STROKE; }
     get l1GhostFill()       { return BCM_L1_FILL; }
     get l1GhostStroke()     { return BCM_L1_STROKE; }
@@ -311,7 +319,7 @@ export default class BcmCapabilityMap extends LightningElement {
     }
 
     get bandTransform() {
-        return `translate(${this.panX}, 0) scale(${this.zoom})`;
+        return `translate(${this.panX}, ${this.panY}) scale(${this.zoom})`;
     }
 
     get l2ClipY() {
@@ -326,35 +334,23 @@ export default class BcmCapabilityMap extends LightningElement {
     _buildL1StrategyMark(pointsStr, x, y, w, h) {
         // Chevron points: 0=top-left, 1=top-right before notch, 2=right tip,
         //                 3=bottom-right after notch, 4=bottom-left
-        // Strategy mark follows right-arrow shape: outer edge (1→2→3), inner offset leftward.
+        // Strategy mark: vertical stripe on the left straight edge (pts[0] → pts[4]).
         const pts = pointsStr.split(' ').map(p => {
             const [px, py] = p.split(',').map(Number);
             return { x: px, y: py };
         });
-        if (pts.length < 5) {
-            // Fallback: vertical rect on right edge
-            return {
-                kind    : 'rect',
-                isL1Edge: false,
-                isRect  : true,
-                x       : pts[1]?.x || (x + w),
-                y       : pts[0]?.y || y,
-                width   : BCM_STRATEGY_MARK.weight,
-                height  : h,
-            };
-        }
-        const w2 = BCM_STRATEGY_MARK.weight;
-        const outerTopRight    = pts[1];
-        const tip              = pts[2];
-        const outerBottomRight = pts[3];
-        const innerTopRight    = { x: outerTopRight.x - w2, y: outerTopRight.y };
-        const innerTip         = { x: tip.x - w2,           y: tip.y };
-        const innerBottomRight = { x: outerBottomRight.x - w2, y: outerBottomRight.y };
-        const polygonPoints = [
-            outerTopRight, tip, outerBottomRight,
-            innerBottomRight, innerTip, innerTopRight
-        ].map(p => `${p.x},${p.y}`).join(' ');
-        return { kind: 'l1-edge', isL1Edge: true, isRect: false, polygonPoints };
+        const leftX  = pts[0]?.x ?? x;
+        const topY   = pts[0]?.y ?? y;
+        const botY   = pts[4]?.y ?? (y + h);
+        return {
+            kind    : 'rect',
+            isL1Edge: false,
+            isRect  : true,
+            x       : leftX,
+            y       : topY,
+            width   : BCM_STRATEGY_MARK.weight,
+            height  : botY - topY,
+        };
     }
 
     _buildLayout(capabilities) {
@@ -665,11 +661,13 @@ export default class BcmCapabilityMap extends LightningElement {
                     `${bandX + bandW - n},${y + h}`,
                     `${bandX},${y + h}`,
                 ].join(' ');
+                const fill = BCM_BAND_RAMP[i % BCM_BAND_RAMP.length];
                 bandNodes.push({
                     id    : cc.Id,
                     name  : cc.Name,
                     label : String(cc.Name || '').toUpperCase(),
-                    fill  : BCM_BAND_RAMP[i % BCM_BAND_RAMP.length],
+                    fill,
+                    labelColor: hexLuminance(fill) > 0.179 ? BCM_BAND_LABEL_DARK : BCM_BAND_LABEL_LIGHT,
                     points,
                     labelX: bandX + BAND_LABEL_PAD_X,
                     labelY: y + h - BAND_LABEL_PAD_BOTTOM,

@@ -3,7 +3,7 @@
 // CSS mirror: bcm_VisualTokens.css (hand-synced; LWC stylesheets cannot cross-import).
 
 // Surface — Level 1 chevrons
-export const BCM_L1_FILL = '#f7f7f7';
+export const BCM_L1_FILL = '#ebebeb';
 export const BCM_L1_FILL_FOCUSED = BCM_L1_FILL; // single-channel focus — fill stable
 export const BCM_L1_STROKE = '#e0e0e0';
 export const BCM_L1_LABEL = '#333333';
