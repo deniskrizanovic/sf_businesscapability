@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { RUN_ID, selectMap, openDiagram } from './fixtures/helpers';
-import { MAP_NAME } from './diagram.seed';
+import { MAP_NAME, DIAGRAM_TAG_NAME } from './diagram.seed';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -258,6 +258,36 @@ test.describe('Tag highlight — editor project', () => {
             await page.getByRole('option', { name: 'None' }).click({ timeout: 1500 });
         }).toPass({ timeout: 20000, intervals: [500, 1000, 1500] });
         await expect(page.locator('.bcm-canvas')).toBeVisible();
+    });
+
+    test('Colour-by-Tag selection persists across page reload within same session', async ({ page }) => {
+        await openDiagram(page);
+        await selectMap(page, MAP_NAME);
+
+        // Select the seeded tag from the Colour by Tag combobox
+        const tagFilter = page.getByRole('combobox', { name: 'Colour by Tag' }).first();
+        await expect(async () => {
+            await tagFilter.click();
+            await page.getByRole('option', { name: DIAGRAM_TAG_NAME }).click({ timeout: 1500 });
+        }).toPass({ timeout: 20000, intervals: [500, 1000, 1500] });
+
+        // L3 tag rect should appear with non-default fill (pre-reload sanity)
+        await expect(page.locator('.bcm-canvas rect.bcm-l3-tag-rect').first())
+            .toBeVisible({ timeout: 10000 });
+
+        // Reload reuses tab — sessionStorage retained for both Map + Tag
+        await page.reload();
+        await page.locator('.bcm-canvas').waitFor({ state: 'visible', timeout: 20000 });
+        await page.locator('.bcm-canvas polygon').first().waitFor({ state: 'visible', timeout: 20000 });
+
+        // lightning-combobox renders the selected option's label as text;
+        // its `value` is the Tag Id, so assert on visible text.
+        const restored = page.getByRole('combobox', { name: 'Colour by Tag' }).first();
+        await expect(restored).toContainText(DIAGRAM_TAG_NAME);
+
+        // Canvas re-applies tag colouring on the tagged L3 capability
+        await expect(page.locator('.bcm-canvas rect.bcm-l3-tag-rect').first())
+            .toBeVisible({ timeout: 20000 });
     });
 });
 

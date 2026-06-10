@@ -1253,6 +1253,7 @@ describe('BcmCapabilityMap tag colour highlight', () => {
     }
 
     beforeEach(async () => {
+        sessionStorage.clear();
         mockCapabilitiesImpl = jest.fn().mockResolvedValue(TAGGED_CAPS);
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
         document.body.appendChild(element);
@@ -1264,6 +1265,7 @@ describe('BcmCapabilityMap tag colour highlight', () => {
 
     afterEach(() => {
         while (document.body.firstChild) document.body.removeChild(document.body.firstChild);
+        sessionStorage.clear();
     });
 
     it('L2 box fill matches selected tag colour when capability carries the tag', async () => {
@@ -1454,6 +1456,7 @@ describe('BcmCapabilityMap tag combobox refresh on focus', () => {
     }
 
     beforeEach(async () => {
+        sessionStorage.clear();
         refreshApex.mockClear();
         mockCapabilitiesImpl = jest.fn().mockResolvedValue(TAGGED_CAPS_FOR_REFRESH);
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
@@ -1469,6 +1472,7 @@ describe('BcmCapabilityMap tag combobox refresh on focus', () => {
         while (document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         }
+        sessionStorage.clear();
     });
 
     it('Focusing the tag combobox refreshes both getTags and getCapabilities wires', async () => {
@@ -1536,5 +1540,131 @@ describe('BcmCapabilityMap tag combobox refresh on focus', () => {
         await flushPromises();
 
         expect(getTagCombobox().value).toBe('');
+    });
+});
+
+describe('BcmCapabilityMap tag session persistence', () => {
+    let element;
+
+    beforeEach(() => {
+        sessionStorage.clear();
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+    });
+
+    afterEach(() => {
+        document.body.removeChild(element);
+        sessionStorage.clear();
+        jest.clearAllMocks();
+    });
+
+    // lwc-jest stubs don't reflect `label` to a DOM attribute, so attribute
+    // selectors fail. Combobox order in template: [0] Map, [1] Colour by Tag.
+    const getTagCombobox = () =>
+        element.shadowRoot.querySelectorAll('lightning-combobox')[1];
+
+    it('Writes selectedTagId to sessionStorage on tag change', async () => {
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [
+            { Id: 'TAG-1', Name: 'Red',   bcm_Colour__c: '#FF0000' },
+            { Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' },
+        ], error: undefined });
+        await flushPromises();
+        const tagCombobox = getTagCombobox();
+        tagCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'TAG-2' } }));
+        await flushPromises();
+        expect(sessionStorage.getItem('bcm.visualisation.selectedTagId')).toBe('TAG-2');
+    });
+
+    it('Removes persisted selectedTagId when user selects None', async () => {
+        sessionStorage.setItem('bcm.visualisation.selectedTagId', 'TAG-2');
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [{ Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' }], error: undefined });
+        await flushPromises();
+        const tagCombobox = getTagCombobox();
+        tagCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: '' } }));
+        await flushPromises();
+        expect(sessionStorage.getItem('bcm.visualisation.selectedTagId')).toBeNull();
+    });
+
+    it('Restores selectedTagId from sessionStorage on init when id is in tagOptions', async () => {
+        sessionStorage.setItem('bcm.visualisation.selectedTagId', 'TAG-2');
+        document.body.removeChild(element);
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [
+            { Id: 'TAG-1', Name: 'Red',   bcm_Colour__c: '#FF0000' },
+            { Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' },
+        ], error: undefined });
+        await flushPromises();
+        expect(getTagCombobox().value).toBe('TAG-2');
+    });
+
+    it('Clears persisted tag id and leaves selector at None when id is not in tagOptions', async () => {
+        sessionStorage.setItem('bcm.visualisation.selectedTagId', 'TAG-DELETED');
+        document.body.removeChild(element);
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
+        await flushPromises();
+        expect(getTagCombobox().value).toBe('');
+        expect(sessionStorage.getItem('bcm.visualisation.selectedTagId')).toBeNull();
+    });
+
+    it('Silent fallback when sessionStorage.setItem throws on tag change', async () => {
+        const setItemSpy = jest.spyOn(Storage.prototype, 'setItem')
+            .mockImplementation(() => { throw new Error('QuotaExceeded'); });
+        try {
+            mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+            mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
+            await flushPromises();
+            const tagCombobox = getTagCombobox();
+            expect(() => {
+                tagCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'TAG-1' } }));
+            }).not.toThrow();
+            await flushPromises();
+            expect(tagCombobox.value).toBe('TAG-1');
+        } finally {
+            setItemSpy.mockRestore();
+        }
+    });
+
+    it('Silent fallback when sessionStorage.getItem throws on init (tag restore)', async () => {
+        const getItemSpy = jest.spyOn(Storage.prototype, 'getItem')
+            .mockImplementation(() => { throw new Error('SecurityError'); });
+        try {
+            document.body.removeChild(element);
+            element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+            document.body.appendChild(element);
+            expect(() => {
+                mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+                mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
+            }).not.toThrow();
+            await flushPromises();
+            expect(getTagCombobox().value).toBe('');
+        } finally {
+            getItemSpy.mockRestore();
+        }
+    });
+
+    it('Silent fallback when sessionStorage.removeItem throws on stale tag path', async () => {
+        sessionStorage.setItem('bcm.visualisation.selectedTagId', 'TAG-DELETED');
+        const removeItemSpy = jest.spyOn(Storage.prototype, 'removeItem')
+            .mockImplementation(() => { throw new Error('SecurityError'); });
+        try {
+            document.body.removeChild(element);
+            element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+            document.body.appendChild(element);
+            expect(() => {
+                mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+                mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
+            }).not.toThrow();
+            await flushPromises();
+            expect(getTagCombobox().value).toBe('');
+        } finally {
+            removeItemSpy.mockRestore();
+        }
     });
 });
