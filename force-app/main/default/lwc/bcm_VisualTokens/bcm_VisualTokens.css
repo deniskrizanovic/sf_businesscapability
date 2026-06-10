@@ -1,0 +1,67 @@
+/* Hand-synced with bcm_VisualTokens.js. Update both together. */
+:host {
+    /* Surface — Level 1 chevrons */
+    --bcm-l1-fill: #f7f7f7;
+    --bcm-l1-fill-focused: #f7f7f7;
+    --bcm-l1-stroke: #e0e0e0;
+    --bcm-l1-label: #333333;
+
+    /* Surface — Level 2 boxes */
+    --bcm-l2-surface: #f0f0f0;
+    --bcm-l2-surface-focused: #f0f0f0;
+    --bcm-l2-stroke: #e0e0e0;
+    --bcm-l2-label: #333333;
+
+    /* Surface — Level 3 bullets */
+    --bcm-l3-label: #333333;
+    --bcm-l3-label-dimmed: #999999;
+    --bcm-l3-focus-rect: #0070D2;
+
+    /* Tag fallback */
+    --bcm-tag-fallback: #ffffff;
+
+    /* Focus */
+    --bcm-focus-ring: #0070D2;
+    --bcm-focus-ring-width: 3px;
+
+    /* Cross-cutting band */
+    --bcm-band-1: #f7f7f7;
+    --bcm-band-2: #ececec;
+    --bcm-band-3: #e0e0e0;
+    --bcm-band-4: #d4d4d4;
+    --bcm-band-divider: #c0c0c0;
+    --bcm-band-stroke: #0e2342;
+
+    /* Strategy mark */
+    --bcm-strategy-mark-fill: #c29b3d;
+    --bcm-strategy-mark-weight: 6;
+
+    /* Type scale */
+    --bcm-type-l1-size: 16px;
+    --bcm-type-l1-weight: 600;
+    --bcm-type-l1-family: Georgia, serif;
+    --bcm-type-l2-size: 14px;
+    --bcm-type-l2-weight: 400;
+    --bcm-type-l2-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --bcm-type-l3-size: 12px;
+    --bcm-type-l3-weight: 400;
+    --bcm-type-l3-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --bcm-type-band-label-size: 14px;
+    --bcm-type-band-label-weight: 500;
+    --bcm-type-band-label-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+    /* Chrome — toolbar + canvas */
+    --bcm-toolbar-bg: #ffffff;
+    --bcm-toolbar-divider: #e0e0e0;
+    --bcm-canvas-bg: #fafafa;
+    --bcm-band-label-light: #ffffff;
+    --bcm-band-label-dark: #222222;
+
+    /* Chrome — detail panel */
+    --bcm-panel-bg: #ffffff;
+    --bcm-panel-header-bg: #f7f7f7;
+    --bcm-panel-header-text: #333333;
+    --bcm-panel-body-text: #333333;
+    --bcm-panel-secondary-text: #6b6b6b;
+    --bcm-panel-divider: #e0e0e0;
+}
