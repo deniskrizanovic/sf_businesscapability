@@ -9,6 +9,16 @@ import updateCapability from '@salesforce/apex/bcm_CapabilityController.updateCa
 import reorderCapabilities from '@salesforce/apex/bcm_DragDropController.reorderCapabilities';
 import reparentCapability from '@salesforce/apex/bcm_DragDropController.reparentCapability';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import {
+    BCM_L1_FILL, BCM_L1_FILL_FOCUSED, BCM_L1_STROKE, BCM_L1_LABEL,
+    BCM_L2_SURFACE, BCM_L2_SURFACE_FOCUSED, BCM_L2_STROKE, BCM_L2_LABEL,
+    BCM_L3_LABEL, BCM_L3_LABEL_DIMMED,
+    BCM_TAG_FALLBACK,
+    BCM_FOCUS_RING,
+    BCM_BAND_RAMP,
+    BCM_STRATEGY_MARK,
+    BCM_BAND_LABEL_LIGHT, BCM_BAND_LABEL_DARK
+} from 'c/bcm_VisualTokens';
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 const COLUMN_WIDTH      = 220;
@@ -33,7 +43,6 @@ const BAND_ROW_OVERLAP    = 12;
 const BAND_NOTCH          = CHEVRON_NOTCH * 2;
 const BAND_LABEL_PAD_X    = 18;
 const BAND_LABEL_PAD_BOTTOM = 8;
-const BAND_PALETTE        = ['#1a3d6b', '#2b4f7a', '#3f6492', '#587bad'];
 
 const ZOOM_MIN   = 0.2;
 const ZOOM_MAX   = 3.0;
@@ -411,8 +420,8 @@ export default class BcmCapabilityMap extends LightningElement {
                 name        : l1.Name,
                 colIdx,
                 isFocused   : l1Focused,
-                fill        : l1Focused ? '#2A2A2A' : '#4A4A4A',
-                strokeColour: l1Focused ? '#0070D2' : '#333333',
+                fill        : l1Focused ? BCM_L1_FILL_FOCUSED : BCM_L1_FILL,
+                strokeColour: l1Focused ? BCM_FOCUS_RING : BCM_L1_STROKE,
                 strokeWidth : l1Focused ? '3' : '1',
                 strokeDash  : l1Dashed ? '4 2' : '',
                 points,
@@ -457,10 +466,10 @@ export default class BcmCapabilityMap extends LightningElement {
                     const l3Focused = l3.Id === this.focusedNodeId;
                     const l3Dashed  = l3._hidden && this.showHidden;
                     const l3TagFill = this._getTagFill(l3.Id, l3.Tags__r);
-                    const showTagRect = !l3Focused && l3TagFill !== '#FFFFFF';
+                    const showTagRect = !l3Focused && l3TagFill !== BCM_TAG_FALLBACK;
                     const fontWeight = l3Focused ? 'bold' : 'normal';
                     const fontStyle  = l3Dashed ? 'italic' : 'normal';
-                    const fillColour = l3Dashed ? '#999' : '#222';
+                    const fillColour = l3Dashed ? BCM_L3_LABEL_DIMMED : BCM_L3_LABEL;
                     const focusRectStartY = bulletY;
                     const lines = allLines.map((text, wIdx) => {
                         const line = {
@@ -536,8 +545,8 @@ export default class BcmCapabilityMap extends LightningElement {
                     y           : boxY,
                     width       : COLUMN_WIDTH,
                     height      : boxHeight,
-                    fill        : l2Focused ? '#E8F4FF' : tagFill,
-                    strokeColour: l2Focused ? '#0070D2' : '#CCCCCC',
+                    fill        : tagFill,
+                    strokeColour: l2Focused ? BCM_FOCUS_RING : BCM_L2_STROKE,
                     strokeWidth : l2Focused ? '3' : '1',
                     strokeDash  : l2Dashed ? '4 2' : '',
                     handleX     : colX + 4,
@@ -614,7 +623,7 @@ export default class BcmCapabilityMap extends LightningElement {
                     id    : cc.Id,
                     name  : cc.Name,
                     label : String(cc.Name || '').toUpperCase(),
-                    fill  : BAND_PALETTE[i % BAND_PALETTE.length],
+                    fill  : BCM_BAND_RAMP[i % BCM_BAND_RAMP.length],
                     points,
                     labelX: bandX + BAND_LABEL_PAD_X,
                     labelY: y + h - BAND_LABEL_PAD_BOTTOM,
@@ -633,14 +642,14 @@ export default class BcmCapabilityMap extends LightningElement {
     }
 
     _getTagFill(capId, tagsRelation) {
-        if (!this.selectedTagId) return '#FFFFFF';
-        if (!tagsRelation?.length) return '#FFFFFF';
+        if (!this.selectedTagId) return BCM_TAG_FALLBACK;
+        if (!tagsRelation?.length) return BCM_TAG_FALLBACK;
         for (const jct of tagsRelation) {
             if (jct.bcm_Tag__c === this.selectedTagId) {
-                return this._tagColourMap.get(this.selectedTagId) || '#FFFFFF';
+                return this._tagColourMap.get(this.selectedTagId) || BCM_TAG_FALLBACK;
             }
         }
-        return '#FFFFFF';
+        return BCM_TAG_FALLBACK;
     }
 
     // ── Event handlers ────────────────────────────────────────────────────────
@@ -971,7 +980,7 @@ export default class BcmCapabilityMap extends LightningElement {
                 label: layoutNode.name,
                 labelX: 12,
                 labelY: 24,
-                labelFill: '#FFFFFF',
+                labelFill: BCM_L1_LABEL,
             };
         }
         if (level === 2) {
@@ -984,7 +993,7 @@ export default class BcmCapabilityMap extends LightningElement {
                 label  : layoutNode.name,
                 labelX : 12,
                 labelY : 20,
-                labelFill: '#222222',
+                labelFill: BCM_L2_LABEL,
             };
         }
         // L3
@@ -998,7 +1007,7 @@ export default class BcmCapabilityMap extends LightningElement {
             label  : group.l3Name,
             labelX : 12,
             labelY : 14,
-            labelFill: '#222222',
+            labelFill: BCM_L3_LABEL,
         };
     }
 
