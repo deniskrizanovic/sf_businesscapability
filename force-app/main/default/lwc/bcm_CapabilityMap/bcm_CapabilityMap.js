@@ -24,6 +24,10 @@ const FONT_SIZE_L2      = 12;
 const FONT_SIZE_L3      = 11;
 const BULLET_INDENT     = Math.round(FONT_SIZE_L3 * 0.6 * 2);
 
+const STRATEGY_STRIPE_W       = 3;
+const STRATEGY_STRIPE_INSET_Y = 4;
+const STRATEGY_STRIPE_INSET_X = 4;
+
 // Cross-cutting band layered visual
 const BAND_ROW_OVERLAP    = 12;
 const BAND_NOTCH          = CHEVRON_NOTCH * 2;
@@ -38,6 +42,7 @@ const ZOOM_DEFAULT = 1.0;
 
 const SESSION_KEY_SELECTED_MAP = 'bcm.visualisation.selectedMapId';
 const SESSION_KEY_SELECTED_TAG = 'bcm.visualisation.selectedTagId';
+const SESSION_KEY_STRATEGIC = 'bcm.visualisation.strategicSupportOn';
 
 function safeSessionGet(key) {
     try { return sessionStorage.getItem(key); } catch (_) { return null; }
@@ -49,6 +54,13 @@ function safeSessionSet(key, value) {
 
 function safeSessionRemove(key) {
     try { sessionStorage.removeItem(key); } catch (_) { /* silent */ }
+}
+
+function isStrategic(html) {
+    return String(html || '')
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/gi, ' ')
+        .trim().length > 0;
 }
 
 // ── Text wrap helper ──────────────────────────────────────────────────────────
@@ -74,6 +86,10 @@ function wrapText(text, maxWidth, fontSize, maxLines) {
 
 
 export default class BcmCapabilityMap extends LightningElement {
+
+    connectedCallback() {
+        this._maybeRestoreStrategicSupport();
+    }
 
     // ── Wired data ────────────────────────────────────────────────────────────
     @track mapOptions   = [];
@@ -153,6 +169,14 @@ export default class BcmCapabilityMap extends LightningElement {
         this.selectedTagId = persistedId;
     }
 
+    _maybeRestoreStrategicSupport() {
+        if (this._strategyRestoreAttempted) return;
+        this._strategyRestoreAttempted = true;
+        if (safeSessionGet(SESSION_KEY_STRATEGIC) === 'true') {
+            this.showStrategicSupport = true;
+        }
+    }
+
     // ── State ─────────────────────────────────────────────────────────────────
     @track selectedMapId         = null;
     @track selectedTagId         = '';
@@ -164,6 +188,7 @@ export default class BcmCapabilityMap extends LightningElement {
     @track _panY                 = 0;
     @track showHidden            = false;
     @track showCrossCutting      = false;
+    @track showStrategicSupport  = false;
     @track focusedNodeId         = null;
     @track _layoutL1             = [];
     @track _layoutL2             = [];
@@ -201,6 +226,7 @@ export default class BcmCapabilityMap extends LightningElement {
     _panStartY      = 0;
     _restoreAttempted = false;
     _tagRestoreAttempted = false;
+    _strategyRestoreAttempted = false;
 
     @api get zoom() { return this._zoom; }
     set zoom(v)      { this._zoom = v; }
@@ -225,6 +251,10 @@ export default class BcmCapabilityMap extends LightningElement {
 
     get crossCuttingVariant() {
         return this.showCrossCutting ? 'brand' : 'border';
+    }
+
+    get strategicSupportVariant() {
+        return this.showStrategicSupport ? 'brand' : 'border';
     }
 
     // ── Computed SVG dimensions & transform ───────────────────────────────────
@@ -367,6 +397,15 @@ export default class BcmCapabilityMap extends LightningElement {
             colMap[colIdx]  = l1.Id;
             l2ByCol[colIdx] = [];
 
+            const l1Strategy = (this.showStrategicSupport && isStrategic(l1.bcm_StrategySupport__c))
+                ? {
+                    x      : x + STRATEGY_STRIPE_INSET_X,
+                    y      : y + STRATEGY_STRIPE_INSET_Y,
+                    width  : STRATEGY_STRIPE_W,
+                    height : h - STRATEGY_STRIPE_INSET_Y * 2,
+                }
+                : null;
+
             l1Nodes.push({
                 id          : l1.Id,
                 name        : l1.Name,
@@ -379,6 +418,7 @@ export default class BcmCapabilityMap extends LightningElement {
                 points,
                 handleX     : x + 8,
                 handleY     : y + h / 2 + 4,
+                strategyStripe: l1Strategy,
                 labelLines: textLines.map((text, i) => ({
                     key : l1.Id + '-label-' + i,
                     text,
@@ -442,6 +482,14 @@ export default class BcmCapabilityMap extends LightningElement {
                         l3Name    : l3.Name,
                         isFocused : l3Focused,
                         lines,
+                        strategyStripe: (this.showStrategicSupport && isStrategic(l3.bcm_StrategySupport__c))
+                            ? {
+                                x      : bulletBaseX - 8,
+                                y      : focusRectStartY,
+                                width  : STRATEGY_STRIPE_W,
+                                height : allLines.length * LINE_HEIGHT - 2,
+                            }
+                            : null,
                         focusRect : l3Focused ? {
                             x     : bulletBaseX - 4,
                             y     : focusRectStartY,
@@ -469,6 +517,15 @@ export default class BcmCapabilityMap extends LightningElement {
                 const rowIdx    = l2ByCol[colIdx].length;
                 l2ByCol[colIdx].push(l2.Id);
 
+                const l2Strategy = (this.showStrategicSupport && isStrategic(l2.bcm_StrategySupport__c))
+                    ? {
+                        x      : colX + STRATEGY_STRIPE_INSET_X,
+                        y      : boxY + STRATEGY_STRIPE_INSET_Y,
+                        width  : STRATEGY_STRIPE_W,
+                        height : boxHeight - STRATEGY_STRIPE_INSET_Y * 2,
+                    }
+                    : null;
+
                 l2Nodes.push({
                     id          : l2.Id,
                     name        : l2.Name,
@@ -485,6 +542,7 @@ export default class BcmCapabilityMap extends LightningElement {
                     strokeDash  : l2Dashed ? '4 2' : '',
                     handleX     : colX + 4,
                     handleY     : boxY + 12,
+                    strategyStripe: l2Strategy,
                     labelLines : l2Lines.map((text, i) => ({
                         key  : l2.Id + '-label-' + i,
                         text,
@@ -560,6 +618,14 @@ export default class BcmCapabilityMap extends LightningElement {
                     points,
                     labelX: bandX + BAND_LABEL_PAD_X,
                     labelY: y + h - BAND_LABEL_PAD_BOTTOM,
+                    strategyStripe: (this.showStrategicSupport && isStrategic(cc.bcm_StrategySupport__c))
+                        ? {
+                            x      : bandX + STRATEGY_STRIPE_INSET_X,
+                            y      : y + STRATEGY_STRIPE_INSET_Y,
+                            width  : STRATEGY_STRIPE_W,
+                            height : h - STRATEGY_STRIPE_INSET_Y * 2,
+                        }
+                        : null,
                 });
             }
         }
@@ -584,6 +650,8 @@ export default class BcmCapabilityMap extends LightningElement {
         this.panX = 0;
         this.panY = 0;
         this.showCrossCutting = false;
+        this.showStrategicSupport = false;
+        // sessionStorage value intentionally untouched — reload restores user's preference
         if (this.selectedMapId) {
             safeSessionSet(SESSION_KEY_SELECTED_MAP, this.selectedMapId);
         } else {
@@ -618,6 +686,16 @@ export default class BcmCapabilityMap extends LightningElement {
 
     handleToggleCrossCutting() {
         this.showCrossCutting = !this.showCrossCutting;
+    }
+
+    handleToggleStrategicSupport() {
+        this.showStrategicSupport = !this.showStrategicSupport;
+        if (this.showStrategicSupport) {
+            safeSessionSet(SESSION_KEY_STRATEGIC, 'true');
+        } else {
+            safeSessionRemove(SESSION_KEY_STRATEGIC);
+        }
+        this._buildLayout(this._capabilities);
     }
 
     _refreshCapabilities() {
@@ -1344,3 +1422,5 @@ export default class BcmCapabilityMap extends LightningElement {
         this._buildLayout(this._capabilities);
     }
 }
+
+export { isStrategic };

@@ -31,6 +31,9 @@ A horizontal stack of full-width chevrons rendered at the bottom of the diagram 
 ## Sort Order
 A sequential integer (1, 2, 3...) stored on each `bcm_Capability__c` record indicating its position among siblings (Capabilities sharing the same parent). When a Capability is reordered or reparented via drag-and-drop, the Sort Order of all affected siblings is rewritten in full from 1. Gaps and fractional values are not used.
 
+## Strategic Support
+Free-text rationale stored on `bcm_Capability__c` (`bcm_StrategySupport__c`) explaining how a capability supports business strategy. The diagram offers a Strategic Support toolbar toggle that, when on, marks every capability whose Strategic Support content is non-empty (after stripping HTML and whitespace) with a visual highlight. The highlight is a display option only — it does not change underlying data.
+
 ## Diagram
 The SVG-based Lightning Web Component (`bcm_CapabilityMap`) that renders the full Capability hierarchy. The diagram is the primary interface for viewing and structurally editing the Capability map.
 

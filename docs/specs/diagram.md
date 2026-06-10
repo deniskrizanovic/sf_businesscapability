@@ -74,6 +74,54 @@ And no error is surfaced to the user
 
 > Tested by: bcm_CapabilityMap.test.js — "Silent fallback when sessionStorage.setItem throws on tag change"
 
+## Feature: Strategic Support highlight
+
+**Scenario: Toggle on shows amber stripe on capabilities with non-empty strategy support**
+
+Given the user is on the Visualisation page with a Map selected
+And at least one capability has non-empty `bcm_StrategySupport__c`
+When the user clicks the Strategic Support toolbar button
+Then every capability with non-empty content renders an amber left-edge stripe
+And the button shows the brand variant
+
+> Tested by: bcm_CapabilityMap.test.js — "Marker present when toggle on and capability has strategy support content"; diagram.spec.ts — "Strategic Support toggle reveals stripes and persists across reload"
+
+**Scenario: Toggle off hides all strategic support stripes**
+
+Given Strategic Support is on
+When the user clicks the toolbar button again
+Then no strategic-support stripes render
+And the button returns to the neutral variant
+
+> Tested by: bcm_CapabilityMap.test.js — "Marker absent when toggle off even if capabilities have content"
+
+**Scenario: Empty / whitespace / bare-tag content does not produce a stripe**
+
+Given Strategic Support is on
+And a capability's `bcm_StrategySupport__c` is null, empty, `<p></p>`, `<p><br></p>`, `<p>&nbsp;</p>`, or whitespace-only
+Then no stripe is rendered for that capability
+
+> Tested by: bcm_CapabilityMap.test.js — "isStrategic normalisation — empty / whitespace / bare-tag inputs"
+
+**Scenario: Switching maps resets the visible toggle to off**
+
+Given Strategic Support is on
+When the user picks a different Map from the Map combobox
+Then the Strategic Support button returns to the neutral variant
+And no stripes render until the user toggles again
+And the persisted `bcm.visualisation.strategicSupportOn` value is unchanged
+
+> Tested by: bcm_CapabilityMap.test.js — "Map switch resets toggle to off but keeps sessionStorage key"
+
+**Scenario: Toggle state survives page reload within the same session**
+
+Given the user toggled Strategic Support on
+When the user reloads the page within the same browser session
+Then the toolbar button is in the brand variant
+And stripes are rendered on capabilities with non-empty strategy support
+
+> Tested by: bcm_CapabilityMap.test.js — "Restores showStrategicSupport from sessionStorage on init"; diagram.spec.ts — "Strategic Support toggle reveals stripes and persists across reload"
+
 ---
 
 ## Feature: Diagram renders the correct structure for a selected Map

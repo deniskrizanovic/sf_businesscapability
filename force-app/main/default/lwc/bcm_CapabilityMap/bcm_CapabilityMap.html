@@ -70,6 +70,15 @@
                     onclick={handleToggleCrossCutting}>
                 </lightning-button-icon>
             </div>
+            <div class="slds-col">
+                <lightning-button-icon
+                    data-id="strategic-support-toggle"
+                    icon-name="utility:strategy"
+                    title="Strategic Support"
+                    variant={strategicSupportVariant}
+                    onclick={handleToggleStrategicSupport}>
+                </lightning-button-icon>
+            </div>
         </div>
     </div>
 
@@ -115,6 +124,14 @@
                             stroke-width={node.strokeWidth}
                             stroke-dasharray={node.strokeDash}>
                         </rect>
+                        <template if:true={node.strategyStripe}>
+                            <rect class="bcm-strategy-stripe"
+                                  x={node.strategyStripe.x}
+                                  y={node.strategyStripe.y}
+                                  width={node.strategyStripe.width}
+                                  height={node.strategyStripe.height}>
+                            </rect>
+                        </template>
                         <template if:true={canEdit}>
                             <text
                                 class="bcm-drag-handle"
@@ -168,6 +185,14 @@
                                         class="bcm-l3-tag-rect">
                                     </rect>
                                 </template>
+                                <template if:true={group.strategyStripe}>
+                                    <rect class="bcm-strategy-stripe"
+                                          x={group.strategyStripe.x}
+                                          y={group.strategyStripe.y}
+                                          width={group.strategyStripe.width}
+                                          height={group.strategyStripe.height}>
+                                    </rect>
+                                </template>
                                 <template for:each={group.lines} for:item="line" for:index="lineIdx">
                                     <text
                                         key={line.key}
@@ -210,6 +235,14 @@
                 <template for:each={l1Nodes} for:item="node">
                     <g key={node.id} onclick={handleNodeClick} data-node-id={node.id} data-node-name={node.name} data-node-level="1" data-focused={node.isFocused} class="bcm-node bcm-l1">
                         <polygon points={node.points} fill={node.fill} stroke={node.strokeColour} stroke-width={node.strokeWidth} stroke-dasharray={node.strokeDash}></polygon>
+                        <template if:true={node.strategyStripe}>
+                            <rect class="bcm-strategy-stripe"
+                                  x={node.strategyStripe.x}
+                                  y={node.strategyStripe.y}
+                                  width={node.strategyStripe.width}
+                                  height={node.strategyStripe.height}>
+                            </rect>
+                        </template>
                         <template for:each={node.labelLines} for:item="line">
                             <text
                                 key={line.key}
@@ -285,6 +318,14 @@
                            data-node-level="1"
                            onclick={handleBandClick}>
                             <polygon points={node.points} fill={node.fill} stroke="#0e2342" stroke-width="1.2"></polygon>
+                            <template if:true={node.strategyStripe}>
+                                <rect class="bcm-strategy-stripe"
+                                      x={node.strategyStripe.x}
+                                      y={node.strategyStripe.y}
+                                      width={node.strategyStripe.width}
+                                      height={node.strategyStripe.height}>
+                                </rect>
+                            </template>
                             <text
                                 x={node.labelX}
                                 y={node.labelY}
