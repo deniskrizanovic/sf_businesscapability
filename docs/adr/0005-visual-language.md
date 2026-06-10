@@ -12,7 +12,7 @@ Issue #43 called for cohesion: a unified palette, focus model, strategy mark, an
 
 ## Decision
 
-Adopt an **SLDS-aligned chrome** + **bespoke canvas tokens** stance. SLDS owns toolbar buttons, comboboxes, and detail-panel form fields. Custom tokens own the SVG canvas and diagram-specific surfaces. Tokens are centralised in `bcm_VisualTokens` LWC module (`BCM_*` JS exports + `--bcm-*` CSS mirror).
+Adopt an **SLDS-aligned chrome** + **bespoke canvas tokens** stance. SLDS owns toolbar buttons, comboboxes, and detail-panel form fields. Custom tokens own the SVG canvas and diagram-specific surfaces. Tokens are centralised in `bcm_VisualTokens` LWC module (`BCM_*` JS exports). CSS counterparts live as `--bcm-*` custom properties in `bcm_CapabilityMap.css :host` — CSS vars inherit through LWC shadow boundaries, so child components (e.g. `bcm_CapabilityDetail`) consume them without redeclaration.
 
 **Chosen aesthetic direction: A — Editorial Monochrome.** Greyscale base with Georgia serif for L1 labels, system sans for L2/L3, SLDS blue focus ring, and muted gold strategy accent.
 
@@ -38,7 +38,7 @@ Adopt an **SLDS-aligned chrome** + **bespoke canvas tokens** stance. SLDS owns t
 
 ## Consequences
 
-**Future palette changes happen in one module.** If the product evolves to a coloured palette, the only surface change is `bcm_VisualTokens.js` + `.css` + updated spec/test mirrored constants.
+**Future palette changes happen in two places.** If the product evolves to a coloured palette, update `bcm_VisualTokens.js` (JS constants) and `bcm_CapabilityMap.css :host` (CSS custom properties) together. No other component needs changes.
 
 **SLDS upgrades affect chrome only.** If SLDS ships a new Lightning Input style, the detail panel reflects it. The canvas remains stable because it sources no SLDS tokens.
 
@@ -48,7 +48,7 @@ Adopt an **SLDS-aligned chrome** + **bespoke canvas tokens** stance. SLDS owns t
 
 **Strategy-mark glyph shape is direction-specific.** Direction A uses `kind: 'stripe'` with L1 variant `chevron-edge`. If the product later adopts a different direction, `BCM_STRATEGY_MARK` must be updated and the layout code must handle the new `kind` (e.g. `tick`, `corner`). Task 8 wired the switch logic into `_buildLayout`.
 
-**LWC stylesheet boundary forces `:host` block duplication across consumers.** LWC stylesheets cannot cross-import. `bcm_VisualTokens.css` is the canonical source. Consumers (`bcm_CapabilityMap.css`, `bcm_CapabilityDetail.css`) copy the `:host` block with a comment pointing to it. Drift is caught by `tests/e2e/visual-language.spec.ts` because computed `fill`/`stroke` values would no longer match expected tokens.
+**CSS custom properties inherit through LWC shadow boundaries** — no duplication needed. `bcm_CapabilityMap.css :host` is the single CSS definition. Child components consume `--bcm-*` vars via inheritance. `bcm_VisualTokens.css` was deleted; `bcm_VisualTokens.js` remains the JS source of truth. Drift between JS constants and CSS vars is caught by `tests/e2e/visual-language.spec.ts`.
 
 ## Verification
 

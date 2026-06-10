@@ -1,4 +1,4 @@
-/* :host vars copy-pasted from bcm_VisualTokens.css; LWC cannot cross-import. Update both together. */
+/* --bcm-* custom properties. Single CSS definition — bcm_VisualTokens.js is the JS source of truth; keep values in sync here when changing tokens. CSS vars inherit into child shadow DOMs (bcm_CapabilityDetail et al) so no duplication needed there. */
 :host {
     display: flex;
     flex-direction: column;

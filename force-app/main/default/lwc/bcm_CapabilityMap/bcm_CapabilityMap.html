@@ -198,6 +198,19 @@
                                     </template>
                                 </template>
                                 <template for:each={group.lines} for:item="line" for:index="lineIdx">
+                                    <template if:true={line.bullet}>
+                                        <text
+                                            key={line.bulletKey}
+                                            x={line.bulletX}
+                                            y={line.y}
+                                            dominant-baseline="middle"
+                                            fill={line.fill}
+                                            font-size="11"
+                                            font-weight={line.fontWeight}
+                                            font-style={line.fontStyle}>
+                                            {line.bullet}
+                                        </text>
+                                    </template>
                                     <text
                                         key={line.key}
                                         data-node-id={group.l3Id}

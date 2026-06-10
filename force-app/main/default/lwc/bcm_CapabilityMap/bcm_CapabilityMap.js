@@ -41,7 +41,7 @@ const DIAGRAM_PADDING = 24;
 const FONT_SIZE_L1 = 13;
 const FONT_SIZE_L2 = 12;
 const FONT_SIZE_L3 = 11;
-const BULLET_INDENT = Math.round(FONT_SIZE_L3 * 0.6 + FONT_SIZE_L3 * 0.3); // "•" ~0.6em + " " ~0.3em
+const BULLET_INDENT = Math.round(FONT_SIZE_L3 * 0.6 * 2); // "• " prefix: bullet + space, each ~0.6em
 
 const STRATEGY_STRIPE_W = BCM_STRATEGY_MARK.weight / 2; // L2/L3 stripes half the L1 weight
 const STRATEGY_STRIPE_INSET_Y = 4;
@@ -553,16 +553,15 @@ export default class BcmCapabilityMap extends LightningElement {
                 const headerHeight = l2Lines.length * (FONT_SIZE_L2 + 4) + BOX_PADDING * 2;
                 const l2StartY = boxY + BOX_PADDING + FONT_SIZE_L2 / 2;
 
-                // L3 bullets — hanging indent: first line gets "• ", continuations indented
+                // L3 bullets — bullet glyph is a separate element; all text lines align at bulletContX
                 const bulletBaseX = colX + BOX_PADDING + 8;
                 const bulletContX = bulletBaseX + BULLET_INDENT;
-                const maxBulletFirst = COLUMN_WIDTH - BOX_PADDING * 2 - 8;
-                const maxBulletCont = maxBulletFirst - BULLET_INDENT;
+                const maxBulletText = COLUMN_WIDTH - BOX_PADDING * 2 - 8 - BULLET_INDENT;
                 const bulletGroups = [];
                 let bulletY = boxY + headerHeight;
                 for (const l3 of l2.children || []) {
                     if (l3._hidden && !this.showHidden) continue;
-                    const allLines = wrapText(l3.Name, maxBulletCont, FONT_SIZE_L3, 5);
+                    const allLines = wrapText(l3.Name, maxBulletText, FONT_SIZE_L3, 5);
                     const l3Focused = l3.Id === this.focusedNodeId;
                     const l3Dashed = l3._hidden && this.showHidden;
                     const l3TagFill = this._getTagFill(l3.Id, l3.Tags__r);
@@ -578,8 +577,11 @@ export default class BcmCapabilityMap extends LightningElement {
                         fontWeight,
                         fontStyle,
                         fill: fillColour,
-                        text: wIdx === 0 ? '• ' + text : text,
-                        x: wIdx === 0 ? bulletBaseX : bulletContX,
+                        bullet: wIdx === 0 ? '•' : null,
+                        bulletKey: l3.Id + '-bullet-glyph',
+                        bulletX: bulletBaseX,
+                        text,
+                        x: bulletContX,
                         y: startBulletY + wIdx * LINE_HEIGHT + LINE_HEIGHT / 2
                     }));
                     bulletY = startBulletY + allLines.length * LINE_HEIGHT;
