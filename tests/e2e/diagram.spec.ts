@@ -291,6 +291,34 @@ test.describe('Tag highlight — editor project', () => {
     });
 });
 
+// ── Strategic Support — editor project ───────────────────────────────────────
+
+test.describe('Strategic Support — editor project', () => {
+    test('Strategic Support toggle reveals stripes and persists across reload', async ({ page }) => {
+        await openDiagram(page);
+        await selectMap(page, MAP_NAME);
+
+        // Stripes hidden before toggle
+        await expect(page.locator('.bcm-canvas')).toBeVisible({ timeout: 20000 });
+        await expect(page.locator('rect.bcm-strategy-stripe')).toHaveCount(0);
+
+        // Click the toolbar button
+        const btn = page.getByRole('button', { name: 'Strategic Support' }).first();
+        await btn.click();
+
+        // Stripes visible
+        await expect(page.locator('rect.bcm-strategy-stripe').first())
+            .toBeVisible({ timeout: 5000 });
+
+        // Reload — stripe state restored from sessionStorage
+        await page.reload();
+        await page.locator('.bcm-canvas').waitFor({ state: 'visible', timeout: 20000 });
+        await page.locator('.bcm-canvas polygon').first().waitFor({ state: 'visible', timeout: 20000 });
+        await expect(page.locator('rect.bcm-strategy-stripe').first())
+            .toBeVisible({ timeout: 20000 });
+    });
+});
+
 // ── Context menu — editor project ─────────────────────────────────────────────
 
 test.describe('Context menu — editor project', () => {
