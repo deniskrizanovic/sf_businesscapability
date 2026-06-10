@@ -12,15 +12,15 @@
 
 ## File Structure
 
-| File | Reason |
-|------|--------|
-| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.js` | Mix in `NavigationMixin`; add `recordPageUrl` tracked field; recompute URL in `capability` setter on id change; clear URL on `GenerateUrl` rejection. |
-| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.html` | Add `<a class="bcm-detail-record-link slds-text-link">Open record page <lightning-icon icon-name="utility:new_window" size="xx-small"></lightning-icon></a>` block in `<header>`, after the read/edit title-row blocks, gated by `if:true={recordPageUrl}`. |
-| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.css` | Minor: spacing for the link row and inline icon alignment. |
-| `force-app/main/default/lwc/bcm_CapabilityDetail/__tests__/bcm_CapabilityDetail.test.js` | Mock `lightning/navigation`'s `GenerateUrl` to resolve a known URL; assert link renders / hidden / target+rel / href updates on capability change / visible in edit mode / visible without canEdit. |
-| `tests/e2e/capability-detail.spec.ts` | Add one scenario: click "Open record page" link, capture new tab via `context.waitForEvent('page')`, assert URL contains `/lightning/r/bcm_Capability__c/` + the open capability's Id. |
-| `docs/specs/diagram.md` | New feature heading "Detail Panel — record page link" with six scenarios, `> Tested by:` markers. |
-| `docs/design/99-cosmic-function-point-count.md` | Add an exclusions-section note: GH #45 link adds no new FP — click triggers FP14. |
+| File                                                                                     | Reason                                                                                                                                                                                                                                                      |
+| ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.js`                | Mix in `NavigationMixin`; add `recordPageUrl` tracked field; recompute URL in `capability` setter on id change; clear URL on `GenerateUrl` rejection.                                                                                                       |
+| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.html`              | Add `<a class="bcm-detail-record-link slds-text-link">Open record page <lightning-icon icon-name="utility:new_window" size="xx-small"></lightning-icon></a>` block in `<header>`, after the read/edit title-row blocks, gated by `if:true={recordPageUrl}`. |
+| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.css`               | Minor: spacing for the link row and inline icon alignment.                                                                                                                                                                                                  |
+| `force-app/main/default/lwc/bcm_CapabilityDetail/__tests__/bcm_CapabilityDetail.test.js` | Mock `lightning/navigation`'s `GenerateUrl` to resolve a known URL; assert link renders / hidden / target+rel / href updates on capability change / visible in edit mode / visible without canEdit.                                                         |
+| `tests/e2e/capability-detail.spec.ts`                                                    | Add one scenario: click "Open record page" link, capture new tab via `context.waitForEvent('page')`, assert URL contains `/lightning/r/bcm_Capability__c/` + the open capability's Id.                                                                      |
+| `docs/specs/diagram.md`                                                                  | New feature heading "Detail Panel — record page link" with six scenarios, `> Tested by:` markers.                                                                                                                                                           |
+| `docs/design/99-cosmic-function-point-count.md`                                          | Add an exclusions-section note: GH #45 link adds no new FP — click triggers FP14.                                                                                                                                                                           |
 
 No new files in `force-app`. No Apex. No `js-meta.xml` changes (NavigationMixin is a pure JS mix-in).
 
@@ -38,6 +38,7 @@ No new files in `force-app`. No Apex. No `js-meta.xml` changes (NavigationMixin 
 ## Task 1: Mix in `NavigationMixin` and track `recordPageUrl`
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.js`
 
 - [x] **Step 1: Import `NavigationMixin` and extend the class**
@@ -117,6 +118,7 @@ Insert near the bottom of the class (before the closing `}`):
 ## Task 2: Render the link in the panel header
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.html`
 - Modify: `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.css`
 
@@ -125,22 +127,20 @@ Insert near the bottom of the class (before the closing `}`):
 Inside the existing `<header>` (after the `if:true={isEditMode}` block, before `</header>`, around line 53):
 
 ```html
-            <template if:true={recordPageUrl}>
-                <div class="bcm-detail-record-link slds-m-top_x-small">
-                    <a href={recordPageUrl}
-                       target="_blank"
-                       rel="noopener"
-                       class="slds-text-link">
-                        Open record page
-                        <lightning-icon
-                            icon-name="utility:new_window"
-                            size="xx-small"
-                            alternative-text="Opens in new tab"
-                            class="slds-m-left_xx-small">
-                        </lightning-icon>
-                    </a>
-                </div>
-            </template>
+<template if:true="{recordPageUrl}">
+    <div class="bcm-detail-record-link slds-m-top_x-small">
+        <a href="{recordPageUrl}" target="_blank" rel="noopener" class="slds-text-link">
+            Open record page
+            <lightning-icon
+                icon-name="utility:new_window"
+                size="xx-small"
+                alternative-text="Opens in new tab"
+                class="slds-m-left_xx-small"
+            >
+            </lightning-icon>
+        </a>
+    </div>
+</template>
 ```
 
 - [x] **Step 2: CSS — keep the icon vertically aligned with the link text**
@@ -162,6 +162,7 @@ Append to `bcm_CapabilityDetail.css`:
 ## Task 3: Jest tests
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityDetail/__tests__/bcm_CapabilityDetail.test.js`
 
 - [x] **Step 1: Mock `lightning/navigation` so `GenerateUrl` resolves to a deterministic URL**
@@ -169,15 +170,20 @@ Append to `bcm_CapabilityDetail.css`:
 At the top of the test file:
 
 ```js
-jest.mock('lightning/navigation', () => {
-    return {
-        NavigationMixin: (Base) => class extends Base {
-            [NavigationMixin.GenerateUrl] = jest.fn();
-        },
-        // The mixin uses a Symbol key — re-export it for the test mock to reuse.
-        // sfdx-lwc-jest's default stub already does this; keep behaviour consistent.
-    };
-}, { virtual: true });
+jest.mock(
+    'lightning/navigation',
+    () => {
+        return {
+            NavigationMixin: (Base) =>
+                class extends Base {
+                    [NavigationMixin.GenerateUrl] = jest.fn();
+                }
+            // The mixin uses a Symbol key — re-export it for the test mock to reuse.
+            // sfdx-lwc-jest's default stub already does this; keep behaviour consistent.
+        };
+    },
+    { virtual: true }
+);
 ```
 
 If the existing `sfdx-lwc-jest` default stub for `lightning/navigation` is sufficient (it returns a Promise), prefer using it and only override `GenerateUrl` per-test via `jest.spyOn` on the component instance to resolve a chosen URL. Concretely: in each test that needs an href, do:
@@ -185,8 +191,9 @@ If the existing `sfdx-lwc-jest` default stub for `lightning/navigation` is suffi
 ```js
 const URL_FOR = (id) => `/lightning/r/bcm_Capability__c/${id}/view`;
 // before connecting:
-jest.spyOn(element, NavigationMixin.GenerateUrl)
-    .mockImplementation(({ attributes }) => Promise.resolve(URL_FOR(attributes.recordId)));
+jest.spyOn(element, NavigationMixin.GenerateUrl).mockImplementation(({ attributes }) =>
+    Promise.resolve(URL_FOR(attributes.recordId))
+);
 ```
 
 (Pick whichever variant the existing test scaffolding cleanly supports — both achieve the same assertion target.)
@@ -249,6 +256,7 @@ it('Record page link updates when capability changes', async () => {
 ## Task 4: Playwright e2e
 
 **Files:**
+
 - Modify: `tests/e2e/capability-detail.spec.ts`
 
 - [x] **Step 1: Add a new test inside the appropriate `test.describe` block**
@@ -263,10 +271,7 @@ test('Record page link opens record page in a new tab', async ({ page, context }
     await expect(link).toHaveAttribute('target', '_blank');
     await expect(link).toHaveAttribute('rel', 'noopener');
 
-    const [newPage] = await Promise.all([
-        context.waitForEvent('page'),
-        link.click(),
-    ]);
+    const [newPage] = await Promise.all([context.waitForEvent('page'), link.click()]);
     expect(newPage.url()).toContain('/lightning/r/bcm_Capability__c/');
     // Diagram tab unaffected
     await expect(page.locator('.bcm-detail-panel[data-open="true"]')).toBeVisible();
@@ -281,6 +286,7 @@ test('Record page link opens record page in a new tab', async ({ page, context }
 ## Task 5: Spec coverage
 
 **Files:**
+
 - Modify: `docs/specs/diagram.md`
 
 - [x] **Step 1: Append a new feature section after "Detail Panel — inline edit (Editors only)"**
@@ -335,6 +341,7 @@ Then the "Open record page" link's `href` updates to B's record page URL
 ## Task 6: COSMIC function-point note
 
 **Files:**
+
 - Modify: `docs/design/99-cosmic-function-point-count.md`
 
 - [x] **Step 1: Add an exclusions note near the existing "Hide via Context Menu removed" note (around line 613)**

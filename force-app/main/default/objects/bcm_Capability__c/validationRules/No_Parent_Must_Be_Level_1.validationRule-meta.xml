@@ -1,7 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>No_Parent_Must_Be_Level_1</fullName>
     <active>true</active>
-    <errorConditionFormula><![CDATA[AND(ISBLANK(bcm_Parent__c), bcm_Level__c <> 1)]]></errorConditionFormula>
+    <errorConditionFormula
+    ><![CDATA[AND(ISBLANK(bcm_Parent__c), bcm_Level__c <> 1)]]></errorConditionFormula>
     <errorMessage>A capability with no parent must be Level 1.</errorMessage>
 </ValidationRule>

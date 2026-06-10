@@ -6,7 +6,7 @@ This document explains the design of the Playwright end-to-end suite under `test
 - [ADR 0004 — Drag-drop test strategy](../adr/0004-playwright-drag-drop-test-strategy.md): hybrid gesture + outcome-only approach.
 - [Quality Plan §3 Layer 2](08-quality-plan.md): how e2e fits into the overall test stack and what it owns.
 
-This doc is the *how* and *why* of the suite mechanics — authentication, seeding, isolation, helpers, ordering, teardown — and the constraints that forced each choice.
+This doc is the _how_ and _why_ of the suite mechanics — authentication, seeding, isolation, helpers, ordering, teardown — and the constraints that forced each choice.
 
 ---
 
@@ -14,14 +14,14 @@ This doc is the *how* and *why* of the suite mechanics — authentication, seedi
 
 The suite runs against a **deployed Salesforce org**, not a local stub. Every test logs in over the public web, navigates Lightning Experience, and exercises real Apex / LWC. This single fact dictates most of the architecture:
 
-| Constraint | Consequence for design |
-|---|---|
-| Org is shared across runs and users | Test data must be namespaced per run so concurrent runs (CI + local + WebStorm) cannot collide |
-| Login is slow (5–15 s) and rate-limited | Cannot log in per test; sessions are reused |
-| Lightning UI mounts onboarding overlays asynchronously | Helpers must strip overlays before they steal focus from controls |
-| `sf apex run` is the only out-of-band write path | Seed and teardown go through Apex, not REST or the UI |
-| Salesforce permission model is the system under test | Two real users (Editor + Viewer) are required; mocking permissions defeats the test |
-| Concurrent UI sessions on one org cause cross-talk | Workers must be limited; project ordering must be deterministic |
+| Constraint                                             | Consequence for design                                                                         |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| Org is shared across runs and users                    | Test data must be namespaced per run so concurrent runs (CI + local + WebStorm) cannot collide |
+| Login is slow (5–15 s) and rate-limited                | Cannot log in per test; sessions are reused                                                    |
+| Lightning UI mounts onboarding overlays asynchronously | Helpers must strip overlays before they steal focus from controls                              |
+| `sf apex run` is the only out-of-band write path       | Seed and teardown go through Apex, not REST or the UI                                          |
+| Salesforce permission model is the system under test   | Two real users (Editor + Viewer) are required; mocking permissions defeats the test            |
+| Concurrent UI sessions on one org cause cross-talk     | Workers must be limited; project ordering must be deterministic                                |
 
 The suite is intentionally a thin layer on top of the real org. We do not abstract Salesforce away. We build small helpers around its idiosyncrasies and let the tests be plain Playwright.
 
@@ -81,7 +81,7 @@ The RUN_ID is read **eagerly at module load** by `fixtures/run-id.ts`. This forc
 ```ts
 // global-setup.ts
 fs.writeFileSync(path.resolve('tests/e2e/.run_id'), runId, 'utf-8');
-const { dragDropSeed } = require('./drag-drop.seed');  // reads RUN_ID now
+const { dragDropSeed } = require('./drag-drop.seed'); // reads RUN_ID now
 ```
 
 `require()` is used (not dynamic `import()`) because Playwright's CommonJS-style loader does not handle top-level `await import()` reliably in the global-setup hook.
@@ -107,8 +107,8 @@ The original suite seeded data inside `beforeAll` blocks in each spec, driving t
 // fixtures/seeds.ts
 export interface SeedSpec {
     label: string;
-    payload: unknown;            // accepted by bcm_ImportController.importCapabilities
-    postSeedApex?: string;       // optional follow-up DML the importer can't do
+    payload: unknown; // accepted by bcm_ImportController.importCapabilities
+    postSeedApex?: string; // optional follow-up DML the importer can't do
 }
 ```
 
@@ -156,13 +156,13 @@ The base64 wrapper is load-bearing: the Lightning debug-log pipeline HTML-entity
 Most diagram-based specs follow the pattern:
 
 ```ts
-await openDiagram(page);             // navigate, wait for canvas
-await selectMap(page, MAP_NAME);     // open combobox, click option, wait for SVG
+await openDiagram(page); // navigate, wait for canvas
+await selectMap(page, MAP_NAME); // open combobox, click option, wait for SVG
 ```
 
 `selectMap` (in `fixtures/helpers.ts`) hardens three known flakes:
 
-1. **Onboarding overlays close the dropdown.** Lightning mounts `RUNTIME_THP_LEARNING-*`, `SALES_YUKON-*`, etc. wrapped in `<lightning-focus-trap>`. The trap steals focus and silently closes any open combobox. `setupAutoDismiss` (called by every test before navigation) installs a `MutationObserver` via `addInitScript` that strips matching elements *as they mount*. Earlier attempts using `addLocatorHandler` fired mid-click and stole focus instead of restoring it.
+1. **Onboarding overlays close the dropdown.** Lightning mounts `RUNTIME_THP_LEARNING-*`, `SALES_YUKON-*`, etc. wrapped in `<lightning-focus-trap>`. The trap steals focus and silently closes any open combobox. `setupAutoDismiss` (called by every test before navigation) installs a `MutationObserver` via `addInitScript` that strips matching elements _as they mount_. Earlier attempts using `addLocatorHandler` fired mid-click and stole focus instead of restoring it.
 
 2. **Late banners (Live Preview, June-2026 security nag).** Same pattern: `setupAutoDismiss` removes them before they can intercept clicks.
 
@@ -194,7 +194,7 @@ The earlier `workers: 1` setting was adopted while three different sources of cr
 2. **Same-user UI cross-talk** — two workers logged in as the same user steal each other's modal focus / close combobox dropdowns / etc.
 3. **Org-side throttles** on parallel login + refresh-apex storms.
 
-(2) and (3) are the structural reasons that survive any teardown fix. They only bite *within the same project* — the `editor` and `viewer` projects authenticate as different users with separate `storageState`s, so cross-project parallelism does not trigger same-user cross-talk and the throttle headroom is fine for two workers.
+(2) and (3) are the structural reasons that survive any teardown fix. They only bite _within the same project_ — the `editor` and `viewer` projects authenticate as different users with separate `storageState`s, so cross-project parallelism does not trigger same-user cross-talk and the throttle headroom is fine for two workers.
 
 `fullyParallel: false + workers: 2` therefore lets `editor` and `viewer` projects run concurrently while spec files within each project remain serial. That preserves the deterministic ordering specs rely on (§8), retains all single-project flake protection, and recovers most of the wall-clock cost of the prior `workers: 1` setting.
 
@@ -215,13 +215,13 @@ There is **one** teardown: `global-teardown.ts`. It generates an Apex script tha
 3. `bcm_Capability__c`
 4. `bcm_Map__c`
 
-Tags are deleted before Capabilities because `bcm_CapabilityTag__c` is master-detail to *both* Capability and Tag; deleting Capabilities cascades junction records, and a same-transaction Tag delete afterwards conflicts with the in-flight cascade.
+Tags are deleted before Capabilities because `bcm_CapabilityTag__c` is master-detail to _both_ Capability and Tag; deleting Capabilities cascades junction records, and a same-transaction Tag delete afterwards conflicts with the in-flight cascade.
 
 ### Pitfall: per-spec `afterAll` teardowns are dangerous
 
 Earlier versions of `diagram.spec.ts` and `capability-detail.spec.ts` each had their own `afterAll` block running an Apex DELETE. Two failure modes:
 
-- **`diagram.spec.ts`** deleted capabilities by `bcm_Map__r.Name LIKE '%${RUN_ID}%'` — *no Map-name filter on the cap-delete*. Because every seed uses the same RUN_ID, that one query nuked drag-drop and capability-detail capabilities too. Under `workers: 1` (alphabetical order), `diagram.spec.ts` runs before `drag-drop.spec.ts`, so drag-drop's seed was wiped before its tests ran. Symptom: `selectMap` finds the Map but waits 20 s for `.bcm-canvas polygon` that never paints (no caps to render).
+- **`diagram.spec.ts`** deleted capabilities by `bcm_Map__r.Name LIKE '%${RUN_ID}%'` — _no Map-name filter on the cap-delete_. Because every seed uses the same RUN_ID, that one query nuked drag-drop and capability-detail capabilities too. Under `workers: 1` (alphabetical order), `diagram.spec.ts` runs before `drag-drop.spec.ts`, so drag-drop's seed was wiped before its tests ran. Symptom: `selectMap` finds the Map but waits 20 s for `.bcm-canvas polygon` that never paints (no caps to render).
 - **`capability-detail.spec.ts`** correctly scoped its delete to its own MAP_NAME but ran in editor's `afterAll`. If viewer's tests on the same spec ran after editor's, they saw a deleted Map.
 
 **Both per-spec teardowns have been removed.** The rule is now: **only `global-teardown.ts` deletes data.** A spec that needs to mutate seed data should make changes that don't affect other specs; if isolation is genuinely needed, define a fresh seed in a new `*.seed.ts` file.

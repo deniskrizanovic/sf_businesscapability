@@ -10,15 +10,15 @@ Emit the `/check-traceability` output first (unchanged), then append:
 
 Two tables — test classes first, then production classes.
 
-| Class | Tests | Failures | Result |
-|---|---|---|---|
-| bcm_CapabilityTagTest | 5 | 0 | ✅ |
-| bcm_CapabilityValidationTest | 24 | 0 | ✅ |
+| Class                        | Tests | Failures | Result |
+| ---------------------------- | ----- | -------- | ------ |
+| bcm_CapabilityTagTest        | 5     | 0        | ✅     |
+| bcm_CapabilityValidationTest | 24    | 0        | ✅     |
 
-| Production class | Coverage | Result |
-|---|---|---|
-| bcm_CapabilityHandler | 95% | ✅ |
-| bcm_CapabilityTrigger | 100% | ✅ |
+| Production class      | Coverage | Result |
+| --------------------- | -------- | ------ |
+| bcm_CapabilityHandler | 95%      | ✅     |
+| bcm_CapabilityTrigger | 100%     | ✅     |
 
 - Test class result: ✅ if failures = 0, otherwise ❌
 - Production class result: ✅ if coverage ≥ 90%, otherwise ❌
@@ -50,8 +50,8 @@ If the parser emits a `⚠` warning line, include it verbatim.
 ### Playwright
 
 | Total | Failures | Result |
-|---|---|---|
-| 37 | 0 | ✅ |
+| ----- | -------- | ------ |
+| 37    | 0        | ✅     |
 
 Result: ✅ if failures = 0, otherwise ❌.
 
@@ -79,9 +79,9 @@ or:
 
 ### Static analysis
 
-| Check | Result |
-|---|---|
-| sf code-analyzer run | ✅ |
+| Check                | Result |
+| -------------------- | ------ |
+| sf code-analyzer run | ✅     |
 
 If failed, append the first violation line immediately below:
 

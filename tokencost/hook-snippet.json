@@ -1,25 +1,25 @@
 {
-  "_comment": "Cost tracker hook entries. Merge into ~/.claude/settings.json under .hooks. Append the cost-tracker entries to the existing SessionEnd / SessionStart .hooks arrays — do not replace existing telemetry / session-start hooks. See ~/.claude/hooks/cost-tracker.py.",
-  "hooks": {
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 /Users/dkrizanovic/.claude/hooks/cost-tracker.py finalize"
-          }
+    "_comment": "Cost tracker hook entries. Merge into ~/.claude/settings.json under .hooks. Append the cost-tracker entries to the existing SessionEnd / SessionStart .hooks arrays — do not replace existing telemetry / session-start hooks. See ~/.claude/hooks/cost-tracker.py.",
+    "hooks": {
+        "SessionEnd": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "python3 /Users/dkrizanovic/.claude/hooks/cost-tracker.py finalize"
+                    }
+                ]
+            }
+        ],
+        "SessionStart": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "python3 /Users/dkrizanovic/.claude/hooks/cost-tracker.py backfill"
+                    }
+                ]
+            }
         ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 /Users/dkrizanovic/.claude/hooks/cost-tracker.py backfill"
-          }
-        ]
-      }
-    ]
-  }
+    }
 }

@@ -4,9 +4,9 @@ GitHub: https://github.com/deniskrizanovic/sf_businesscapability/issues/4
 
 ## New Functional Processes (COSMIC)
 
-| FP | Functional Process | E | X | R | W | CFP |
-|---|---|---|---|---|---|---|
-| FP31 | Hide Capability via Context Menu | 1 | 1 | 0 | 1 | 3 |
+| FP   | Functional Process               | E   | X   | R   | W   | CFP |
+| ---- | -------------------------------- | --- | --- | --- | --- | --- |
+| FP31 | Hide Capability via Context Menu | 1   | 1   | 0   | 1   | 3   |
 
 Running total: **119 → 122 CFP**
 
@@ -15,6 +15,7 @@ Running total: **119 → 122 CFP**
 ## Goal
 
 Acceptance per issue:
+
 1. Jest test asserts `NavigationMixin.Navigate` called with `{ type: 'standard__recordPage', ... }` when "View detail" clicked.
 2. Jest test asserts Apex `hideCapability` called and layout rebuild triggered when "Hide" clicked.
 3. Replace matching `Deferred:` lines in `docs/specs/diagram.md` with `Tested by: BcmCapabilityMapTest.<method>`.
@@ -27,41 +28,44 @@ Issue acceptance text drives current impl. Detail panel work is a future issue (
 ### Wiring changes (in scope)
 
 1. **`bcm_CapabilityMap.js`**
-   - `import { NavigationMixin } from 'lightning/navigation';`
-   - Class declaration: `extends NavigationMixin(LightningElement)`.
-   - `handleViewDetail(evt)` reads `evt.detail.id` and calls `this[NavigationMixin.Navigate]({ type:'standard__recordPage', attributes:{ recordId:evt.detail.id, objectApiName:'bcm_Capability__c', actionName:'view' } });` then closes menu.
+    - `import { NavigationMixin } from 'lightning/navigation';`
+    - Class declaration: `extends NavigationMixin(LightningElement)`.
+    - `handleViewDetail(evt)` reads `evt.detail.id` and calls `this[NavigationMixin.Navigate]({ type:'standard__recordPage', attributes:{ recordId:evt.detail.id, objectApiName:'bcm_Capability__c', actionName:'view' } });` then closes menu.
 
 2. **`bcm_ContextMenu.js`**
-   - `handleHide()` dispatches new `hide` CustomEvent with `{ id, level, name }` payload before closing.
+    - `handleHide()` dispatches new `hide` CustomEvent with `{ id, level, name }` payload before closing.
 
 3. **`bcm_ContextMenu.html`** — no change (handler signature unchanged).
 
 4. **`bcm_CapabilityMap.html`** — add `onhide={handleHide}` to `<c-bcm_-context-menu>`.
 
 5. **`bcm_CapabilityMap.js`** — `handleHide(evt)`:
-   ```
-   const id = evt.detail.id;
-   hideCapability({ capabilityId: id })
-       .then(() => {
-           // Optimistic local update + rebuild layout
-           const cap = this._capabilities.find(c => c.Id === id);
-           if (cap) cap.bcm_HideFromDiagram__c = true;
-           this._buildLayout(this._capabilities);
-       });
-   this.contextMenuVisible = false;
-   ```
+
+    ```
+    const id = evt.detail.id;
+    hideCapability({ capabilityId: id })
+        .then(() => {
+            // Optimistic local update + rebuild layout
+            const cap = this._capabilities.find(c => c.Id === id);
+            if (cap) cap.bcm_HideFromDiagram__c = true;
+            this._buildLayout(this._capabilities);
+        });
+    this.contextMenuVisible = false;
+    ```
 
 6. **`bcm_CapabilityController.cls`** — new `@AuraEnabled` static method:
-   ```
-   public static void hideCapability(Id capabilityId) {
-       update new bcm_Capability__c(Id = capabilityId, bcm_HideFromDiagram__c = true);
-   }
-   ```
-   With null guard + WITH USER_MODE / try-catch wrap mirroring `getCapabilities`.
+
+    ```
+    public static void hideCapability(Id capabilityId) {
+        update new bcm_Capability__c(Id = capabilityId, bcm_HideFromDiagram__c = true);
+    }
+    ```
+
+    With null guard + WITH USER_MODE / try-catch wrap mirroring `getCapabilities`.
 
 7. **`bcm_CapabilityControllerTest.cls`** — add tests:
-   - `shouldHideCapability` — verifies field flips to true.
-   - `shouldThrowException_WhenHideCapabilityIdIsNull`.
+    - `shouldHideCapability` — verifies field flips to true.
+    - `shouldThrowException_WhenHideCapabilityIdIsNull`.
 
 ### Test changes (in scope)
 
@@ -85,6 +89,7 @@ describe('BcmCapabilityMap context menu — Hide capability', () => {
 ```
 
 NavigationMixin Jest mock pattern:
+
 ```
 const mockNavigate = jest.fn();
 jest.mock('lightning/navigation', () => ({
@@ -103,6 +108,7 @@ Hide path in test: dispatch `hide` event on the rendered `c-bcm_-context-menu` d
 ### Spec updates
 
 In `docs/specs/diagram.md`:
+
 - Line 415 "View detail opens panel" → keep `capability-detail.spec.ts` reference (deferred to future issue).
 - Line 432 `> Deferred: Apex DML + re-render is a JS invariant; integration tested manually` →
   `> Tested by: bcm_CapabilityMap.test.js — "Hide click calls hideCapability Apex and rebuilds layout"`

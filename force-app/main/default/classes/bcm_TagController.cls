@@ -3,7 +3,6 @@
  * Used by bcm_CapabilityMap LWC to populate the Tag highlight combobox.
  */
 public with sharing class bcm_TagController {
-
     /**
      * Returns all Tags ordered by Name.
      *

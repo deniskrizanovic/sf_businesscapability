@@ -36,12 +36,13 @@ Add a single `@api canEdit = false;` field. Wrap the Hide `<li>` in `<template i
 
 ```html
 <c-bcm_-context-menu
-    anchor-x={contextMenuX}
-    anchor-y={contextMenuY}
-    node={contextMenuNode}
-    onclose={handleContextMenuClose}
-    onviewdetail={handleViewDetail}
-    onhide={handleHide}>
+    anchor-x="{contextMenuX}"
+    anchor-y="{contextMenuY}"
+    node="{contextMenuNode}"
+    onclose="{handleContextMenuClose}"
+    onviewdetail="{handleViewDetail}"
+    onhide="{handleHide}"
+>
 </c-bcm_-context-menu>
 ```
 
@@ -65,8 +66,8 @@ test('Viewer cannot see Hide button in context menu', async ({ page }) => {
     await openDiagram(page);
     await selectMapFromCombobox(page);
     const node = page.locator('.bcm-canvas .bcm-node').first();
-    await node.click();   // first click → focus
-    await node.click();   // second click → opens context menu
+    await node.click(); // first click → focus
+    await node.click(); // second click → opens context menu
     const menu = page.locator('.bcm-menu-card');
     await expect(menu).toBeVisible();
     await expect(menu.getByText('View detail', { exact: true })).toBeVisible();
@@ -75,6 +76,7 @@ test('Viewer cannot see Hide button in context menu', async ({ page }) => {
 ```
 
 Notes:
+
 - Reuses `openDiagram` and `selectMapFromCombobox` helpers already in the file.
 - `selectMapFromCombobox` waits for polygons → confirms map loaded.
 - The viewer project picks up the `viewer.json` storage state automatically because the test name matches `/viewer project/`.
@@ -88,9 +90,9 @@ Replace lines 426–432:
 ```
 **Scenario: Hide action is visible only to Editors**
 
-Given the context menu is open  
-When the user has only the bcm_Viewer permission set  
-Then the "Hide" menu item is not rendered  
+Given the context menu is open
+When the user has only the bcm_Viewer permission set
+Then the "Hide" menu item is not rendered
 
 > Tested by: diagram.spec.ts — "Viewer cannot see Hide button in context menu"
 ```

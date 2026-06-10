@@ -14,17 +14,17 @@
 
 ## E2e changes (per project rule)
 
-| File | Change |
-|---|---|
-| `tests/e2e/fixtures/helpers.ts` | Add `selectMap(page, mapName)` helper with retry + option-count assertion. |
-| `tests/e2e/fixtures/seeds.ts` (new) | Aggregate per-spec seed payloads; run via Apex. |
-| `tests/e2e/global-setup.ts` | After writing RUN_ID, invoke aggregated Apex seed. |
-| `tests/e2e/drag-drop.spec.ts` | Remove both UI `beforeAll` blocks; export seed; replace raw combobox clicks with `selectMap()`. |
-| `tests/e2e/capability-detail.spec.ts` | Same — remove UI seed `beforeAll`; export seed; replace raw combobox click. |
-| `tests/e2e/diagram.spec.ts` | Same — remove UI seed `beforeAll` (incl. cross-cutting flag Apex); export seed (cross-cutting flag folded into payload via post-seed Apex tail). |
-| `tests/e2e/drag-drop.seed.ts` (new) | Exported `SAMPLE_JSON` + name constants. |
-| `tests/e2e/capability-detail.seed.ts` (new) | Same. |
-| `tests/e2e/diagram.seed.ts` (new) | Same + cross-cutting flag SOQL/DML payload. |
+| File                                        | Change                                                                                                                                           |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `tests/e2e/fixtures/helpers.ts`             | Add `selectMap(page, mapName)` helper with retry + option-count assertion.                                                                       |
+| `tests/e2e/fixtures/seeds.ts` (new)         | Aggregate per-spec seed payloads; run via Apex.                                                                                                  |
+| `tests/e2e/global-setup.ts`                 | After writing RUN_ID, invoke aggregated Apex seed.                                                                                               |
+| `tests/e2e/drag-drop.spec.ts`               | Remove both UI `beforeAll` blocks; export seed; replace raw combobox clicks with `selectMap()`.                                                  |
+| `tests/e2e/capability-detail.spec.ts`       | Same — remove UI seed `beforeAll`; export seed; replace raw combobox click.                                                                      |
+| `tests/e2e/diagram.spec.ts`                 | Same — remove UI seed `beforeAll` (incl. cross-cutting flag Apex); export seed (cross-cutting flag folded into payload via post-seed Apex tail). |
+| `tests/e2e/drag-drop.seed.ts` (new)         | Exported `SAMPLE_JSON` + name constants.                                                                                                         |
+| `tests/e2e/capability-detail.seed.ts` (new) | Same.                                                                                                                                            |
+| `tests/e2e/diagram.seed.ts` (new)           | Same + cross-cutting flag SOQL/DML payload.                                                                                                      |
 
 Specs not touched: `app-structure`, `capability`, `capability-tag`, `import`, `map`, `tag`. They either don't seed via JSON Import, or use independent Map/Cap creation flows whose flake risk was rated low in the audit.
 
@@ -50,6 +50,7 @@ tests/e2e/
 ```
 
 Each `*.seed.ts` exports:
+
 - name constants (MAP_NAME etc.) — re-exported from spec for backward use
 - a `SeedSpec` object: `{ payload: object, postSeedApex?: string }`
 
@@ -68,6 +69,7 @@ bcm_ImportController.importCapabilities('<json escaped>');
 ### Task 1: Add `selectMap` helper to `fixtures/helpers.ts`
 
 **Files:**
+
 - Modify: `tests/e2e/fixtures/helpers.ts`
 
 - [ ] **Step 1: Append `selectMap` helper at end of `helpers.ts`**
@@ -98,7 +100,7 @@ export async function selectMap(page: Page, mapName: string): Promise<void> {
         if (count > 1) {
             throw new Error(
                 `selectMap: ${count} Map options match "${mapName}" — duplicate seed. ` +
-                `Check globalSetup ran exactly once and externalIds in seeds.ts are unique.`,
+                    `Check globalSetup ran exactly once and externalIds in seeds.ts are unique.`
             );
         }
         await option.click({ timeout: 1500 });
@@ -125,6 +127,7 @@ git commit -m "test(e2e): add shared selectMap helper with retry + dup-detection
 ### Task 2: Create `drag-drop.seed.ts` extracting payload from spec
 
 **Files:**
+
 - Create: `tests/e2e/drag-drop.seed.ts`
 
 - [ ] **Step 1: Create `drag-drop.seed.ts` with content moved from spec**
@@ -133,12 +136,12 @@ git commit -m "test(e2e): add shared selectMap helper with retry + dup-detection
 import { RUN_ID } from './fixtures/helpers';
 import type { SeedSpec } from './fixtures/seeds';
 
-export const MAP_NAME   = `E2E DragDrop Map ${RUN_ID}`;
-export const L1A_NAME   = `Domain DD Alpha ${RUN_ID}`;
-export const L1B_NAME   = `Domain DD Beta ${RUN_ID}`;
-export const L2A1_NAME  = `Group Alpha One ${RUN_ID}`;
-export const L2A2_NAME  = `Group Alpha Two ${RUN_ID}`;
-export const L2B1_NAME  = `Group Beta One ${RUN_ID}`;
+export const MAP_NAME = `E2E DragDrop Map ${RUN_ID}`;
+export const L1A_NAME = `Domain DD Alpha ${RUN_ID}`;
+export const L1B_NAME = `Domain DD Beta ${RUN_ID}`;
+export const L2A1_NAME = `Group Alpha One ${RUN_ID}`;
+export const L2A2_NAME = `Group Alpha Two ${RUN_ID}`;
+export const L2B1_NAME = `Group Beta One ${RUN_ID}`;
 export const L3A1A_NAME = `Cap Alpha One A ${RUN_ID}`;
 export const L3A1B_NAME = `Cap Alpha One B ${RUN_ID}`;
 
@@ -147,39 +150,84 @@ const PAYLOAD = {
     mapDescription: '<p>Seeded for drag-drop e2e tests</p>',
     capabilities: [
         {
-            externalId: `dd-l1a-${RUN_ID}`, name: L1A_NAME, level: 1, sortOrder: 1,
-            definition: '', strategySupport: '', architecturalNuance: '',
+            externalId: `dd-l1a-${RUN_ID}`,
+            name: L1A_NAME,
+            level: 1,
+            sortOrder: 1,
+            definition: '',
+            strategySupport: '',
+            architecturalNuance: '',
             children: [
                 {
-                    externalId: `dd-l2a1-${RUN_ID}`, name: L2A1_NAME, level: 2, sortOrder: 1,
-                    definition: '', strategySupport: '', architecturalNuance: '',
+                    externalId: `dd-l2a1-${RUN_ID}`,
+                    name: L2A1_NAME,
+                    level: 2,
+                    sortOrder: 1,
+                    definition: '',
+                    strategySupport: '',
+                    architecturalNuance: '',
                     children: [
-                        { externalId: `dd-l3a1a-${RUN_ID}`, name: L3A1A_NAME, level: 3, sortOrder: 1, definition: '', strategySupport: '', architecturalNuance: '', children: [] },
-                        { externalId: `dd-l3a1b-${RUN_ID}`, name: L3A1B_NAME, level: 3, sortOrder: 2, definition: '', strategySupport: '', architecturalNuance: '', children: [] },
-                    ],
+                        {
+                            externalId: `dd-l3a1a-${RUN_ID}`,
+                            name: L3A1A_NAME,
+                            level: 3,
+                            sortOrder: 1,
+                            definition: '',
+                            strategySupport: '',
+                            architecturalNuance: '',
+                            children: []
+                        },
+                        {
+                            externalId: `dd-l3a1b-${RUN_ID}`,
+                            name: L3A1B_NAME,
+                            level: 3,
+                            sortOrder: 2,
+                            definition: '',
+                            strategySupport: '',
+                            architecturalNuance: '',
+                            children: []
+                        }
+                    ]
                 },
                 {
-                    externalId: `dd-l2a2-${RUN_ID}`, name: L2A2_NAME, level: 2, sortOrder: 2,
-                    definition: '', strategySupport: '', architecturalNuance: '', children: [],
-                },
-            ],
+                    externalId: `dd-l2a2-${RUN_ID}`,
+                    name: L2A2_NAME,
+                    level: 2,
+                    sortOrder: 2,
+                    definition: '',
+                    strategySupport: '',
+                    architecturalNuance: '',
+                    children: []
+                }
+            ]
         },
         {
-            externalId: `dd-l1b-${RUN_ID}`, name: L1B_NAME, level: 1, sortOrder: 2,
-            definition: '', strategySupport: '', architecturalNuance: '',
+            externalId: `dd-l1b-${RUN_ID}`,
+            name: L1B_NAME,
+            level: 1,
+            sortOrder: 2,
+            definition: '',
+            strategySupport: '',
+            architecturalNuance: '',
             children: [
                 {
-                    externalId: `dd-l2b1-${RUN_ID}`, name: L2B1_NAME, level: 2, sortOrder: 1,
-                    definition: '', strategySupport: '', architecturalNuance: '', children: [],
-                },
-            ],
-        },
-    ],
+                    externalId: `dd-l2b1-${RUN_ID}`,
+                    name: L2B1_NAME,
+                    level: 2,
+                    sortOrder: 1,
+                    definition: '',
+                    strategySupport: '',
+                    architecturalNuance: '',
+                    children: []
+                }
+            ]
+        }
+    ]
 };
 
 export const dragDropSeed: SeedSpec = {
     label: 'drag-drop',
-    payload: PAYLOAD,
+    payload: PAYLOAD
 };
 ```
 
@@ -200,6 +248,7 @@ git commit -m "test(e2e): extract drag-drop seed payload to dedicated module"
 ### Task 3: Create `capability-detail.seed.ts`
 
 **Files:**
+
 - Create: `tests/e2e/capability-detail.seed.ts`
 
 - [ ] **Step 1: Create file**
@@ -209,37 +258,52 @@ import { RUN_ID } from './fixtures/helpers';
 import type { SeedSpec } from './fixtures/seeds';
 
 export const MAP_NAME = `E2E Detail Panel Map ${RUN_ID}`;
-export const L1_NAME  = `Detail Domain ${RUN_ID}`;
-export const L2_NAME  = `Detail Group ${RUN_ID}`;
-export const L3_NAME  = `Detail Capability ${RUN_ID}`;
+export const L1_NAME = `Detail Domain ${RUN_ID}`;
+export const L2_NAME = `Detail Group ${RUN_ID}`;
+export const L3_NAME = `Detail Capability ${RUN_ID}`;
 
 const PAYLOAD = {
     mapName: MAP_NAME,
     mapDescription: '<p>Seeded for detail panel e2e tests</p>',
     capabilities: [
         {
-            externalId: `dp-l1-${RUN_ID}`, name: L1_NAME, level: 1, sortOrder: 1,
-            definition: '<p>L1 def</p>', strategySupport: '', architecturalNuance: '',
+            externalId: `dp-l1-${RUN_ID}`,
+            name: L1_NAME,
+            level: 1,
+            sortOrder: 1,
+            definition: '<p>L1 def</p>',
+            strategySupport: '',
+            architecturalNuance: '',
             children: [
                 {
-                    externalId: `dp-l2-${RUN_ID}`, name: L2_NAME, level: 2, sortOrder: 1,
-                    definition: '<p>L2 def</p>', strategySupport: '', architecturalNuance: '',
+                    externalId: `dp-l2-${RUN_ID}`,
+                    name: L2_NAME,
+                    level: 2,
+                    sortOrder: 1,
+                    definition: '<p>L2 def</p>',
+                    strategySupport: '',
+                    architecturalNuance: '',
                     children: [
                         {
-                            externalId: `dp-l3-${RUN_ID}`, name: L3_NAME, level: 3, sortOrder: 1,
-                            definition: '<p>L3 def</p>', strategySupport: '', architecturalNuance: '',
-                            children: [],
-                        },
-                    ],
-                },
-            ],
-        },
-    ],
+                            externalId: `dp-l3-${RUN_ID}`,
+                            name: L3_NAME,
+                            level: 3,
+                            sortOrder: 1,
+                            definition: '<p>L3 def</p>',
+                            strategySupport: '',
+                            architecturalNuance: '',
+                            children: []
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
 };
 
 export const capabilityDetailSeed: SeedSpec = {
     label: 'capability-detail',
-    payload: PAYLOAD,
+    payload: PAYLOAD
 };
 ```
 
@@ -262,6 +326,7 @@ git commit -m "test(e2e): extract capability-detail seed payload"
 ### Task 4: Create `diagram.seed.ts` (with cross-cutting flag tail Apex)
 
 **Files:**
+
 - Create: `tests/e2e/diagram.seed.ts`
 
 - [ ] **Step 1: Read current diagram SAMPLE_JSON to copy verbatim**
@@ -282,7 +347,7 @@ const PAYLOAD = {
     mapDescription: '<p>Seeded for diagram e2e tests</p>',
     capabilities: [
         // ... copy verbatim from diagram.spec.ts SAMPLE_JSON (lines ~11–88)
-    ],
+    ]
 };
 
 // After the import, flip the cross-cutting flag on Foo/Bar.
@@ -297,7 +362,7 @@ update cc;
 export const diagramSeed: SeedSpec = {
     label: 'diagram',
     payload: PAYLOAD,
-    postSeedApex: POST_SEED_APEX,
+    postSeedApex: POST_SEED_APEX
 };
 ```
 
@@ -313,6 +378,7 @@ git commit -m "test(e2e): extract diagram seed payload + cross-cutting tail apex
 ### Task 5: Create `fixtures/seeds.ts` aggregator
 
 **Files:**
+
 - Create: `tests/e2e/fixtures/seeds.ts`
 
 - [ ] **Step 1: Create aggregator + Apex runner**
@@ -344,16 +410,16 @@ export function runAllSeeds(seeds: SeedSpec[]): void {
     const blocks: string[] = [];
     for (const s of seeds) {
         // Apex string literal: escape backslashes and single-quotes.
-        const json = JSON.stringify(s.payload).replace(/\\/g, '\\\\').replace(/'/g, '\\\'');
+        const json = JSON.stringify(s.payload).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         blocks.push(`/* === ${s.label} === */`);
         blocks.push(
             `bcm_ImportController.bcm_ImportResult res_${s.label.replace(/[^a-zA-Z0-9_]/g, '_')} = ` +
-            `bcm_ImportController.importCapabilities('${json}');`,
+                `bcm_ImportController.importCapabilities('${json}');`
         );
         blocks.push(
             `if (!res_${s.label.replace(/[^a-zA-Z0-9_]/g, '_')}.success) ` +
-            `throw new System.AssertException('Seed ${s.label} failed: ' + ` +
-            `res_${s.label.replace(/[^a-zA-Z0-9_]/g, '_')}.errorMessage);`,
+                `throw new System.AssertException('Seed ${s.label} failed: ' + ` +
+                `res_${s.label.replace(/[^a-zA-Z0-9_]/g, '_')}.errorMessage);`
         );
         if (s.postSeedApex) blocks.push(s.postSeedApex);
     }
@@ -362,7 +428,9 @@ export function runAllSeeds(seeds: SeedSpec[]): void {
     const apexFile = path.resolve(`tests/e2e/.seed_${Date.now()}.apex`);
     fs.writeFileSync(apexFile, apex, 'utf-8');
     try {
-        execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], { stdio: 'inherit' });
+        execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], {
+            stdio: 'inherit'
+        });
     } finally {
         fs.unlinkSync(apexFile);
     }
@@ -386,6 +454,7 @@ git commit -m "test(e2e): add seed aggregator that runs bcm_ImportController via
 ### Task 6: Wire `globalSetup` to invoke aggregated seed
 
 **Files:**
+
 - Modify: `tests/e2e/global-setup.ts`
 
 - [ ] **Step 1: Replace contents**
@@ -419,11 +488,14 @@ export default function globalSetup() {
 Refactor each `.seed.ts` to defer payload construction:
 
 In `drag-drop.seed.ts` (and equivalents), replace:
+
 ```ts
 const PAYLOAD = { mapName: MAP_NAME, ... };
 export const dragDropSeed: SeedSpec = { label: 'drag-drop', payload: PAYLOAD };
 ```
+
 with:
+
 ```ts
 export const dragDropSeed: SeedSpec = {
     label: 'drag-drop',
@@ -436,6 +508,7 @@ function buildPayload() {
 ```
 
 But MAP_NAME also reads RUN_ID eagerly. Two cleaner alternatives:
+
 - (a) Convert MAP_NAME to a getter via a function: `export const mapName = () => \`E2E DragDrop Map ${getRunId()}\`;`
 - (b) Move `fs.writeFileSync` of RUN_ID **before** the seed-module imports inside globalSetup using a dynamic `import()`:
 
@@ -499,6 +572,7 @@ git commit -m "test(e2e): seed all maps via apex in globalSetup (kills parallel-
 ### Task 7: Strip `drag-drop.spec.ts` UI seed + adopt `selectMap`
 
 **Files:**
+
 - Modify: `tests/e2e/drag-drop.spec.ts`
 
 - [ ] **Step 1: Replace top-of-file constants and helper with seed import**
@@ -512,7 +586,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { RUN_ID, setupAutoDismiss, selectMap } from './fixtures/helpers';
 import {
-    MAP_NAME, L1A_NAME, L1B_NAME, L2A1_NAME, L2A2_NAME, L2B1_NAME, L3A1A_NAME, L3A1B_NAME,
+    MAP_NAME,
+    L1A_NAME,
+    L1B_NAME,
+    L2A1_NAME,
+    L2A2_NAME,
+    L2B1_NAME,
+    L3A1A_NAME,
+    L3A1B_NAME
 } from './drag-drop.seed';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -525,11 +606,15 @@ async function openDiagram(page: import('@playwright/test').Page) {
 
 async function waitForDragDropSettled(page: import('@playwright/test').Page) {
     try {
-        await page.locator('.bcm-canvas-container[data-bcm-saving="true"]').waitFor({ state: 'attached', timeout: 2000 });
+        await page
+            .locator('.bcm-canvas-container[data-bcm-saving="true"]')
+            .waitFor({ state: 'attached', timeout: 2000 });
     } catch (_) {
         // No-op gesture — saving never flipped to true. Proceed.
     }
-    await page.locator('.bcm-canvas-container[data-bcm-saving="false"]').waitFor({ state: 'attached', timeout: 15000 });
+    await page
+        .locator('.bcm-canvas-container[data-bcm-saving="false"]')
+        .waitFor({ state: 'attached', timeout: 15000 });
 }
 ```
 
@@ -555,6 +640,7 @@ test.describe('Drag-drop seed — editor project', () => {
 - [ ] **Step 3: Replace every `await selectMap(page);` (no arg) with `await selectMap(page, MAP_NAME);`**
 
 Sed-style replacement:
+
 ```bash
 sed -i '' 's/await selectMap(page);/await selectMap(page, MAP_NAME);/g' tests/e2e/drag-drop.spec.ts
 ```
@@ -591,6 +677,7 @@ git commit -m "test(e2e): drop UI seed in drag-drop.spec — use globalSetup + s
 ### Task 8: Strip `capability-detail.spec.ts` UI seed + adopt `selectMap`
 
 **Files:**
+
 - Modify: `tests/e2e/capability-detail.spec.ts`
 
 - [ ] **Step 1: Replace top imports with seed import**
@@ -607,6 +694,7 @@ Delete the local `SAMPLE_JSON` constant (lines ~13–48).
 - [ ] **Step 2: Delete local `selectMap` helper (lines 60–64)**
 
 Remove:
+
 ```ts
 async function selectMap(page: Page) {
     await page.getByRole('combobox', { name: 'Map' }).first().click();
@@ -649,6 +737,7 @@ git commit -m "test(e2e): drop UI seed in capability-detail.spec — use globalS
 ### Task 9: Strip `diagram.spec.ts` UI seed + cross-cutting flag Apex + adopt `selectMap`
 
 **Files:**
+
 - Modify: `tests/e2e/diagram.spec.ts`
 
 - [ ] **Step 1: Replace constants + import**
@@ -705,6 +794,7 @@ git commit -m "test(e2e): drop UI seed in diagram.spec — use globalSetup + sha
 ### Task 10: Run full e2e suite + clean up
 
 **Files:**
+
 - None (verification only).
 
 - [ ] **Step 1: Full suite, single run, both projects**
@@ -745,12 +835,12 @@ If steps 1–4 surface issues that required fixes, stage and commit them. Otherw
 
 ## Risk register
 
-| Risk | Mitigation |
-|---|---|
+| Risk                                                                                                                                                      | Mitigation                                                                                                                                                                         |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `bcm_ImportController.importCapabilities` raises `AuraHandledException` for non-`bcm_CanEdit` users; globalSetup runs as the SF CLI's authenticated user. | Verify CLI org user has `bcm_CanEdit`. If not, run script via `--user` or as an integration user. The existing JSON-Import `beforeAll` already proves the CLI user has DML access. |
-| Apex literal escape via `JSON.stringify(...).replace(/'/g, "\\'")` may miss edge cases (backslashes in HTML descriptions). | Use a deliberate escape pair: backslashes first, then quotes. Already in `runAllSeeds`. |
-| Single 200KB+ Apex script hits compile or governor limits. | Three seeds × ~5KB each = ~15KB Apex. Well under the 1MB anon limit. |
-| `globalSetup` failure surfaces as cryptic test errors. | Apex script halts on `System.AssertException` per seed; `execFileSync` non-zero exit propagates the full Apex stderr to Playwright stdout. |
-| Cross-cutting flag tail Apex runs before the importer commits. | Importer commits synchronously inside `bcm_ImportController.importCapabilities`; tail Apex runs in a subsequent statement of the same anon block, sees committed state. |
+| Apex literal escape via `JSON.stringify(...).replace(/'/g, "\\'")` may miss edge cases (backslashes in HTML descriptions).                                | Use a deliberate escape pair: backslashes first, then quotes. Already in `runAllSeeds`.                                                                                            |
+| Single 200KB+ Apex script hits compile or governor limits.                                                                                                | Three seeds × ~5KB each = ~15KB Apex. Well under the 1MB anon limit.                                                                                                               |
+| `globalSetup` failure surfaces as cryptic test errors.                                                                                                    | Apex script halts on `System.AssertException` per seed; `execFileSync` non-zero exit propagates the full Apex stderr to Playwright stdout.                                         |
+| Cross-cutting flag tail Apex runs before the importer commits.                                                                                            | Importer commits synchronously inside `bcm_ImportController.importCapabilities`; tail Apex runs in a subsequent statement of the same anon block, sees committed state.            |
 
 Self-review pass: spec coverage ✓ all three flake-prone seeds migrated, helper standardised. No placeholders. Type names consistent (`SeedSpec`, `selectMap(page, mapName)`, `bcm_ImportController.bcm_ImportResult`) across all tasks.

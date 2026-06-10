@@ -13,36 +13,36 @@ Slide-out panel (400px overlay, CSS transition) triggered by "View detail" conte
 
 ## Decisions
 
-| Decision | Choice |
-|---|---|
-| Layout | Overlay (not push) — SVG coordinates fixed |
-| Levels that trigger panel | All (L1, L2, L3) |
-| Panel width | 400px fixed |
-| Data source | Fresh Apex call (`getCapabilityDetail`) |
-| New Apex method location | Extend `bcm_CapabilityController` |
-| Panel implementation | New `bcm_CapabilityDetail` LWC (presentational) |
-| ID flow | `viewdetail` event (no payload); parent uses `contextMenuNode.id` |
-| Close gestures | X button + Escape key |
-| Panel-already-open behaviour | Update in place |
-| Edit mode | Inline (Save/Cancel); gated by `bcm_CanEdit` |
-| Editable fields | Name, Definition, Strategy Support, Architectural Nuance, Hide From Diagram |
-| Rich text fields | `lightning-input-rich-text` for Definition, Strategy Support, Architectural Nuance (already `Html` type) |
-| Save mechanism | Explicit Save/Cancel |
-| Post-save | Trust saved values; re-call `loadCapabilities()` to refresh diagram |
-| Apex save architecture | ADR 0002: Controller → Service (new) |
-| Container/presentational | `bcm_CapabilityMap` owns all Apex; `bcm_CapabilityDetail` purely presentational |
-| Breadcrumb | Built client-side from `_capabilities` tree; passed as `@api` prop |
-| Animation | CSS `transform: translateX(100%)` → `translateX(0)`, ~250ms ease |
-| E2e tests | New `tests/e2e/capability-detail.spec.ts` |
+| Decision                     | Choice                                                                                                   |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Layout                       | Overlay (not push) — SVG coordinates fixed                                                               |
+| Levels that trigger panel    | All (L1, L2, L3)                                                                                         |
+| Panel width                  | 400px fixed                                                                                              |
+| Data source                  | Fresh Apex call (`getCapabilityDetail`)                                                                  |
+| New Apex method location     | Extend `bcm_CapabilityController`                                                                        |
+| Panel implementation         | New `bcm_CapabilityDetail` LWC (presentational)                                                          |
+| ID flow                      | `viewdetail` event (no payload); parent uses `contextMenuNode.id`                                        |
+| Close gestures               | X button + Escape key                                                                                    |
+| Panel-already-open behaviour | Update in place                                                                                          |
+| Edit mode                    | Inline (Save/Cancel); gated by `bcm_CanEdit`                                                             |
+| Editable fields              | Name, Definition, Strategy Support, Architectural Nuance, Hide From Diagram                              |
+| Rich text fields             | `lightning-input-rich-text` for Definition, Strategy Support, Architectural Nuance (already `Html` type) |
+| Save mechanism               | Explicit Save/Cancel                                                                                     |
+| Post-save                    | Trust saved values; re-call `loadCapabilities()` to refresh diagram                                      |
+| Apex save architecture       | ADR 0002: Controller → Service (new)                                                                     |
+| Container/presentational     | `bcm_CapabilityMap` owns all Apex; `bcm_CapabilityDetail` purely presentational                          |
+| Breadcrumb                   | Built client-side from `_capabilities` tree; passed as `@api` prop                                       |
+| Animation                    | CSS `transform: translateX(100%)` → `translateX(0)`, ~250ms ease                                         |
+| E2e tests                    | New `tests/e2e/capability-detail.spec.ts`                                                                |
 
 ---
 
 ## New Functional Processes (COSMIC)
 
-| FP | Functional Process | E | X | R | W | CFP | Implements |
-|---|---|---|---|---|---|---|---|
-| FP29 | View Capability Detail via Panel | 1 | 1 | 3 | 0 | 5 | `getCapabilityDetail` in `bcm_CapabilityController` |
-| FP30 | Edit Capability via Panel — Save | 1 | 1 | 0 | 1 | 3 | `updateCapability` in `bcm_CapabilityController` + `bcm_CapabilityService` |
+| FP   | Functional Process               | E   | X   | R   | W   | CFP | Implements                                                                 |
+| ---- | -------------------------------- | --- | --- | --- | --- | --- | -------------------------------------------------------------------------- |
+| FP29 | View Capability Detail via Panel | 1   | 1   | 3   | 0   | 5   | `getCapabilityDetail` in `bcm_CapabilityController`                        |
+| FP30 | Edit Capability via Panel — Save | 1   | 1   | 0   | 1   | 3   | `updateCapability` in `bcm_CapabilityController` + `bcm_CapabilityService` |
 
 Full data movement breakdown in `docs/design/99-cosmic-function-point-count.md`.  
 Running total: 111 → **119 CFP**.
@@ -69,30 +69,30 @@ bcm_CapabilityMap (container)
 
 ## Files to create
 
-| File | Purpose |
-|---|---|
-| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.js` | Panel JS |
-| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.html` | Panel template |
-| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.css` | Slide-in animation + layout |
-| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.js-meta.xml` | LWC metadata |
-| `force-app/main/default/classes/bcm_CapabilityService.cls` | Business logic for updateCapability |
-| `force-app/main/default/classes/bcm_CapabilityService.cls-meta.xml` | Apex metadata |
-| `force-app/main/default/classes/bcm_CapabilityServiceTest.cls` | Unit tests for service |
-| `force-app/main/default/classes/bcm_CapabilityServiceTest.cls-meta.xml` | Apex metadata |
-| `tests/e2e/capability-detail.spec.ts` | Playwright e2e tests |
+| File                                                                               | Purpose                             |
+| ---------------------------------------------------------------------------------- | ----------------------------------- |
+| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.js`          | Panel JS                            |
+| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.html`        | Panel template                      |
+| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.css`         | Slide-in animation + layout         |
+| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.js-meta.xml` | LWC metadata                        |
+| `force-app/main/default/classes/bcm_CapabilityService.cls`                         | Business logic for updateCapability |
+| `force-app/main/default/classes/bcm_CapabilityService.cls-meta.xml`                | Apex metadata                       |
+| `force-app/main/default/classes/bcm_CapabilityServiceTest.cls`                     | Unit tests for service              |
+| `force-app/main/default/classes/bcm_CapabilityServiceTest.cls-meta.xml`            | Apex metadata                       |
+| `tests/e2e/capability-detail.spec.ts`                                              | Playwright e2e tests                |
 
 ---
 
 ## Files to modify
 
-| File | Change |
-|---|---|
-| `force-app/main/default/classes/bcm_CapabilityController.cls` | Add `getCapabilityDetail(Id capabilityId)` and `updateCapability(bcm_Capability__c capability)` methods |
-| `force-app/main/default/classes/bcm_CapabilityControllerTest.cls` | Tests for new controller methods |
-| `force-app/main/default/lwc/bcm_ContextMenu/bcm_ContextMenu.html` | Add "View detail" menu item for L1 and L2 (already exists for L3) |
-| `force-app/main/default/lwc/bcm_ContextMenu/bcm_ContextMenu.js` | `handleViewDetail()` fires `CustomEvent('viewdetail')` instead of no-op |
-| `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js` | Add detail panel state, `handleViewDetail`, `handleDetailClose`, `handleDetailSaved`, `_buildBreadcrumb()` |
-| `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.html` | Slot in `<c-bcm_-capability-detail>` alongside context menu |
+| File                                                                  | Change                                                                                                     |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `force-app/main/default/classes/bcm_CapabilityController.cls`         | Add `getCapabilityDetail(Id capabilityId)` and `updateCapability(bcm_Capability__c capability)` methods    |
+| `force-app/main/default/classes/bcm_CapabilityControllerTest.cls`     | Tests for new controller methods                                                                           |
+| `force-app/main/default/lwc/bcm_ContextMenu/bcm_ContextMenu.html`     | Add "View detail" menu item for L1 and L2 (already exists for L3)                                          |
+| `force-app/main/default/lwc/bcm_ContextMenu/bcm_ContextMenu.js`       | `handleViewDetail()` fires `CustomEvent('viewdetail')` instead of no-op                                    |
+| `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js`   | Add detail panel state, `handleViewDetail`, `handleDetailClose`, `handleDetailSaved`, `_buildBreadcrumb()` |
+| `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.html` | Slot in `<c-bcm_-capability-detail>` alongside context menu                                                |
 
 ---
 
@@ -102,10 +102,10 @@ bcm_CapabilityMap (container)
 
 Update before writing any code (already done as part of planning):
 
-| File | Change |
-|---|---|
-| `docs/design/05-lwc-architecture.md` | Add `bcm_CapabilityDetail` component row; add `getCapabilityDetail`/`updateCapability` imports; add `detail*` tracked state; update template snippet; rewrite `bcm_ContextMenu` section; add new `bcm_CapabilityDetail` section; add methods to Apex controllers table |
-| `docs/design/99-cosmic-function-point-count.md` | Add FP29 (View detail via panel, 5 CFP) and FP30 (Edit via panel save, 3 CFP); update summary table to 119 CFP; clarify section 6 context menu exclusion note |
+| File                                            | Change                                                                                                                                                                                                                                                                 |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/design/05-lwc-architecture.md`            | Add `bcm_CapabilityDetail` component row; add `getCapabilityDetail`/`updateCapability` imports; add `detail*` tracked state; update template snippet; rewrite `bcm_ContextMenu` section; add new `bcm_CapabilityDetail` section; add methods to Apex controllers table |
+| `docs/design/99-cosmic-function-point-count.md` | Add FP29 (View detail via panel, 5 CFP) and FP30 (Edit via panel save, 3 CFP); update summary table to 119 CFP; clarify section 6 context menu exclusion note                                                                                                          |
 
 ---
 
@@ -169,6 +169,7 @@ public static void updateCapability(bcm_Capability__c capability) {
 `bcm_ContextMenu.html` — remove `if:true={isL3}` gate on "View detail"; show for all levels.
 
 `bcm_ContextMenu.js` — replace stub:
+
 ```js
 handleViewDetail() {
     this.dispatchEvent(new CustomEvent('viewdetail'));
@@ -179,6 +180,7 @@ handleViewDetail() {
 ### Step 5 — `bcm_CapabilityDetail` LWC
 
 **JS (`bcm_CapabilityDetail.js`):**
+
 - `@api capability` — full record (or null while loading)
 - `@api breadcrumb` — `[{ id, label }]` array
 - `@api canEdit` — boolean
@@ -192,6 +194,7 @@ handleViewDetail() {
 - Escape keydown handler on panel root → fires `close`
 
 **HTML (`bcm_CapabilityDetail.html`):**
+
 ```
 <div class="bcm-detail-panel" class:bcm-detail-panel--open={isOpen}>
   <!-- header: breadcrumb + X button -->
@@ -205,16 +208,19 @@ handleViewDetail() {
 ```
 
 **CSS (`bcm_CapabilityDetail.css`):**
+
 ```css
 .bcm-detail-panel {
     position: absolute;
-    top: 0; right: 0;
-    width: 400px; height: 100%;
+    top: 0;
+    right: 0;
+    width: 400px;
+    height: 100%;
     transform: translateX(100%);
     transition: transform 250ms ease;
     z-index: 100;
     background: #fff;
-    box-shadow: -4px 0 16px rgba(0,0,0,0.12);
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.12);
     overflow-y: auto;
 }
 .bcm-detail-panel--open {
@@ -227,8 +233,9 @@ Container (`.bcm-canvas-container`) needs `position: relative` — verify in `bc
 ### Step 6 — Wire into `bcm_CapabilityMap`
 
 **New state:**
+
 ```js
-detailCapabilityId = null;   // null = panel closed
+detailCapabilityId = null; // null = panel closed
 detailCapability = null;
 detailBreadcrumb = [];
 detailIsLoading = false;
@@ -236,12 +243,14 @@ detailErrorMessage = null;
 ```
 
 **New import:**
+
 ```js
 import getCapabilityDetail from '@salesforce/apex/bcm_CapabilityController.getCapabilityDetail';
 import updateCapability from '@salesforce/apex/bcm_CapabilityController.updateCapability';
 ```
 
 **`handleViewDetail()`** (catches `viewdetail` from context menu):
+
 ```js
 handleViewDetail() {
     const id = this.contextMenuNode?.id;
@@ -260,12 +269,14 @@ handleViewDetail() {
 ```
 
 **`_buildBreadcrumb(id)`:**
+
 - Walk `_capabilities` map by parent until root
 - Return `[{ id, label: name }]` root-first
 
 **`handleDetailClose()`** → `this.detailCapabilityId = null; this.detailCapability = null;`
 
 **`handleDetailSaved(evt)`:**
+
 ```js
 handleDetailSaved(evt) {
     const { id, ...fields } = evt.detail;
@@ -285,32 +296,37 @@ handleDetailSaved(evt) {
 **`get detailCanEdit()`** → `return hasPermission;`
 
 **HTML addition** (alongside `<c-bcm_-context-menu>`):
+
 ```html
 <c-bcm_-capability-detail
-    capability={detailCapability}
-    breadcrumb={detailBreadcrumb}
-    can-edit={detailCanEdit}
-    is-loading={detailIsLoading}
-    onclose={handleDetailClose}
-    onsaved={handleDetailSaved}>
+    capability="{detailCapability}"
+    breadcrumb="{detailBreadcrumb}"
+    can-edit="{detailCanEdit}"
+    is-loading="{detailIsLoading}"
+    onclose="{handleDetailClose}"
+    onsaved="{handleDetailSaved}"
+>
 </c-bcm_-capability-detail>
 ```
 
 ### Step 7 — Apex tests
 
 `bcm_CapabilityControllerTest` additions:
+
 - `getCapabilityDetail_returnsRecord` — valid ID returns record with all fields
 - `getCapabilityDetail_nullId_throws` — null ID throws AuraHandledException
 - `updateCapability_updatesName` — name change persisted
 - `updateCapability_nullCapability_throws` — null throws
 
 `bcm_CapabilityServiceTest`:
+
 - `updateCapability_persists` — DML succeeds
 - `updateCapability_respectsUserMode` — runs with sharing
 
 ### Step 8 — E2e tests (`tests/e2e/capability-detail.spec.ts`)
 
 Scenarios (from spec):
+
 - `"View detail opens panel with capability name in header"`
 - `"Close button dismisses the detail panel"`
 - `"Escape key closes the detail panel"`

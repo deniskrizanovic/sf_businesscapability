@@ -10,9 +10,9 @@
 
 1. **HTML restructure (`bcm_CapabilityMap.html`)** — wrap toolbar + canvas-container + detail panel in a new `.bcm-root` `<div>`. Move `<c-bcm_-capability-detail>` out of `.bcm-canvas-container` so it becomes a sibling of canvas-container under `.bcm-root`.
 2. **CSS (`bcm_CapabilityMap.css`)** — make `:host` and `.bcm-root` fill the FlexiPage region:
-   - `:host { display: flex; flex-direction: column; height: 100%; }`
-   - `.bcm-root { flex: 1; min-height: 0; display: flex; flex-direction: column; position: relative; }`
-   - `.bcm-canvas-container { flex: 1; min-height: 0; overflow: auto; }` (keep existing `position: relative` removed — positioning context now lives on `.bcm-root`)
+    - `:host { display: flex; flex-direction: column; height: 100%; }`
+    - `.bcm-root { flex: 1; min-height: 0; display: flex; flex-direction: column; position: relative; }`
+    - `.bcm-canvas-container { flex: 1; min-height: 0; overflow: auto; }` (keep existing `position: relative` removed — positioning context now lives on `.bcm-root`)
 3. **No JS change.** `bcm_CapabilityMap.js` still queries `.bcm-canvas-container.getBoundingClientRect()` in `handleFitToWindow`. After restructure that container fills the remaining LWC area, which only improves fit-to-window behaviour. The panel CSS itself (`bcm_CapabilityDetail.css`) is unchanged — `position: absolute; right: 0; top: 0; width: 400px; max-height: 100%` now resolves against `.bcm-root`.
 
 **Tech Stack:** LWC HTML + CSS (`bcm_CapabilityMap`), Jest (`__tests__/bcm_CapabilityMap.test.js`), Playwright (`tests/e2e/capability-detail.spec.ts`), spec doc (`docs/specs/diagram.md`), CFP doc (`docs/design/99-cosmic-function-point-count.md`).
@@ -35,6 +35,7 @@
 ## Task 1: LWC restructure — DOM + CSS
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.html`
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.css`
 
@@ -44,13 +45,13 @@ In `bcm_CapabilityMap.html`, change the top-level structure from:
 
 ```html
 <template>
-  <div class="bcm-toolbar">…</div>
-  <template if:true={errorMessage}>…</template>
-  <template if:true={isLoading}>…</template>
-  <div class="bcm-canvas-container">
-    <svg …>…</svg>
-    <c-bcm_-capability-detail …></c-bcm_-capability-detail>
-  </div>
+    <div class="bcm-toolbar">…</div>
+    <template if:true="{errorMessage}">…</template>
+    <template if:true="{isLoading}">…</template>
+    <div class="bcm-canvas-container">
+        <svg …>…</svg>
+        <c-bcm_-capability-detail …></c-bcm_-capability-detail>
+    </div>
 </template>
 ```
 
@@ -58,23 +59,24 @@ to:
 
 ```html
 <template>
-  <div class="bcm-root">
-    <div class="bcm-toolbar">…</div>
-    <template if:true={errorMessage}>…</template>
-    <template if:true={isLoading}>…</template>
-    <div class="bcm-canvas-container">
-      <svg …>…</svg>
+    <div class="bcm-root">
+        <div class="bcm-toolbar">…</div>
+        <template if:true="{errorMessage}">…</template>
+        <template if:true="{isLoading}">…</template>
+        <div class="bcm-canvas-container">
+            <svg …>…</svg>
+        </div>
+        <c-bcm_-capability-detail
+            capability="{detailCapability}"
+            breadcrumb="{detailBreadcrumb}"
+            is-loading="{detailIsLoading}"
+            error-message="{detailErrorMessage}"
+            can-edit="{canEdit}"
+            onclose="{handleDetailClose}"
+            onsaved="{handleDetailSaved}"
+        >
+        </c-bcm_-capability-detail>
     </div>
-    <c-bcm_-capability-detail
-        capability={detailCapability}
-        breadcrumb={detailBreadcrumb}
-        is-loading={detailIsLoading}
-        error-message={detailErrorMessage}
-        can-edit={canEdit}
-        onclose={handleDetailClose}
-        onsaved={handleDetailSaved}>
-    </c-bcm_-capability-detail>
-  </div>
 </template>
 ```
 
@@ -108,6 +110,7 @@ Replace the existing rules (keep `.bcm-toolbar`, `.bcm-canvas`, `.bcm-canvas:act
 ```
 
 Notes:
+
 - Remove `position: relative` from `.bcm-canvas-container` if present — the panel's positioning context is now `.bcm-root`.
 - The existing `.bcm-toolbar` background/border rule stays as-is. It is now a fixed-height flex item at the top of `.bcm-root`.
 - The detail panel's own CSS (`bcm_CapabilityDetail.css`) is **not** changed — `position: absolute; right: 0; top: 0; max-height: 100%` resolves against `.bcm-root` after the restructure.
@@ -115,6 +118,7 @@ Notes:
 - [x] **Step 3: Manually verify in scratch org** (2026-06-05 — deployed to home-denispoc + verified bounds via Playwright editor project)
 
 Deploy and open a Map containing a single L1 with one L2. Open the detail panel via second-click. Confirm:
+
 - Panel right edge is flush with the LWC right edge.
 - Panel top is at the LWC body top (just under the toolbar) — not floating over the SVG bounds.
 - Panel full height equals the available LWC body height.
@@ -133,11 +137,13 @@ git commit -m "fix(visualisation): anchor detail panel to LWC root, not canvas c
 ## Task 2: Jest — structural regression guard
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js`
 
 - [x] **Step 1: Add a single test asserting the detail panel is NOT inside `.bcm-canvas-container`**
 
 Add inside an existing `describe` covering the diagram structure (or add a new `describe('Detail panel anchoring')` block). The test asserts both:
+
 1. `<c-bcm_-capability-detail>` exists in the shadow DOM.
 2. `.bcm-canvas-container` does NOT contain it.
 
@@ -172,6 +178,7 @@ git commit -m "test(visualisation): assert detail panel sits outside canvas cont
 ## Task 3: e2e — bounding-box containment
 
 **Files:**
+
 - Modify: `tests/e2e/capability-detail.spec.ts`
 
 - [x] **Step 1: Add a new `test.describe` block "Detail panel — layout — editor project"**
@@ -206,6 +213,7 @@ git commit -m "test(e2e): assert detail panel within LWC bounds + Save/Cancel vi
 ## Task 4: Spec — `docs/specs/diagram.md`
 
 **Files:**
+
 - Modify: `docs/specs/diagram.md`
 
 - [x] **Step 1: Add a new scenario under the existing Detail Panel area**
@@ -219,7 +227,7 @@ Given a Map containing a single L1 capability with one L2 child
 When the user opens the Detail Panel via second-click  
 Then the panel's right edge does not extend past the LWC right edge  
 And the panel's bottom edge does not extend past the LWC bottom edge  
-And in edit mode the Save and Cancel buttons are visible without scrolling on a normal-height viewport  
+And in edit mode the Save and Cancel buttons are visible without scrolling on a normal-height viewport
 
 > Tested by: capability-detail.spec.ts — "Panel stays inside LWC bounds and Save/Cancel are visible in edit mode"; bcm_CapabilityMap.test.js — "Detail panel is anchored outside the canvas container"
 ```
@@ -236,6 +244,7 @@ git commit -m "docs(specs): add detail-panel containment scenario (GH #41)"
 ## Task 5: COSMIC FP doc — note exclusion
 
 **Files:**
+
 - Modify: `docs/design/99-cosmic-function-point-count.md`
 
 - [x] **Step 1: Add row to §6 Excluded Processes**

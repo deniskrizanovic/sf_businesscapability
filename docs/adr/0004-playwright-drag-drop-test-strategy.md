@@ -15,11 +15,13 @@ The single gesture test proves the drag interaction works end-to-end. Outcome-on
 ## Considered Options
 
 **A. Full mouse simulation for every scenario.** Each spec scenario drives a real gesture against the SVG canvas. Highest fidelity. Rejected because:
+
 - SVG hit-testing inside Lightning Experience requires precise coordinate math against handle bounding boxes that shift with viewport size, zoom, and dynamic layout. Coordinate fragility makes tests flaky in CI.
 - Each gesture test must reset zoom/pan/focus state before running; the per-test setup cost adds up across 5+ scenarios.
 - Drag-drop combinatorics (5 scenarios × 2 directions × ghost/indicator assertions) double or triple the test surface for diminishing fidelity gain — the same gesture is being re-driven against different node coordinates.
 
 **B. Outcome-only for every scenario.** Skip gestures entirely; all tests use CLI record updates and assert the diagram reflects the new state. Lowest cost. Rejected because:
+
 - Spec language is explicitly "the user drags...". Asserting the persistence layer without ever exercising the gesture leaves the gesture untested in CI. A regression in `mousedown` → drop-target hit-test → optimistic update would not be caught.
 - Sets a precedent that "we don't test gestures" — wrong message for future interactive features.
 

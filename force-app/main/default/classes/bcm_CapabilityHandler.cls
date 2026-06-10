@@ -11,7 +11,6 @@
  *   - No value provided → append at MAX sibling SortOrder + 1 (or 1 if no siblings)
  */
 public with sharing class bcm_CapabilityHandler {
-
     /**
      * Entry point called by bcm_CapabilityTrigger for before insert and before update.
      * @param newRecords Trigger.new list
@@ -95,7 +94,8 @@ public with sharing class bcm_CapabilityHandler {
         for (String key : incomingByKey.keySet()) {
             Integer minVal = null;
             for (Integer v : incomingByKey.get(key)) {
-                if (minVal == null || v < minVal) minVal = v;
+                if (minVal == null || v < minVal)
+                    minVal = v;
             }
             minIncomingByKey.put(key, minVal);
         }
@@ -105,8 +105,10 @@ public with sharing class bcm_CapabilityHandler {
         Boolean hasNullParentGroup = false;
         for (String key : parentIdByKey.keySet()) {
             Id pid = parentIdByKey.get(key);
-            if (pid != null) nonNullParentIds.add(pid);
-            else hasNullParentGroup = true;
+            if (pid != null)
+                nonNullParentIds.add(pid);
+            else
+                hasNullParentGroup = true;
         }
 
         // siblingsMap: groupKey → (sortOrder → sibling record)
@@ -121,8 +123,10 @@ public with sharing class bcm_CapabilityHandler {
             ]) {
                 String key = buildGroupKey(sib.bcm_Map__c, sib.bcm_Parent__c);
                 Integer minIncoming = minIncomingByKey.get(key);
-                if (minIncoming == null || sib.bcm_SortOrder__c < minIncoming) continue;
-                if (!siblingsMap.containsKey(key)) siblingsMap.put(key, new Map<Integer, bcm_Capability__c>());
+                if (minIncoming == null || sib.bcm_SortOrder__c < minIncoming)
+                    continue;
+                if (!siblingsMap.containsKey(key))
+                    siblingsMap.put(key, new Map<Integer, bcm_Capability__c>());
                 siblingsMap.get(key).put(sib.bcm_SortOrder__c.intValue(), sib);
             }
         }
@@ -136,8 +140,10 @@ public with sharing class bcm_CapabilityHandler {
             ]) {
                 String key = buildGroupKey(sib.bcm_Map__c, null);
                 Integer minIncoming = minIncomingByKey.get(key);
-                if (minIncoming == null || sib.bcm_SortOrder__c < minIncoming) continue;
-                if (!siblingsMap.containsKey(key)) siblingsMap.put(key, new Map<Integer, bcm_Capability__c>());
+                if (minIncoming == null || sib.bcm_SortOrder__c < minIncoming)
+                    continue;
+                if (!siblingsMap.containsKey(key))
+                    siblingsMap.put(key, new Map<Integer, bcm_Capability__c>());
                 siblingsMap.get(key).put(sib.bcm_SortOrder__c.intValue(), sib);
             }
         }
@@ -153,7 +159,8 @@ public with sharing class bcm_CapabilityHandler {
 
         for (String key : incomingByKey.keySet()) {
             Map<Integer, bcm_Capability__c> byPos = siblingsMap.get(key);
-            if (byPos == null || byPos.isEmpty()) continue;
+            if (byPos == null || byPos.isEmpty())
+                continue;
 
             Set<Integer> occupied = new Set<Integer>(byPos.keySet());
 
@@ -175,7 +182,8 @@ public with sharing class bcm_CapabilityHandler {
                 // to avoid overwriting a position before it is processed
                 for (Integer pos = runEnd; pos >= incomingPos; pos--) {
                     bcm_Capability__c sib = byPos.get(pos);
-                    if (sib == null) continue;
+                    if (sib == null)
+                        continue;
                     occupied.remove(pos);
                     byPos.remove(pos);
                     sib.bcm_SortOrder__c = pos + 1;

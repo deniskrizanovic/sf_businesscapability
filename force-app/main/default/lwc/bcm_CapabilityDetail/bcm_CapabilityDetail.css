@@ -1,3 +1,5 @@
+/* --bcm-* custom properties inherited from bcm_CapabilityMap.css :host block (CSS vars pierce LWC shadow boundaries). This component is only ever rendered inside bcm_CapabilityMap. */
+
 .bcm-detail-panel {
     position: absolute;
     top: 0;
@@ -7,7 +9,7 @@
     transform: translateX(100%);
     transition: transform 250ms ease;
     z-index: 100;
-    background: #fff;
+    background: var(--bcm-panel-bg);
     box-shadow: -4px 0 16px rgba(0, 0, 0, 0.12);
     display: flex;
     flex-direction: column;
@@ -20,18 +22,18 @@
     overflow-y: auto;
 }
 
-.bcm-detail-panel[data-open="true"] {
+.bcm-detail-panel[data-open='true'] {
     transform: translateX(0);
 }
 
 .bcm-detail-header {
-    background: #fafafa;
+    background: var(--bcm-panel-header-bg);
     flex: 0 0 auto;
 }
 
 .bcm-detail-breadcrumb {
     font-size: 12px;
-    color: #444;
+    color: var(--bcm-panel-secondary-text);
     flex: 1 1 auto;
     min-width: 0;
 }
@@ -45,7 +47,7 @@
 
 .bcm-detail-breadcrumb-segment:last-child .bcm-detail-breadcrumb-label {
     font-weight: bold;
-    color: #222;
+    color: var(--bcm-panel-header-text);
 }
 
 .bcm-detail-level-badge {
@@ -53,8 +55,8 @@
     min-width: 28px;
     padding: 2px 6px;
     border-radius: 4px;
-    background: #4A4A4A;
-    color: #fff;
+    background: var(--bcm-l1-label);
+    color: var(--bcm-panel-bg);
     font-size: 11px;
     font-weight: bold;
     text-align: center;
@@ -62,7 +64,7 @@
 
 .bcm-detail-name {
     font-weight: bold;
-    color: #222;
+    color: var(--bcm-panel-body-text);
 }
 
 .bcm-detail-tags {
@@ -76,22 +78,22 @@
     padding: 2px 8px;
     border-radius: 10px;
     font-size: 11px;
-    color: #222;
+    color: var(--bcm-panel-body-text);
     border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .bcm-detail-field-label {
     font-weight: bold;
-    color: #555;
+    color: var(--bcm-panel-secondary-text);
     margin-bottom: 2px;
 }
 
 .bcm-detail-field-value {
-    color: #222;
+    color: var(--bcm-panel-body-text);
 }
 
 .bcm-detail-footer {
-    background: #fafafa;
+    background: var(--bcm-panel-header-bg);
     flex: 0 0 auto;
 }
 

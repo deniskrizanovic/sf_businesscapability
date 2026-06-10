@@ -1,9 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>bcm_Definition__c</fullName>
     <label>Definition</label>
-    <description>Rich text description defining what this capability means for the organisation.</description>
-    <inlineHelpText>Describe what this capability is and what it encompasses. Rich text formatting is supported.</inlineHelpText>
+    <description
+    >Rich text description defining what this capability means for the organisation.</description>
+    <inlineHelpText
+    >Describe what this capability is and what it encompasses. Rich text formatting is supported.</inlineHelpText>
     <type>Html</type>
     <length>32768</length>
     <visibleLines>25</visibleLines>

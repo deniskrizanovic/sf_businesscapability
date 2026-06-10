@@ -15,13 +15,58 @@ let mockUpdateCapabilityImpl = jest.fn().mockResolvedValue(undefined);
 
 // Imperative Apex mock — returns a resolved promise with seeded data
 const CAPS_DATA = [
-    { Id: 'L1-A', Name: 'Capability A', bcm_Parent__c: null, bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false },
-    { Id: 'L2-A1', Name: 'Sub-Cap A1', bcm_Parent__c: 'L1-A', bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false, Tags__r: [] },
-    { Id: 'L2-A2', Name: 'Sub-Cap A2', bcm_Parent__c: 'L1-A', bcm_SortOrder__c: 2, bcm_HideFromDiagram__c: false, Tags__r: [] },
-    { Id: 'L3-A1a', Name: 'Detail A1a', bcm_Parent__c: 'L2-A1', bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false },
-    { Id: 'L3-A1b', Name: 'Detail A1b', bcm_Parent__c: 'L2-A1', bcm_SortOrder__c: 2, bcm_HideFromDiagram__c: false },
-    { Id: 'L1-B', Name: 'Capability B', bcm_Parent__c: null, bcm_SortOrder__c: 2, bcm_HideFromDiagram__c: false },
-    { Id: 'L2-B1', Name: 'Sub-Cap B1', bcm_Parent__c: 'L1-B', bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false, Tags__r: [] },
+    {
+        Id: 'L1-A',
+        Name: 'Capability A',
+        bcm_Parent__c: null,
+        bcm_SortOrder__c: 1,
+        bcm_HideFromDiagram__c: false
+    },
+    {
+        Id: 'L2-A1',
+        Name: 'Sub-Cap A1',
+        bcm_Parent__c: 'L1-A',
+        bcm_SortOrder__c: 1,
+        bcm_HideFromDiagram__c: false,
+        Tags__r: []
+    },
+    {
+        Id: 'L2-A2',
+        Name: 'Sub-Cap A2',
+        bcm_Parent__c: 'L1-A',
+        bcm_SortOrder__c: 2,
+        bcm_HideFromDiagram__c: false,
+        Tags__r: []
+    },
+    {
+        Id: 'L3-A1a',
+        Name: 'Detail A1a',
+        bcm_Parent__c: 'L2-A1',
+        bcm_SortOrder__c: 1,
+        bcm_HideFromDiagram__c: false
+    },
+    {
+        Id: 'L3-A1b',
+        Name: 'Detail A1b',
+        bcm_Parent__c: 'L2-A1',
+        bcm_SortOrder__c: 2,
+        bcm_HideFromDiagram__c: false
+    },
+    {
+        Id: 'L1-B',
+        Name: 'Capability B',
+        bcm_Parent__c: null,
+        bcm_SortOrder__c: 2,
+        bcm_HideFromDiagram__c: false
+    },
+    {
+        Id: 'L2-B1',
+        Name: 'Sub-Cap B1',
+        bcm_Parent__c: 'L1-B',
+        bcm_SortOrder__c: 1,
+        bcm_HideFromDiagram__c: false,
+        Tags__r: []
+    }
 ];
 
 // `getCapabilities` is now a @wire — `mockGetCapabilities.emit(data)` feeds the
@@ -36,17 +81,26 @@ jest.mock(
     '@salesforce/customPermission/bcm_CanEdit',
     () => ({
         __esModule: true,
-        get default() { return mockCanEdit; },
+        get default() {
+            return mockCanEdit;
+        }
     }),
     { virtual: true }
 );
 
-let mockReorderImpl  = jest.fn().mockResolvedValue(undefined);
+let mockReorderImpl = jest.fn().mockResolvedValue(undefined);
 let mockReparentImpl = jest.fn().mockResolvedValue(undefined);
+
+// Visual tokens — mirrored from c/bcm_VisualTokens (regression check, not imported)
+const TOKEN_L2_STROKE = '#e0e0e0';
+const TOKEN_FOCUS_RING = '#0070D2';
+const TOKEN_TAG_FALLBACK = '#ffffff';
 jest.mock(
     '@salesforce/apex/bcm_DragDropController.reorderCapabilities',
     () => {
-        const fn = function(...args) { return mockReorderImpl(...args); };
+        const fn = function (...args) {
+            return mockReorderImpl(...args);
+        };
         fn.__esModule = true;
         fn.default = fn;
         return fn;
@@ -56,7 +110,9 @@ jest.mock(
 jest.mock(
     '@salesforce/apex/bcm_DragDropController.reparentCapability',
     () => {
-        const fn = function(...args) { return mockReparentImpl(...args); };
+        const fn = function (...args) {
+            return mockReparentImpl(...args);
+        };
         fn.__esModule = true;
         fn.default = fn;
         return fn;
@@ -71,33 +127,52 @@ jest.mock(
             constructor(detail) {
                 super('lightning__showtoast', { detail, bubbles: true, composed: true });
             }
-        },
+        }
     }),
     { virtual: true }
 );
-jest.mock('@salesforce/apex', () => ({
-    __esModule: true,
-    refreshApex: jest.fn().mockResolvedValue(undefined),
-}), { virtual: true });
+jest.mock(
+    '@salesforce/apex',
+    () => ({
+        __esModule: true,
+        refreshApex: jest.fn().mockResolvedValue(undefined)
+    }),
+    { virtual: true }
+);
 const { refreshApex } = require('@salesforce/apex');
-jest.mock('@salesforce/apex/bcm_MapController.getMaps', () => ({ __esModule: true, default: mockGetMaps }), { virtual: true });
-jest.mock('@salesforce/apex/bcm_TagController.getTags', () => ({ __esModule: true, default: mockGetTags }), { virtual: true });
-jest.mock('@salesforce/apex/bcm_CapabilityController.getCapabilities',
+jest.mock(
+    '@salesforce/apex/bcm_MapController.getMaps',
+    () => ({ __esModule: true, default: mockGetMaps }),
+    { virtual: true }
+);
+jest.mock(
+    '@salesforce/apex/bcm_TagController.getTags',
+    () => ({ __esModule: true, default: mockGetTags }),
+    { virtual: true }
+);
+jest.mock(
+    '@salesforce/apex/bcm_CapabilityController.getCapabilities',
     () => ({ __esModule: true, default: mockGetCapabilities }),
     { virtual: true }
 );
-jest.mock('@salesforce/apex/bcm_CapabilityController.getCapabilityDetail',
+jest.mock(
+    '@salesforce/apex/bcm_CapabilityController.getCapabilityDetail',
     () => {
-        const fn = function(...args) { return mockGetCapabilityDetailImpl(...args); };
+        const fn = function (...args) {
+            return mockGetCapabilityDetailImpl(...args);
+        };
         fn.__esModule = true;
         fn.default = fn;
         return fn;
     },
     { virtual: true }
 );
-jest.mock('@salesforce/apex/bcm_CapabilityController.updateCapability',
+jest.mock(
+    '@salesforce/apex/bcm_CapabilityController.updateCapability',
     () => {
-        const fn = function(...args) { return mockUpdateCapabilityImpl(...args); };
+        const fn = function (...args) {
+            return mockUpdateCapabilityImpl(...args);
+        };
         fn.__esModule = true;
         fn.default = fn;
         return fn;
@@ -151,9 +226,9 @@ describe('BcmCapabilityMap zoom/pan state machine', () => {
         mockGetTags.emit({ data: [], error: undefined });
         await flushPromises();
 
-        zoomInBtn   = element.shadowRoot.querySelector('[title="Zoom In"]');
-        zoomOutBtn  = element.shadowRoot.querySelector('[title="Zoom Out"]');
-        resetBtn    = element.shadowRoot.querySelector('[title="Reset View"]');
+        zoomInBtn = element.shadowRoot.querySelector('[title="Zoom In"]');
+        zoomOutBtn = element.shadowRoot.querySelector('[title="Zoom Out"]');
+        resetBtn = element.shadowRoot.querySelector('[title="Reset View"]');
         mapCombobox = element.shadowRoot.querySelector('lightning-combobox');
     });
 
@@ -215,18 +290,21 @@ describe('BcmCapabilityMap zoom/pan state machine', () => {
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
         await flushPromises();
         await seedLayout(element);
-        expect(element.shadowRoot.querySelectorAll('.bcm-node[data-node-level="1"]').length)
-            .toBeGreaterThan(0);
+        expect(
+            element.shadowRoot.querySelectorAll('.bcm-node[data-node-level="1"]').length
+        ).toBeGreaterThan(0);
 
         // User clears the combobox
         mapCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: '' } }));
         await flushPromises();
 
         // Diagram emptied — no L1 column nodes remain
-        expect(element.shadowRoot.querySelectorAll('.bcm-node[data-node-level="1"]').length)
-            .toBe(0);
-        expect(element.shadowRoot.querySelectorAll('.bcm-node[data-node-level="2"]').length)
-            .toBe(0);
+        expect(element.shadowRoot.querySelectorAll('.bcm-node[data-node-level="1"]').length).toBe(
+            0
+        );
+        expect(element.shadowRoot.querySelectorAll('.bcm-node[data-node-level="2"]').length).toBe(
+            0
+        );
     });
 });
 
@@ -240,7 +318,12 @@ describe('BcmCapabilityMap node click UX — focus then panel', () => {
     beforeEach(async () => {
         mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
         mockGetCapabilityDetailImpl = jest.fn().mockImplementation(({ capabilityId }) =>
-            Promise.resolve({ Id: capabilityId, Name: capabilityId, bcm_Level__c: 1, Tags__r: [] })
+            Promise.resolve({
+                Id: capabilityId,
+                Name: capabilityId,
+                bcm_Level__c: 1,
+                Tags__r: []
+            })
         );
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
         document.body.appendChild(element);
@@ -308,7 +391,12 @@ describe('BcmCapabilityMap node click UX — L3 bullets', () => {
     beforeEach(async () => {
         mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
         mockGetCapabilityDetailImpl = jest.fn().mockImplementation(({ capabilityId }) =>
-            Promise.resolve({ Id: capabilityId, Name: capabilityId, bcm_Level__c: 3, Tags__r: [] })
+            Promise.resolve({
+                Id: capabilityId,
+                Name: capabilityId,
+                bcm_Level__c: 3,
+                Tags__r: []
+            })
         );
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
         document.body.appendChild(element);
@@ -349,7 +437,12 @@ describe('BcmCapabilityMap keyboard navigation — L2 level', () => {
     beforeEach(async () => {
         mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
         mockGetCapabilityDetailImpl = jest.fn().mockImplementation(({ capabilityId }) =>
-            Promise.resolve({ Id: capabilityId, Name: capabilityId, bcm_Level__c: 2, Tags__r: [] })
+            Promise.resolve({
+                Id: capabilityId,
+                Name: capabilityId,
+                bcm_Level__c: 2,
+                Tags__r: []
+            })
         );
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
         document.body.appendChild(element);
@@ -567,8 +660,8 @@ describe('BcmCapabilityMap L3 focus highlight rect', () => {
 
         const rect = getFocusRect(element);
         expect(rect).not.toBeNull();
-        expect(rect.getAttribute('fill')).toBe('#E8F4FF');
-        expect(rect.getAttribute('stroke')).toBe('#0070D2');
+        expect(rect.getAttribute('fill')).toBe('transparent');
+        expect(rect.getAttribute('stroke')).toBe(TOKEN_FOCUS_RING);
         // Only one rect total
         expect(getFocusRects(element).length).toBe(1);
     });
@@ -673,20 +766,30 @@ describe('BcmCapabilityMap canvas click clears focus', () => {
         expect(getNode(element, 'L2-A1').getAttribute('data-focused')).toBe('true');
 
         // Mousedown on bare SVG (no .bcm-node ancestor)
-        const evt = new MouseEvent('mousedown', { bubbles: true, composed: true, clientX: 10, clientY: 10 });
+        const evt = new MouseEvent('mousedown', {
+            bubbles: true,
+            composed: true,
+            clientX: 10,
+            clientY: 10
+        });
         svg.dispatchEvent(evt);
         await flushPromises();
 
         expect(getNode(element, 'L2-A1').getAttribute('data-focused')).not.toBe('true');
         // Stroke reverts to default
         const rect = getNode(element, 'L2-A1').querySelector('rect');
-        expect(rect.getAttribute('stroke')).toBe('#CCCCCC');
+        expect(rect.getAttribute('stroke')).toBe(TOKEN_L2_STROKE);
         expect(rect.getAttribute('stroke-width')).toBe('1');
     });
 
     it('Canvas mousedown with no focus is a no-op (no throw)', async () => {
         expect(() => {
-            const evt = new MouseEvent('mousedown', { bubbles: true, composed: true, clientX: 10, clientY: 10 });
+            const evt = new MouseEvent('mousedown', {
+                bubbles: true,
+                composed: true,
+                clientX: 10,
+                clientY: 10
+            });
             svg.dispatchEvent(evt);
         }).not.toThrow();
         await flushPromises();
@@ -694,9 +797,19 @@ describe('BcmCapabilityMap canvas click clears focus', () => {
 
     it('Pan still works after canvas mousedown', async () => {
         const before = element.panX;
-        const down = new MouseEvent('mousedown', { bubbles: true, composed: true, clientX: 100, clientY: 100 });
+        const down = new MouseEvent('mousedown', {
+            bubbles: true,
+            composed: true,
+            clientX: 100,
+            clientY: 100
+        });
         svg.dispatchEvent(down);
-        const move = new MouseEvent('mousemove', { bubbles: true, composed: true, clientX: 150, clientY: 100 });
+        const move = new MouseEvent('mousemove', {
+            bubbles: true,
+            composed: true,
+            clientX: 150,
+            clientY: 100
+        });
         svg.dispatchEvent(move);
         await flushPromises();
         expect(element.panX).toBe(before + 50);
@@ -753,7 +866,7 @@ describe('BcmCapabilityMap second-click → detail panel', () => {
             bcm_StrategySupport__c: null,
             bcm_ArchitecturalNuance__c: null,
             bcm_HideFromDiagram__c: false,
-            Tags__r: [],
+            Tags__r: []
         };
         mockGetCapabilityDetailImpl = jest.fn().mockResolvedValue(detailRecord);
 
@@ -767,7 +880,7 @@ describe('BcmCapabilityMap second-click → detail panel', () => {
         // Breadcrumb walks parent chain root-first: L1-A -> L2-A1
         expect(panel.breadcrumb).toEqual([
             { id: 'L1-A', label: 'Capability A' },
-            { id: 'L2-A1', label: 'Sub-Cap A1' },
+            { id: 'L2-A1', label: 'Sub-Cap A1' }
         ]);
     });
 });
@@ -814,7 +927,7 @@ describe('BcmCapabilityMap detail panel — saved flow', () => {
             bcm_StrategySupport__c: null,
             bcm_ArchitecturalNuance__c: null,
             bcm_HideFromDiagram__c: false,
-            Tags__r: [],
+            Tags__r: []
         });
 
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
@@ -835,31 +948,35 @@ describe('BcmCapabilityMap detail panel — saved flow', () => {
         const panel = element.shadowRoot.querySelector('c-bcm_-capability-detail');
         expect(panel).not.toBeNull();
 
-        panel.dispatchEvent(new CustomEvent('saved', {
-            detail: {
-                id                  : 'L2-A1',
-                name                : 'Renamed L2',
-                definition          : '<p>D</p>',
-                strategySupport     : '<p>S</p>',
-                architecturalNuance : '<p>N</p>',
-                hideFromDiagram     : false,
-            },
-        }));
+        panel.dispatchEvent(
+            new CustomEvent('saved', {
+                detail: {
+                    id: 'L2-A1',
+                    name: 'Renamed L2',
+                    definition: '<p>D</p>',
+                    strategySupport: '<p>S</p>',
+                    architecturalNuance: '<p>N</p>',
+                    hideFromDiagram: false
+                }
+            })
+        );
         await flushPromises();
         await flushPromises();
 
         expect(mockUpdateCapabilityImpl).toHaveBeenCalledTimes(1);
         const arg = mockUpdateCapabilityImpl.mock.calls[0][0];
         expect(arg.capability).toMatchObject({
-            Id                          : 'L2-A1',
-            Name                        : 'Renamed L2',
-            bcm_Definition__c           : '<p>D</p>',
-            bcm_StrategySupport__c      : '<p>S</p>',
-            bcm_ArchitecturalNuance__c  : '<p>N</p>',
-            bcm_HideFromDiagram__c      : false,
+            Id: 'L2-A1',
+            Name: 'Renamed L2',
+            bcm_Definition__c: '<p>D</p>',
+            bcm_StrategySupport__c: '<p>S</p>',
+            bcm_ArchitecturalNuance__c: '<p>N</p>',
+            bcm_HideFromDiagram__c: false
         });
         // Local-patch immediately reflects new name; refreshApex runs behind it.
-        const renamed = element.shadowRoot.querySelector('[data-node-id="L2-A1"][data-node-name="Renamed L2"]');
+        const renamed = element.shadowRoot.querySelector(
+            '[data-node-id="L2-A1"][data-node-name="Renamed L2"]'
+        );
         expect(renamed).not.toBeNull();
     });
 
@@ -872,20 +989,22 @@ describe('BcmCapabilityMap detail panel — saved flow', () => {
 
     it('saved event Apex error surfaces errorMessage to detail panel', async () => {
         mockUpdateCapabilityImpl = jest.fn().mockRejectedValue({
-            body: { message: 'Validation rule blocked the save' },
+            body: { message: 'Validation rule blocked the save' }
         });
         const panel = element.shadowRoot.querySelector('c-bcm_-capability-detail');
 
-        panel.dispatchEvent(new CustomEvent('saved', {
-            detail: {
-                id                  : 'L2-A1',
-                name                : 'Will Fail',
-                definition          : '<p>D</p>',
-                strategySupport     : '<p>S</p>',
-                architecturalNuance : '<p>N</p>',
-                hideFromDiagram     : false,
-            },
-        }));
+        panel.dispatchEvent(
+            new CustomEvent('saved', {
+                detail: {
+                    id: 'L2-A1',
+                    name: 'Will Fail',
+                    definition: '<p>D</p>',
+                    strategySupport: '<p>S</p>',
+                    architecturalNuance: '<p>N</p>',
+                    hideFromDiagram: false
+                }
+            })
+        );
         await flushPromises();
         await flushPromises();
 
@@ -911,7 +1030,13 @@ describe('BcmCapabilityMap session persistence', () => {
     });
 
     it('Writes selectedMapId to sessionStorage on map change', async () => {
-        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }, { Id: 'MAP-2', Name: 'Map 2' }], error: undefined });
+        mockGetMaps.emit({
+            data: [
+                { Id: 'MAP-1', Name: 'Map 1' },
+                { Id: 'MAP-2', Name: 'Map 2' }
+            ],
+            error: undefined
+        });
         await flushPromises();
         const combobox = element.shadowRoot.querySelector('lightning-combobox');
         combobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'MAP-2' } }));
@@ -924,7 +1049,13 @@ describe('BcmCapabilityMap session persistence', () => {
         document.body.removeChild(element);
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
         document.body.appendChild(element);
-        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }, { Id: 'MAP-2', Name: 'Map 2' }], error: undefined });
+        mockGetMaps.emit({
+            data: [
+                { Id: 'MAP-1', Name: 'Map 1' },
+                { Id: 'MAP-2', Name: 'Map 2' }
+            ],
+            error: undefined
+        });
         await flushPromises();
         const combobox = element.shadowRoot.querySelector('lightning-combobox');
         expect(combobox.value).toBe('MAP-2');
@@ -947,8 +1078,9 @@ describe('BcmCapabilityMap session persistence', () => {
     });
 
     it('Silent fallback when sessionStorage.setItem throws (no crash, no abort)', async () => {
-        const setItemSpy = jest.spyOn(Storage.prototype, 'setItem')
-            .mockImplementation(() => { throw new Error('QuotaExceeded'); });
+        const setItemSpy = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+            throw new Error('QuotaExceeded');
+        });
         try {
             mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
             await flushPromises();
@@ -964,8 +1096,9 @@ describe('BcmCapabilityMap session persistence', () => {
     });
 
     it('Silent fallback when sessionStorage.getItem throws on init', async () => {
-        const getItemSpy = jest.spyOn(Storage.prototype, 'getItem')
-            .mockImplementation(() => { throw new Error('SecurityError'); });
+        const getItemSpy = jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+            throw new Error('SecurityError');
+        });
         try {
             document.body.removeChild(element);
             element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
@@ -984,8 +1117,9 @@ describe('BcmCapabilityMap session persistence', () => {
 
     it('Silent fallback when sessionStorage.removeItem throws (stale-id path)', async () => {
         sessionStorage.setItem('bcm.visualisation.selectedMapId', 'MAP-DELETED');
-        const removeItemSpy = jest.spyOn(Storage.prototype, 'removeItem')
-            .mockImplementation(() => { throw new Error('SecurityError'); });
+        const removeItemSpy = jest.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+            throw new Error('SecurityError');
+        });
         try {
             document.body.removeChild(element);
             element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
@@ -1009,12 +1143,31 @@ describe('BcmCapabilityMap cross-cutting band', () => {
 
     const CAPS_DATA_WITH_CC = [
         ...CAPS_DATA,
-        { Id: 'L1-CC', Name: 'Security', bcm_Parent__c: null, bcm_SortOrder__c: 99,
-          bcm_HideFromDiagram__c: false, bcm_IsCrossCutting__c: true },
-        { Id: 'L1-CC2', Name: 'Compliance', bcm_Parent__c: null, bcm_SortOrder__c: 100,
-          bcm_HideFromDiagram__c: false, bcm_IsCrossCutting__c: true },
-        { Id: 'L2-CC1', Name: 'Encryption', bcm_Parent__c: 'L1-CC', bcm_SortOrder__c: 1,
-          bcm_HideFromDiagram__c: false, bcm_IsCrossCutting__c: false, Tags__r: [] },
+        {
+            Id: 'L1-CC',
+            Name: 'Security',
+            bcm_Parent__c: null,
+            bcm_SortOrder__c: 99,
+            bcm_HideFromDiagram__c: false,
+            bcm_IsCrossCutting__c: true
+        },
+        {
+            Id: 'L1-CC2',
+            Name: 'Compliance',
+            bcm_Parent__c: null,
+            bcm_SortOrder__c: 100,
+            bcm_HideFromDiagram__c: false,
+            bcm_IsCrossCutting__c: true
+        },
+        {
+            Id: 'L2-CC1',
+            Name: 'Encryption',
+            bcm_Parent__c: 'L1-CC',
+            bcm_SortOrder__c: 1,
+            bcm_HideFromDiagram__c: false,
+            bcm_IsCrossCutting__c: false,
+            Tags__r: []
+        }
     ];
 
     beforeEach(async () => {
@@ -1101,8 +1254,14 @@ describe('BcmCapabilityMap cross-cutting band — cc-only map', () => {
     let element;
 
     const CAPS_DATA_CC_ONLY = [
-        { Id: 'L1-CC', Name: 'Security', bcm_Parent__c: null, bcm_SortOrder__c: 1,
-          bcm_HideFromDiagram__c: false, bcm_IsCrossCutting__c: true },
+        {
+            Id: 'L1-CC',
+            Name: 'Security',
+            bcm_Parent__c: null,
+            bcm_SortOrder__c: 1,
+            bcm_HideFromDiagram__c: false,
+            bcm_IsCrossCutting__c: true
+        }
     ];
 
     beforeEach(async () => {
@@ -1151,8 +1310,14 @@ describe('BcmCapabilityMap cross-cutting toggle', () => {
 
     const CAPS_DATA_WITH_CC = [
         ...CAPS_DATA,
-        { Id: 'L1-CC', Name: 'Security', bcm_Parent__c: null, bcm_SortOrder__c: 99,
-          bcm_HideFromDiagram__c: false, bcm_IsCrossCutting__c: true },
+        {
+            Id: 'L1-CC',
+            Name: 'Security',
+            bcm_Parent__c: null,
+            bcm_SortOrder__c: 99,
+            bcm_HideFromDiagram__c: false,
+            bcm_IsCrossCutting__c: true
+        }
     ];
 
     beforeEach(async () => {
@@ -1222,19 +1387,53 @@ describe('BcmCapabilityMap cross-cutting toggle', () => {
 describe('BcmCapabilityMap tag colour highlight', () => {
     let element;
 
-    const TAG_RED   = { Id: 'tag-1', Name: 'NEW',     bcm_Colour__c: '#FF5733' };
-    const TAG_BLUE  = { Id: 'tag-2', Name: 'CHANGED', bcm_Colour__c: '#3366FF' };
+    const TAG_RED = { Id: 'tag-1', Name: 'NEW', bcm_Colour__c: '#FF5733' };
+    const TAG_BLUE = { Id: 'tag-2', Name: 'CHANGED', bcm_Colour__c: '#3366FF' };
 
     const TAGGED_CAPS = [
-        { Id: 'L1-A', Name: 'Capability A', bcm_Parent__c: null, bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false },
-        { Id: 'L2-A1', Name: 'Sub-Cap A1', bcm_Parent__c: 'L1-A', bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false,
-          Tags__r: [{ bcm_Tag__c: 'tag-1', bcm_Tag__r: { Name: 'NEW', bcm_Colour__c: '#FF5733' } }] },
-        { Id: 'L2-A2', Name: 'Sub-Cap A2', bcm_Parent__c: 'L1-A', bcm_SortOrder__c: 2, bcm_HideFromDiagram__c: false,
-          Tags__r: [] },
-        { Id: 'L3-A1a', Name: 'Detail A1a', bcm_Parent__c: 'L2-A1', bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false,
-          Tags__r: [{ bcm_Tag__c: 'tag-1', bcm_Tag__r: { Name: 'NEW', bcm_Colour__c: '#FF5733' } }] },
-        { Id: 'L3-A1b', Name: 'Detail A1b', bcm_Parent__c: 'L2-A1', bcm_SortOrder__c: 2, bcm_HideFromDiagram__c: false,
-          Tags__r: [] },
+        {
+            Id: 'L1-A',
+            Name: 'Capability A',
+            bcm_Parent__c: null,
+            bcm_SortOrder__c: 1,
+            bcm_HideFromDiagram__c: false
+        },
+        {
+            Id: 'L2-A1',
+            Name: 'Sub-Cap A1',
+            bcm_Parent__c: 'L1-A',
+            bcm_SortOrder__c: 1,
+            bcm_HideFromDiagram__c: false,
+            Tags__r: [
+                { bcm_Tag__c: 'tag-1', bcm_Tag__r: { Name: 'NEW', bcm_Colour__c: '#FF5733' } }
+            ]
+        },
+        {
+            Id: 'L2-A2',
+            Name: 'Sub-Cap A2',
+            bcm_Parent__c: 'L1-A',
+            bcm_SortOrder__c: 2,
+            bcm_HideFromDiagram__c: false,
+            Tags__r: []
+        },
+        {
+            Id: 'L3-A1a',
+            Name: 'Detail A1a',
+            bcm_Parent__c: 'L2-A1',
+            bcm_SortOrder__c: 1,
+            bcm_HideFromDiagram__c: false,
+            Tags__r: [
+                { bcm_Tag__c: 'tag-1', bcm_Tag__r: { Name: 'NEW', bcm_Colour__c: '#FF5733' } }
+            ]
+        },
+        {
+            Id: 'L3-A1b',
+            Name: 'Detail A1b',
+            bcm_Parent__c: 'L2-A1',
+            bcm_SortOrder__c: 2,
+            bcm_HideFromDiagram__c: false,
+            Tags__r: []
+        }
     ];
 
     function getTagCombobox() {
@@ -1280,7 +1479,7 @@ describe('BcmCapabilityMap tag colour highlight', () => {
         getTagCombobox().dispatchEvent(new CustomEvent('change', { detail: { value: 'tag-1' } }));
         await flushPromises();
 
-        expect(getL2Rect(element, 'L2-A2').getAttribute('fill')).toBe('#FFFFFF');
+        expect(getL2Rect(element, 'L2-A2').getAttribute('fill')).toBe(TOKEN_TAG_FALLBACK);
     });
 
     it('L3 bullet group renders tag rect with selected tag colour', async () => {
@@ -1320,7 +1519,7 @@ describe('BcmCapabilityMap tag colour highlight', () => {
         getTagCombobox().dispatchEvent(new CustomEvent('change', { detail: { value: '' } }));
         await flushPromises();
 
-        expect(getL2Rect(element, 'L2-A1').getAttribute('fill')).toBe('#FFFFFF');
+        expect(getL2Rect(element, 'L2-A1').getAttribute('fill')).toBe(TOKEN_TAG_FALLBACK);
         expect(getTagRects(element).length).toBe(0);
     });
 });
@@ -1338,14 +1537,16 @@ describe('BcmCapabilityMap drag-drop', () => {
         return el.shadowRoot.querySelector('[data-bcm-drop-indicator="true"]');
     }
     function getL2Handle(el, l2Id) {
-        return el.shadowRoot.querySelector(`[data-bcm-drag-handle="true"][data-node-id="${l2Id}"][data-node-level="2"]`);
+        return el.shadowRoot.querySelector(
+            `[data-bcm-drag-handle="true"][data-node-id="${l2Id}"][data-node-level="2"]`
+        );
     }
 
     beforeEach(async () => {
         mockCanEdit = true;
         mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
         mockGetCapabilityDetailImpl = jest.fn().mockResolvedValue(null);
-        mockReorderImpl  = jest.fn().mockResolvedValue(undefined);
+        mockReorderImpl = jest.fn().mockResolvedValue(undefined);
         mockReparentImpl = jest.fn().mockResolvedValue(undefined);
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
         document.body.appendChild(element);
@@ -1355,7 +1556,14 @@ describe('BcmCapabilityMap drag-drop', () => {
         await seedLayout(element);
         // jsdom doesn't implement getBoundingClientRect on SVG; stub it.
         const svg = element.shadowRoot.querySelector('svg.bcm-canvas');
-        svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 1000, height: 800, right: 1000, bottom: 800 });
+        svg.getBoundingClientRect = () => ({
+            left: 0,
+            top: 0,
+            width: 1000,
+            height: 800,
+            right: 1000,
+            bottom: 800
+        });
     });
 
     afterEach(() => {
@@ -1375,7 +1583,14 @@ describe('BcmCapabilityMap drag-drop', () => {
 
     it('ghost renders at cursor', async () => {
         const handle = getL2Handle(element, 'L2-A1');
-        handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true, clientX: 100, clientY: 200 }));
+        handle.dispatchEvent(
+            new MouseEvent('mousedown', {
+                bubbles: true,
+                composed: true,
+                clientX: 100,
+                clientY: 200
+            })
+        );
         window.dispatchEvent(new MouseEvent('mousemove', { clientX: 250, clientY: 320 }));
         await flushPromises();
         expect(getGhost(element)).not.toBeNull();
@@ -1383,7 +1598,14 @@ describe('BcmCapabilityMap drag-drop', () => {
 
     it('drop indicator renders at target gap', async () => {
         const handle = getL2Handle(element, 'L2-A1');
-        handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true, clientX: 100, clientY: 200 }));
+        handle.dispatchEvent(
+            new MouseEvent('mousedown', {
+                bubbles: true,
+                composed: true,
+                clientX: 100,
+                clientY: 200
+            })
+        );
         // Hover over L2-A2 mid-y so target = position before A2 (i.e. swap)
         // L2-A2 sits in column 0, below L2-A1.
         window.dispatchEvent(new MouseEvent('mousemove', { clientX: 100, clientY: 350 }));
@@ -1396,7 +1618,14 @@ describe('BcmCapabilityMap drag-drop', () => {
 
     it('drop outside valid target cancels', async () => {
         const handle = getL2Handle(element, 'L2-A1');
-        handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true, clientX: 100, clientY: 200 }));
+        handle.dispatchEvent(
+            new MouseEvent('mousedown', {
+                bubbles: true,
+                composed: true,
+                clientX: 100,
+                clientY: 200
+            })
+        );
         // Drop at far-bottom outside any column header / column box gap area
         window.dispatchEvent(new MouseEvent('mousemove', { clientX: -500, clientY: -500 }));
         window.dispatchEvent(new MouseEvent('mouseup', { clientX: -500, clientY: -500 }));
@@ -1412,7 +1641,14 @@ describe('BcmCapabilityMap drag-drop', () => {
         element.addEventListener('lightning__showtoast', toastSpy);
 
         const handle = getL2Handle(element, 'L2-A1');
-        handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true, clientX: 100, clientY: 200 }));
+        handle.dispatchEvent(
+            new MouseEvent('mousedown', {
+                bubbles: true,
+                composed: true,
+                clientX: 100,
+                clientY: 200
+            })
+        );
         // Drop into L1-B column (different parent → reparent path)
         // L1-B is column index 1 — its L2 column starts at DIAGRAM_PADDING + COLUMN_WIDTH + COLUMN_GAP = 24 + 220 + 16 = 260
         window.dispatchEvent(new MouseEvent('mousemove', { clientX: 280, clientY: 100 }));
@@ -1426,7 +1662,14 @@ describe('BcmCapabilityMap drag-drop', () => {
 
     it('escape cancels drag', async () => {
         const handle = getL2Handle(element, 'L2-A1');
-        handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true, clientX: 100, clientY: 200 }));
+        handle.dispatchEvent(
+            new MouseEvent('mousedown', {
+                bubbles: true,
+                composed: true,
+                clientX: 100,
+                clientY: 200
+            })
+        );
         await flushPromises();
         expect(getGhost(element)).not.toBeNull();
 
@@ -1443,9 +1686,21 @@ describe('BcmCapabilityMap tag combobox refresh on focus', () => {
     let element;
 
     const TAGGED_CAPS_FOR_REFRESH = [
-        { Id: 'L1-A', Name: 'Capability A', bcm_Parent__c: null, bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false },
-        { Id: 'L2-A1', Name: 'Sub-Cap A1', bcm_Parent__c: 'L1-A', bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false,
-          Tags__r: [{ bcm_Tag__c: 'TAG-1' }] },
+        {
+            Id: 'L1-A',
+            Name: 'Capability A',
+            bcm_Parent__c: null,
+            bcm_SortOrder__c: 1,
+            bcm_HideFromDiagram__c: false
+        },
+        {
+            Id: 'L2-A1',
+            Name: 'Sub-Cap A1',
+            bcm_Parent__c: 'L1-A',
+            bcm_SortOrder__c: 1,
+            bcm_HideFromDiagram__c: false,
+            Tags__r: [{ bcm_Tag__c: 'TAG-1' }]
+        }
     ];
 
     function getTagCombobox() {
@@ -1463,9 +1718,10 @@ describe('BcmCapabilityMap tag combobox refresh on focus', () => {
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
         document.body.appendChild(element);
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
-        mockGetTags.emit({ data: [
-            { Id: 'TAG-1', Name: 'Strategic', bcm_Colour__c: '#FF0000' },
-        ], error: undefined });
+        mockGetTags.emit({
+            data: [{ Id: 'TAG-1', Name: 'Strategic', bcm_Colour__c: '#FF0000' }],
+            error: undefined
+        });
         await flushPromises();
     });
 
@@ -1496,25 +1752,39 @@ describe('BcmCapabilityMap tag combobox refresh on focus', () => {
         // (mirrors a user un-tagging the L2 in another tab).
         mockGetCapabilities.emit({
             data: [
-                { Id: 'L1-A', Name: 'Capability A', bcm_Parent__c: null, bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false },
-                { Id: 'L2-A1', Name: 'Sub-Cap A1', bcm_Parent__c: 'L1-A', bcm_SortOrder__c: 1, bcm_HideFromDiagram__c: false, Tags__r: [] },
+                {
+                    Id: 'L1-A',
+                    Name: 'Capability A',
+                    bcm_Parent__c: null,
+                    bcm_SortOrder__c: 1,
+                    bcm_HideFromDiagram__c: false
+                },
+                {
+                    Id: 'L2-A1',
+                    Name: 'Sub-Cap A1',
+                    bcm_Parent__c: 'L1-A',
+                    bcm_SortOrder__c: 1,
+                    bcm_HideFromDiagram__c: false,
+                    Tags__r: []
+                }
             ],
-            error: undefined,
+            error: undefined
         });
         await flushPromises();
 
-        expect(getL2Rect(element, 'L2-A1').getAttribute('fill')).toBe('#FFFFFF');
+        expect(getL2Rect(element, 'L2-A1').getAttribute('fill')).toBe(TOKEN_TAG_FALLBACK);
     });
 
     it('Second wire emission with a new colour updates tagOptions colour entry', async () => {
-        expect(getTagCombobox().options.find(o => o.value === 'TAG-1').colour).toBe('#FF0000');
+        expect(getTagCombobox().options.find((o) => o.value === 'TAG-1').colour).toBe('#FF0000');
 
-        mockGetTags.emit({ data: [
-            { Id: 'TAG-1', Name: 'Strategic', bcm_Colour__c: '#00FF00' },
-        ], error: undefined });
+        mockGetTags.emit({
+            data: [{ Id: 'TAG-1', Name: 'Strategic', bcm_Colour__c: '#00FF00' }],
+            error: undefined
+        });
         await flushPromises();
 
-        expect(getTagCombobox().options.find(o => o.value === 'TAG-1').colour).toBe('#00FF00');
+        expect(getTagCombobox().options.find((o) => o.value === 'TAG-1').colour).toBe('#00FF00');
     });
 
     it('Selected L2 fill repaints when refreshed colour map changes', async () => {
@@ -1523,9 +1793,10 @@ describe('BcmCapabilityMap tag combobox refresh on focus', () => {
         await flushPromises();
         expect(getL2Rect(element, 'L2-A1').getAttribute('fill')).toBe('#FF0000');
 
-        mockGetTags.emit({ data: [
-            { Id: 'TAG-1', Name: 'Strategic', bcm_Colour__c: '#00FF00' },
-        ], error: undefined });
+        mockGetTags.emit({
+            data: [{ Id: 'TAG-1', Name: 'Strategic', bcm_Colour__c: '#00FF00' }],
+            error: undefined
+        });
         await flushPromises();
 
         expect(getL2Rect(element, 'L2-A1').getAttribute('fill')).toBe('#00FF00');
@@ -1561,15 +1832,17 @@ describe('BcmCapabilityMap tag session persistence', () => {
 
     // lwc-jest stubs don't reflect `label` to a DOM attribute, so attribute
     // selectors fail. Combobox order in template: [0] Map, [1] Colour by Tag.
-    const getTagCombobox = () =>
-        element.shadowRoot.querySelectorAll('lightning-combobox')[1];
+    const getTagCombobox = () => element.shadowRoot.querySelectorAll('lightning-combobox')[1];
 
     it('Writes selectedTagId to sessionStorage on tag change', async () => {
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
-        mockGetTags.emit({ data: [
-            { Id: 'TAG-1', Name: 'Red',   bcm_Colour__c: '#FF0000' },
-            { Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' },
-        ], error: undefined });
+        mockGetTags.emit({
+            data: [
+                { Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' },
+                { Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' }
+            ],
+            error: undefined
+        });
         await flushPromises();
         const tagCombobox = getTagCombobox();
         tagCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'TAG-2' } }));
@@ -1580,7 +1853,10 @@ describe('BcmCapabilityMap tag session persistence', () => {
     it('Removes persisted selectedTagId when user selects None', async () => {
         sessionStorage.setItem('bcm.visualisation.selectedTagId', 'TAG-2');
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
-        mockGetTags.emit({ data: [{ Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' }], error: undefined });
+        mockGetTags.emit({
+            data: [{ Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' }],
+            error: undefined
+        });
         await flushPromises();
         const tagCombobox = getTagCombobox();
         tagCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: '' } }));
@@ -1594,10 +1870,13 @@ describe('BcmCapabilityMap tag session persistence', () => {
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
         document.body.appendChild(element);
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
-        mockGetTags.emit({ data: [
-            { Id: 'TAG-1', Name: 'Red',   bcm_Colour__c: '#FF0000' },
-            { Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' },
-        ], error: undefined });
+        mockGetTags.emit({
+            data: [
+                { Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' },
+                { Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' }
+            ],
+            error: undefined
+        });
         await flushPromises();
         expect(getTagCombobox().value).toBe('TAG-2');
     });
@@ -1608,22 +1887,31 @@ describe('BcmCapabilityMap tag session persistence', () => {
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
         document.body.appendChild(element);
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
-        mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
+        mockGetTags.emit({
+            data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }],
+            error: undefined
+        });
         await flushPromises();
         expect(getTagCombobox().value).toBe('');
         expect(sessionStorage.getItem('bcm.visualisation.selectedTagId')).toBeNull();
     });
 
     it('Silent fallback when sessionStorage.setItem throws on tag change', async () => {
-        const setItemSpy = jest.spyOn(Storage.prototype, 'setItem')
-            .mockImplementation(() => { throw new Error('QuotaExceeded'); });
+        const setItemSpy = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+            throw new Error('QuotaExceeded');
+        });
         try {
             mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
-            mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
+            mockGetTags.emit({
+                data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }],
+                error: undefined
+            });
             await flushPromises();
             const tagCombobox = getTagCombobox();
             expect(() => {
-                tagCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'TAG-1' } }));
+                tagCombobox.dispatchEvent(
+                    new CustomEvent('change', { detail: { value: 'TAG-1' } })
+                );
             }).not.toThrow();
             await flushPromises();
             expect(tagCombobox.value).toBe('TAG-1');
@@ -1633,15 +1921,19 @@ describe('BcmCapabilityMap tag session persistence', () => {
     });
 
     it('Silent fallback when sessionStorage.getItem throws on init (tag restore)', async () => {
-        const getItemSpy = jest.spyOn(Storage.prototype, 'getItem')
-            .mockImplementation(() => { throw new Error('SecurityError'); });
+        const getItemSpy = jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+            throw new Error('SecurityError');
+        });
         try {
             document.body.removeChild(element);
             element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
             document.body.appendChild(element);
             expect(() => {
                 mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
-                mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
+                mockGetTags.emit({
+                    data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }],
+                    error: undefined
+                });
             }).not.toThrow();
             await flushPromises();
             expect(getTagCombobox().value).toBe('');
@@ -1652,15 +1944,19 @@ describe('BcmCapabilityMap tag session persistence', () => {
 
     it('Silent fallback when sessionStorage.removeItem throws on stale tag path', async () => {
         sessionStorage.setItem('bcm.visualisation.selectedTagId', 'TAG-DELETED');
-        const removeItemSpy = jest.spyOn(Storage.prototype, 'removeItem')
-            .mockImplementation(() => { throw new Error('SecurityError'); });
+        const removeItemSpy = jest.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+            throw new Error('SecurityError');
+        });
         try {
             document.body.removeChild(element);
             element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
             document.body.appendChild(element);
             expect(() => {
                 mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
-                mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
+                mockGetTags.emit({
+                    data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }],
+                    error: undefined
+                });
             }).not.toThrow();
             await flushPromises();
             expect(getTagCombobox().value).toBe('');
@@ -1672,10 +1968,20 @@ describe('BcmCapabilityMap tag session persistence', () => {
 
 describe('BcmCapabilityMap strategic support highlight - helper', () => {
     it('isStrategic normalisation — empty / whitespace / bare-tag inputs', () => {
-        [null, undefined, '', '   ', '<p></p>', '<p><br></p>', '<p>&nbsp;</p>', '<p>   </p>', '<div><br/></div>']
-            .forEach(v => expect(isStrategic(v)).toBe(false));
-        ['x', '<p>x</p>', '<p>Strategy text</p>', '<p>&nbsp;Strategy</p>']
-            .forEach(v => expect(isStrategic(v)).toBe(true));
+        [
+            null,
+            undefined,
+            '',
+            '   ',
+            '<p></p>',
+            '<p><br></p>',
+            '<p>&nbsp;</p>',
+            '<p>   </p>',
+            '<div><br/></div>'
+        ].forEach((v) => expect(isStrategic(v)).toBe(false));
+        ['x', '<p>x</p>', '<p>Strategy text</p>', '<p>&nbsp;Strategy</p>'].forEach((v) =>
+            expect(isStrategic(v)).toBe(true)
+        );
     });
 });
 
@@ -1723,7 +2029,13 @@ describe('BcmCapabilityMap strategic support highlight', () => {
         document.body.removeChild(element);
         element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
         document.body.appendChild(element);
-        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }, { Id: 'MAP-2', Name: 'Map 2' }], error: undefined });
+        mockGetMaps.emit({
+            data: [
+                { Id: 'MAP-1', Name: 'Map 1' },
+                { Id: 'MAP-2', Name: 'Map 2' }
+            ],
+            error: undefined
+        });
         mockGetTags.emit({ data: [], error: undefined });
         await flushPromises();
         const btn = element.shadowRoot.querySelector('[data-id="strategic-support-toggle"]');
@@ -1736,8 +2048,9 @@ describe('BcmCapabilityMap strategic support highlight', () => {
     });
 
     it('Silent fallback when sessionStorage.setItem throws on toggle', async () => {
-        const setItemSpy = jest.spyOn(Storage.prototype, 'setItem')
-            .mockImplementation(() => { throw new Error('QuotaExceeded'); });
+        const setItemSpy = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+            throw new Error('QuotaExceeded');
+        });
         try {
             mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
             mockGetTags.emit({ data: [], error: undefined });
@@ -1753,10 +2066,23 @@ describe('BcmCapabilityMap strategic support highlight', () => {
 
     it('Marker present when toggle on and capability has strategy support content', async () => {
         const CAPS_WITH_STRATEGY = [
-            { Id: 'L1-A', Name: 'L1 A', bcm_Level__c: 1, bcm_SortOrder__c: 1, bcm_Parent__c: null,
-              bcm_StrategySupport__c: '' },
-            { Id: 'L2-A', Name: 'L2 A', bcm_Level__c: 2, bcm_SortOrder__c: 1, bcm_Parent__c: 'L1-A',
-              bcm_StrategySupport__c: '<p>Real content</p>', Tags__r: [] },
+            {
+                Id: 'L1-A',
+                Name: 'L1 A',
+                bcm_Level__c: 1,
+                bcm_SortOrder__c: 1,
+                bcm_Parent__c: null,
+                bcm_StrategySupport__c: ''
+            },
+            {
+                Id: 'L2-A',
+                Name: 'L2 A',
+                bcm_Level__c: 2,
+                bcm_SortOrder__c: 1,
+                bcm_Parent__c: 'L1-A',
+                bcm_StrategySupport__c: '<p>Real content</p>',
+                Tags__r: []
+            }
         ];
         mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_WITH_STRATEGY);
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
@@ -1766,13 +2092,21 @@ describe('BcmCapabilityMap strategic support highlight', () => {
         const btn = element.shadowRoot.querySelector('[data-id="strategic-support-toggle"]');
         btn.click();
         await flushPromises();
-        expect(element.shadowRoot.querySelectorAll('rect.bcm-strategy-stripe').length).toBeGreaterThan(0);
+        expect(
+            element.shadowRoot.querySelectorAll('rect.bcm-strategy-stripe').length
+        ).toBeGreaterThan(0);
     });
 
     it('Marker absent when toggle off even if capabilities have content', async () => {
         const CAPS_WITH_STRATEGY = [
-            { Id: 'L1-A', Name: 'L1 A', bcm_Level__c: 1, bcm_SortOrder__c: 1, bcm_Parent__c: null,
-              bcm_StrategySupport__c: '<p>Real content</p>' },
+            {
+                Id: 'L1-A',
+                Name: 'L1 A',
+                bcm_Level__c: 1,
+                bcm_SortOrder__c: 1,
+                bcm_Parent__c: null,
+                bcm_StrategySupport__c: '<p>Real content</p>'
+            }
         ];
         mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_WITH_STRATEGY);
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });

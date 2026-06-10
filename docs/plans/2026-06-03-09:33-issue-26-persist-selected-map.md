@@ -25,6 +25,7 @@
 ## Task 1: Persist `selectedMapId` to sessionStorage on map change
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js` (top constants + `handleMapChange`)
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js` (new describe)
 
@@ -49,7 +50,13 @@ describe('BcmCapabilityMap session persistence', () => {
     });
 
     it('Writes selectedMapId to sessionStorage on map change', async () => {
-        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }, { Id: 'MAP-2', Name: 'Map 2' }], error: undefined });
+        mockGetMaps.emit({
+            data: [
+                { Id: 'MAP-1', Name: 'Map 1' },
+                { Id: 'MAP-2', Name: 'Map 2' }
+            ],
+            error: undefined
+        });
         await flushPromises();
         const combobox = element.shadowRoot.querySelector('lightning-combobox');
         combobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'MAP-2' } }));
@@ -72,15 +79,27 @@ In `bcm_CapabilityMap.js`, after the `ZOOM_DEFAULT` constant (~line 26) add:
 const SESSION_KEY_SELECTED_MAP = 'bcm.visualisation.selectedMapId';
 
 function safeSessionGet(key) {
-    try { return sessionStorage.getItem(key); } catch (_) { return null; }
+    try {
+        return sessionStorage.getItem(key);
+    } catch (_) {
+        return null;
+    }
 }
 
 function safeSessionSet(key, value) {
-    try { sessionStorage.setItem(key, value); } catch (_) { /* silent */ }
+    try {
+        sessionStorage.setItem(key, value);
+    } catch (_) {
+        /* silent */
+    }
 }
 
 function safeSessionRemove(key) {
-    try { sessionStorage.removeItem(key); } catch (_) { /* silent */ }
+    try {
+        sessionStorage.removeItem(key);
+    } catch (_) {
+        /* silent */
+    }
 }
 ```
 
@@ -122,6 +141,7 @@ git commit -m "feat(visualisation): persist selectedMapId to sessionStorage on m
 ## Task 2: Restore selection on component init when id present in mapOptions
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js` (`wiredMaps` + new private flag)
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js`
 
@@ -136,7 +156,13 @@ it('Restores selectedMapId from sessionStorage on init when id is in mapOptions'
     mockCapabilitiesImpl.mockClear();
     element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
     document.body.appendChild(element);
-    mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }, { Id: 'MAP-2', Name: 'Map 2' }], error: undefined });
+    mockGetMaps.emit({
+        data: [
+            { Id: 'MAP-1', Name: 'Map 1' },
+            { Id: 'MAP-2', Name: 'Map 2' }
+        ],
+        error: undefined
+    });
     await flushPromises();
     const combobox = element.shadowRoot.querySelector('lightning-combobox');
     expect(combobox.value).toBe('MAP-2');
@@ -208,6 +234,7 @@ git commit -m "feat(visualisation): restore selectedMapId from sessionStorage on
 ## Task 3: Stale-id guard — drop key if persisted id not in mapOptions
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js`
 
 (Implementation already in `_maybeRestoreSelectedMap` from Task 2 — this task adds the test that proves the guard.)
@@ -249,6 +276,7 @@ git commit -m "test(visualisation): assert stale persisted mapId is dropped (GH 
 ## Task 4: sessionStorage unavailable — silent fallback
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js`
 
 (Implementation already in `safeSession*` helpers from Task 1 — this task proves it.)
@@ -259,8 +287,9 @@ Add inside the `BcmCapabilityMap session persistence` describe:
 
 ```javascript
 it('Silent fallback when sessionStorage.setItem throws (no crash, no abort)', async () => {
-    const setItemSpy = jest.spyOn(Storage.prototype, 'setItem')
-        .mockImplementation(() => { throw new Error('QuotaExceeded'); });
+    const setItemSpy = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('QuotaExceeded');
+    });
     try {
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
         await flushPromises();
@@ -295,6 +324,7 @@ git commit -m "test(visualisation): silent fallback when sessionStorage throws (
 ## Task 5: Update spec — `docs/specs/diagram.md`
 
 **Files:**
+
 - Modify: `docs/specs/diagram.md`
 
 - [ ] **Step 1: Insert new feature block after the existing `Feature: Map selector loads available Maps` section (line 21, before `---`)**
@@ -302,13 +332,12 @@ git commit -m "test(visualisation): silent fallback when sessionStorage throws (
 Insert this content immediately after the "No map is selected on initial load" `> Tested by:` line and before the `---` separator on line 21:
 
 ```markdown
-
 **Scenario: Map selection persists for session — restore after navigation**
 
 Given the user selected a Map in the Visualisation page  
 When the user navigates to another tab and returns within the same browser session  
 Then the Map dropdown still shows the previously selected Map  
-And the canvas renders the capabilities for that Map  
+And the canvas renders the capabilities for that Map
 
 > Tested by: bcm_CapabilityMap.test.js — "Restores selectedMapId from sessionStorage on init when id is in mapOptions"; diagram.spec.ts — "Selected map persists across page reload within same session"
 
@@ -317,7 +346,7 @@ And the canvas renders the capabilities for that Map
 Given the user has a persisted Map id in sessionStorage that no longer exists in `mapOptions`  
 When the Visualisation panel reloads  
 Then the dropdown is empty  
-And the persisted key is removed from sessionStorage  
+And the persisted key is removed from sessionStorage
 
 > Tested by: bcm_CapabilityMap.test.js — "Clears persisted id and leaves selector empty when id is not in mapOptions"
 
@@ -326,7 +355,7 @@ And the persisted key is removed from sessionStorage
 Given `sessionStorage.setItem` throws (privacy mode / quota)  
 When the user selects a Map  
 Then the diagram still loads capabilities for that map  
-And no error is surfaced to the user  
+And no error is surfaced to the user
 
 > Tested by: bcm_CapabilityMap.test.js — "Silent fallback when sessionStorage.setItem throws (no crash, no abort)"
 ```
@@ -343,6 +372,7 @@ git commit -m "docs(specs): add session-persistence scenarios for Map selector (
 ## Task 6: e2e — assert dropdown retained across reload
 
 **Files:**
+
 - Modify: `tests/e2e/diagram.spec.ts`
 
 - [ ] **Step 1: Add e2e test inside the `Map selector — editor project` describe**
@@ -360,10 +390,12 @@ test('Selected map persists across page reload within same session', async ({ pa
     await page.locator('.bcm-canvas polygon').first().waitFor({ state: 'visible', timeout: 20000 });
     // Combobox displays the seeded map name
     const combobox = page.getByRole('combobox', { name: 'Map' }).first();
-    await expect(combobox).toHaveValue(MAP_NAME).catch(async () => {
-        // lightning-combobox surfaces selection via aria-activedescendant; fall back to text
-        await expect(combobox).toContainText(MAP_NAME);
-    });
+    await expect(combobox)
+        .toHaveValue(MAP_NAME)
+        .catch(async () => {
+            // lightning-combobox surfaces selection via aria-activedescendant; fall back to text
+            await expect(combobox).toContainText(MAP_NAME);
+        });
 });
 ```
 
@@ -384,6 +416,7 @@ git commit -m "test(e2e): assert selected map persists across page reload (GH #2
 ## Task 7: Note exclusion in COSMIC FP doc
 
 **Files:**
+
 - Modify: `docs/design/99-cosmic-function-point-count.md`
 
 - [ ] **Step 1: Add row to §6 Excluded Processes table**

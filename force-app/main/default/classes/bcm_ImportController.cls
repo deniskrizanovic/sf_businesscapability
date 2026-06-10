@@ -13,10 +13,9 @@
  * {@link AuraHandledException}.</p>
  */
 public with sharing class bcm_ImportController {
-
-    private static final String ERROR_PAYLOAD_REQUIRED  = 'JSON payload is required';
+    private static final String ERROR_PAYLOAD_REQUIRED = 'JSON payload is required';
     private static final String ERROR_MAP_NAME_REQUIRED = 'mapName is required in the JSON payload';
-    private static final String ERROR_ACCESS_DENIED     = 'Access denied';
+    private static final String ERROR_ACCESS_DENIED = 'Access denied';
 
     // ─── Public entry point ──────────────────────────────────────────────────
 
@@ -61,9 +60,9 @@ public with sharing class bcm_ImportController {
 
     private static bcm_ImportPayload parsePayload(Map<String, Object> raw) {
         bcm_ImportPayload p = new bcm_ImportPayload();
-        p.mapName        = (String) raw.get('mapName');
+        p.mapName = (String) raw.get('mapName');
         p.mapDescription = (String) raw.get('mapDescription');
-        p.capabilities   = new List<bcm_CapabilityNode>();
+        p.capabilities = new List<bcm_CapabilityNode>();
         Object caps = raw.get('capabilities');
         if (caps instanceof List<Object>) {
             for (Object item : (List<Object>) caps) {
@@ -75,14 +74,18 @@ public with sharing class bcm_ImportController {
 
     private static bcm_CapabilityNode parseNode(Map<String, Object> raw) {
         bcm_CapabilityNode n = new bcm_CapabilityNode();
-        n.externalId          = (String)  raw.get('externalId');
-        n.name                = (String)  raw.get('name');
-        n.level               = raw.get('level')      != null ? Integer.valueOf(String.valueOf(raw.get('level')))     : null;
-        n.sortOrder           = raw.get('sortOrder')  != null ? Integer.valueOf(String.valueOf(raw.get('sortOrder'))) : null;
-        n.definition          = (String)  raw.get('definition');
-        n.strategySupport     = (String)  raw.get('strategySupport');
-        n.architecturalNuance = (String)  raw.get('architecturalNuance');
-        n.children            = new List<bcm_CapabilityNode>();
+        n.externalId = (String) raw.get('externalId');
+        n.name = (String) raw.get('name');
+        n.level = raw.get('level') != null
+            ? Integer.valueOf(String.valueOf(raw.get('level')))
+            : null;
+        n.sortOrder = raw.get('sortOrder') != null
+            ? Integer.valueOf(String.valueOf(raw.get('sortOrder')))
+            : null;
+        n.definition = (String) raw.get('definition');
+        n.strategySupport = (String) raw.get('strategySupport');
+        n.architecturalNuance = (String) raw.get('architecturalNuance');
+        n.children = new List<bcm_CapabilityNode>();
         Object kids = raw.get('children');
         if (kids instanceof List<Object>) {
             for (Object item : (List<Object>) kids) {
@@ -102,11 +105,14 @@ public with sharing class bcm_ImportController {
 
         bcm_Map__c mapRecord = upsertMap(payload);
 
-        List<bcm_CapabilityNode> rootNodes =
-            payload.capabilities ?? new List<bcm_CapabilityNode>();
+        List<bcm_CapabilityNode> rootNodes = payload.capabilities ?? new List<bcm_CapabilityNode>();
         Map<String, String> parentByChild = new Map<String, String>();
-        List<bcm_Capability__c> flatList  =
-            flattenTree(rootNodes, mapRecord.Id, null, parentByChild);
+        List<bcm_Capability__c> flatList = flattenTree(
+            rootNodes,
+            mapRecord.Id,
+            null,
+            parentByChild
+        );
 
         upsertByLevel(flatList, mapRecord.Id, parentByChild, result);
 
@@ -138,7 +144,7 @@ public with sharing class bcm_ImportController {
             return mapRecord;
         }
         bcm_Map__c newMap = new bcm_Map__c(
-            Name               = payload.mapName,
+            Name = payload.mapName,
             bcm_Description__c = payload.mapDescription
         );
         Database.insert(newMap, AccessLevel.USER_MODE);
@@ -171,21 +177,22 @@ public with sharing class bcm_ImportController {
             return flatList;
         }
         for (bcm_CapabilityNode node : nodes) {
-            flatList.add(new bcm_Capability__c(
-                Name                       = node.name,
-                bcm_Map__c                 = mapId,
-                bcm_Level__c               = node.level,
-                bcm_SortOrder__c           = node.sortOrder,
-                bcm_ExternalId__c          = node.externalId,
-                bcm_Definition__c          = node.definition,
-                bcm_StrategySupport__c     = node.strategySupport,
-                bcm_ArchitecturalNuance__c = node.architecturalNuance
-            ));
+            flatList.add(
+                new bcm_Capability__c(
+                    Name = node.name,
+                    bcm_Map__c = mapId,
+                    bcm_Level__c = node.level,
+                    bcm_SortOrder__c = node.sortOrder,
+                    bcm_ExternalId__c = node.externalId,
+                    bcm_Definition__c = node.definition,
+                    bcm_StrategySupport__c = node.strategySupport,
+                    bcm_ArchitecturalNuance__c = node.architecturalNuance
+                )
+            );
             if (parentExternalId != null) {
                 parentByChild.put(node.externalId, parentExternalId);
             }
-            List<bcm_CapabilityNode> children =
-                node.children ?? new List<bcm_CapabilityNode>();
+            List<bcm_CapabilityNode> children = node.children ?? new List<bcm_CapabilityNode>();
             flatList.addAll(flattenTree(children, mapId, node.externalId, parentByChild));
         }
         return flatList;
@@ -235,8 +242,11 @@ public with sharing class bcm_ImportController {
                 }
             }
 
-            List<Database.UpsertResult> upsertResults =
-                Database.upsert(levelList, bcm_Capability__c.bcm_ExternalId__c, false);
+            List<Database.UpsertResult> upsertResults = Database.upsert(
+                levelList,
+                bcm_Capability__c.bcm_ExternalId__c,
+                false
+            );
             for (Database.UpsertResult ur : upsertResults) {
                 if (ur.isSuccess()) {
                     if (ur.isCreated()) {
@@ -251,8 +261,7 @@ public with sharing class bcm_ImportController {
             for (bcm_Capability__c cap : [
                 SELECT Id, bcm_ExternalId__c
                 FROM bcm_Capability__c
-                WHERE bcm_Map__c = :mapId
-                AND   bcm_Level__c = :level
+                WHERE bcm_Map__c = :mapId AND bcm_Level__c = :level
                 WITH USER_MODE
             ]) {
                 if (String.isNotBlank(cap.bcm_ExternalId__c)) {
@@ -266,7 +275,7 @@ public with sharing class bcm_ImportController {
 
     private static bcm_ImportResult errorResult(String message) {
         bcm_ImportResult result = new bcm_ImportResult();
-        result.success      = false;
+        result.success = false;
         result.errorMessage = message;
         return result;
     }
@@ -317,13 +326,17 @@ public with sharing class bcm_ImportController {
      */
     public class bcm_ImportResult {
         /** Number of bcm_Capability__c records created in this import. */
-        @InvocableVariable public Integer capabilitiesInserted = 0;
+        @InvocableVariable
+        public Integer capabilitiesInserted = 0;
         /** Number of bcm_Capability__c records updated in this import. */
-        @InvocableVariable public Integer capabilitiesUpdated  = 0;
+        @InvocableVariable
+        public Integer capabilitiesUpdated = 0;
         /** {@code true} when the import completed without a hard error. */
-        @InvocableVariable public Boolean success              = false;
+        @InvocableVariable
+        public Boolean success = false;
         /** Human-readable description when {@code success} is {@code false}. */
-        @InvocableVariable public String  errorMessage;
+        @InvocableVariable
+        public String errorMessage;
     }
 
     // ─── Flow entry point ────────────────────────────────────────────────────
@@ -343,10 +356,10 @@ public with sharing class bcm_ImportController {
             return new List<bcm_ImportResult>{ importCapabilities(inputs.get(0).jsonPayload) };
         } catch (AuraHandledException e) {
             bcm_ImportResult err = new bcm_ImportResult();
-            err.success              = false;
-            err.errorMessage         = e.getMessage();
+            err.success = false;
+            err.errorMessage = e.getMessage();
             err.capabilitiesInserted = 0;
-            err.capabilitiesUpdated  = 0;
+            err.capabilitiesUpdated = 0;
             return new List<bcm_ImportResult>{ err };
         }
     }

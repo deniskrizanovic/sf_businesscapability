@@ -19,29 +19,29 @@ to narrow the check (e.g. `check-traceability capability-object.md`).
 
 ## Checks
 
-| Column header | Direction | What is checked |
-|---|---|---|
-| All covered | Forward | Every spec scenario has a `> Tested by:` or `> Deferred:` marker — no bare scenarios |
-| Apex refs valid | Forward | Every `Tested by:` Apex reference (`ClassName.methodName`) resolves to a real method in the `.cls` file |
-| e2e refs valid | Forward | Every `Tested by:` e2e reference (`` `e2e/foo.spec.ts::"desc"` ``) resolves to a test with that exact description in the file |
-| @spec back-refs | Reverse | Every `// @spec foo.md · "Feature" · "Scenario"` in Apex resolves to a real feature + scenario in the named spec file |
-| No banned markers | Format | Any banned marker (`not yet covered`, `UI only`) is flagged as a format violation |
+| Column header     | Direction | What is checked                                                                                                               |
+| ----------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| All covered       | Forward   | Every spec scenario has a `> Tested by:` or `> Deferred:` marker — no bare scenarios                                          |
+| Apex refs valid   | Forward   | Every `Tested by:` Apex reference (`ClassName.methodName`) resolves to a real method in the `.cls` file                       |
+| e2e refs valid    | Forward   | Every `Tested by:` e2e reference (`` `e2e/foo.spec.ts::"desc"` ``) resolves to a test with that exact description in the file |
+| @spec back-refs   | Reverse   | Every `// @spec foo.md · "Feature" · "Scenario"` in Apex resolves to a real feature + scenario in the named spec file         |
+| No banned markers | Format    | Any banned marker (`not yet covered`, `UI only`) is flagged as a format violation                                             |
 
 ## Scope
 
 By default, only spec files whose corresponding implementation step is marked `[x]`
 in `docs/plan/implementation-plan.md` are checked. The step-to-spec mapping is:
 
-| Step | Spec file |
-|---|---|
-| 1 | `map-object.md` |
-| 2 | `capability-object.md` |
-| 3 | `tag-object.md` |
-| 4 | `capability-tag-object.md` |
-| 5 | `app-structure.md` |
-| 6 | `import.md` |
-| 7 | `diagram.md` |
-| 8 | `drag-drop.md` |
+| Step | Spec file                  |
+| ---- | -------------------------- |
+| 1    | `map-object.md`            |
+| 2    | `capability-object.md`     |
+| 3    | `tag-object.md`            |
+| 4    | `capability-tag-object.md` |
+| 5    | `app-structure.md`         |
+| 6    | `import.md`                |
+| 7    | `diagram.md`               |
+| 8    | `drag-drop.md`             |
 
 If an optional filename argument is provided (e.g. `capability-object.md`), check
 only that file regardless of step completion status.

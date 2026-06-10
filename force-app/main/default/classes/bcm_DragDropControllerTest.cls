@@ -11,7 +11,6 @@
  */
 @IsTest(SeeAllData=false)
 private class bcm_DragDropControllerTest {
-
     // ─── reorderCapabilities ──────────────────────────────────────────────────
 
     @IsTest
@@ -29,11 +28,13 @@ private class bcm_DragDropControllerTest {
         Test.stopTest();
 
         // Then — sort order rewritten 1..3
-        Map<Id, bcm_Capability__c> byId = new Map<Id, bcm_Capability__c>([
-            SELECT Id, bcm_SortOrder__c
-            FROM bcm_Capability__c
-            WHERE Id IN (:a.Id, :b.Id, :c.Id)
-        ]);
+        Map<Id, bcm_Capability__c> byId = new Map<Id, bcm_Capability__c>(
+            [
+                SELECT Id, bcm_SortOrder__c
+                FROM bcm_Capability__c
+                WHERE Id IN (:a.Id, :b.Id, :c.Id)
+            ]
+        );
         Assert.areEqual(1, byId.get(c.Id).bcm_SortOrder__c, 'c should be SortOrder 1');
         Assert.areEqual(2, byId.get(a.Id).bcm_SortOrder__c, 'a should be SortOrder 2');
         Assert.areEqual(3, byId.get(b.Id).bcm_SortOrder__c, 'b should be SortOrder 3');
@@ -53,8 +54,11 @@ private class bcm_DragDropControllerTest {
                 bcm_DragDropController.reorderCapabilities(new List<Id>{ l1.Id });
                 Assert.fail('Expected AuraHandledException for Viewer without bcm_CanEdit');
             } catch (AuraHandledException e) {
-                Assert.areEqual('Access denied.', e.getMessage(),
-                    'Viewer should hit the bcm_CanEdit gate, not a DML error');
+                Assert.areEqual(
+                    'Access denied.',
+                    e.getMessage(),
+                    'Viewer should hit the bcm_CanEdit gate, not a DML error'
+                );
             }
         }
         Test.stopTest();
@@ -75,10 +79,15 @@ private class bcm_DragDropControllerTest {
 
         // Then — record untouched
         bcm_Capability__c after = [
-            SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :l1.Id
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :l1.Id
         ];
-        Assert.areEqual(originalSort, after.bcm_SortOrder__c,
-            'SortOrder should be unchanged for an empty / null reorder list');
+        Assert.areEqual(
+            originalSort,
+            after.bcm_SortOrder__c,
+            'SortOrder should be unchanged for an empty / null reorder list'
+        );
     }
 
     // ─── reparentCapability — L2 across L1 columns ────────────────────────────
@@ -106,19 +115,24 @@ private class bcm_DragDropControllerTest {
         // Then
         bcm_Capability__c bAfter = [
             SELECT bcm_Parent__c, bcm_Level__c, bcm_SortOrder__c
-            FROM bcm_Capability__c WHERE Id = :b.Id
+            FROM bcm_Capability__c
+            WHERE Id = :b.Id
         ];
         Assert.areEqual(l1b.Id, bAfter.bcm_Parent__c, 'b should now be parented to L1B');
         Assert.areEqual(2, bAfter.bcm_Level__c, 'b should remain Level 2');
         Assert.areEqual(2, bAfter.bcm_SortOrder__c, 'b should be SortOrder 2 in L1B');
 
         bcm_Capability__c xAfter = [
-            SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :x.Id
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :x.Id
         ];
         Assert.areEqual(1, xAfter.bcm_SortOrder__c, 'x should remain SortOrder 1 in L1B');
 
         bcm_Capability__c aAfter = [
-            SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :a.Id
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :a.Id
         ];
         Assert.areEqual(1, aAfter.bcm_SortOrder__c, 'a should be SortOrder 1 in L1A');
     }
@@ -149,17 +163,23 @@ private class bcm_DragDropControllerTest {
         // Then
         bcm_Capability__c moved = [
             SELECT bcm_Parent__c, bcm_Level__c, bcm_SortOrder__c
-            FROM bcm_Capability__c WHERE Id = :l3a2.Id
+            FROM bcm_Capability__c
+            WHERE Id = :l3a2.Id
         ];
         Assert.areEqual(l2b.Id, moved.bcm_Parent__c, 'L3 should be reparented to L2B');
         Assert.areEqual(3, moved.bcm_Level__c, 'L3 should remain Level 3');
         Assert.areEqual(2, moved.bcm_SortOrder__c, 'L3 should be SortOrder 2 under L2B');
 
         bcm_Capability__c oldRemaining = [
-            SELECT bcm_SortOrder__c FROM bcm_Capability__c WHERE Id = :l3a1.Id
+            SELECT bcm_SortOrder__c
+            FROM bcm_Capability__c
+            WHERE Id = :l3a1.Id
         ];
-        Assert.areEqual(1, oldRemaining.bcm_SortOrder__c,
-            'Remaining L3 under L2A should be SortOrder 1');
+        Assert.areEqual(
+            1,
+            oldRemaining.bcm_SortOrder__c,
+            'Remaining L3 under L2A should be SortOrder 1'
+        );
     }
 
     // ─── reparentCapability — L1 reorder via newParentId == null ──────────────
@@ -183,11 +203,13 @@ private class bcm_DragDropControllerTest {
         Test.stopTest();
 
         // Then — sequence rewritten and level still 1
-        Map<Id, bcm_Capability__c> byId = new Map<Id, bcm_Capability__c>([
-            SELECT Id, bcm_Level__c, bcm_SortOrder__c, bcm_Parent__c
-            FROM bcm_Capability__c
-            WHERE Id IN (:c1.Id, :c2.Id, :c3.Id)
-        ]);
+        Map<Id, bcm_Capability__c> byId = new Map<Id, bcm_Capability__c>(
+            [
+                SELECT Id, bcm_Level__c, bcm_SortOrder__c, bcm_Parent__c
+                FROM bcm_Capability__c
+                WHERE Id IN (:c1.Id, :c2.Id, :c3.Id)
+            ]
+        );
         Assert.areEqual(1, byId.get(c3.Id).bcm_SortOrder__c, 'c3 should be SortOrder 1');
         Assert.areEqual(2, byId.get(c1.Id).bcm_SortOrder__c, 'c1 should be SortOrder 2');
         Assert.areEqual(3, byId.get(c2.Id).bcm_SortOrder__c, 'c2 should be SortOrder 3');
@@ -218,11 +240,13 @@ private class bcm_DragDropControllerTest {
         Test.stopTest();
 
         // Then — L3 children stay at Level 3 (parent stayed at Level 2)
-        Map<Id, bcm_Capability__c> byId = new Map<Id, bcm_Capability__c>([
-            SELECT Id, bcm_Level__c
-            FROM bcm_Capability__c
-            WHERE Id IN (:l2.Id, :l3a.Id, :l3b.Id)
-        ]);
+        Map<Id, bcm_Capability__c> byId = new Map<Id, bcm_Capability__c>(
+            [
+                SELECT Id, bcm_Level__c
+                FROM bcm_Capability__c
+                WHERE Id IN (:l2.Id, :l3a.Id, :l3b.Id)
+            ]
+        );
         Assert.areEqual(2, byId.get(l2.Id).bcm_Level__c, 'L2 should remain Level 2');
         Assert.areEqual(3, byId.get(l3a.Id).bcm_Level__c, 'L3a should remain Level 3');
         Assert.areEqual(3, byId.get(l3b.Id).bcm_Level__c, 'L3b should remain Level 3');
@@ -250,8 +274,11 @@ private class bcm_DragDropControllerTest {
             );
             Assert.fail('Expected AuraHandledException for cross-Map reparent');
         } catch (AuraHandledException e) {
-            Assert.areEqual('Cannot move a capability across Maps.', e.getMessage(),
-                'Cross-Map reparent should be rejected by the explicit guard, not platform DML');
+            Assert.areEqual(
+                'Cannot move a capability across Maps.',
+                e.getMessage(),
+                'Cross-Map reparent should be rejected by the explicit guard, not platform DML'
+            );
         }
         Test.stopTest();
     }
@@ -278,8 +305,11 @@ private class bcm_DragDropControllerTest {
                 );
                 Assert.fail('Expected AuraHandledException for Viewer');
             } catch (AuraHandledException e) {
-                Assert.areEqual('Access denied.', e.getMessage(),
-                    'Viewer should hit the bcm_CanEdit gate, not a DML error');
+                Assert.areEqual(
+                    'Access denied.',
+                    e.getMessage(),
+                    'Viewer should hit the bcm_CanEdit gate, not a DML error'
+                );
             }
         }
         Test.stopTest();

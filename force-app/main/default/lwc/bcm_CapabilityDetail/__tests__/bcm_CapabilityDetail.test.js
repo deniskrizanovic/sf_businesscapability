@@ -4,12 +4,15 @@ import BcmCapabilityDetail from 'c/bcm_CapabilityDetail';
 jest.mock('lightning/navigation', () => {
     const Navigate = Symbol('Navigate');
     const GenerateUrl = Symbol('GenerateUrl');
-    const NavigationMixin = (Base) => class extends Base {
-        [Navigate]() {}
-        [GenerateUrl]({ attributes }) {
-            return Promise.resolve(`/lightning/r/${attributes.objectApiName}/${attributes.recordId}/${attributes.actionName}`);
-        }
-    };
+    const NavigationMixin = (Base) =>
+        class extends Base {
+            [Navigate]() {}
+            [GenerateUrl]({ attributes }) {
+                return Promise.resolve(
+                    `/lightning/r/${attributes.objectApiName}/${attributes.recordId}/${attributes.actionName}`
+                );
+            }
+        };
     NavigationMixin.Navigate = Navigate;
     NavigationMixin.GenerateUrl = GenerateUrl;
     return { NavigationMixin };
@@ -29,21 +32,27 @@ const SAMPLE_CAPABILITY = {
     bcm_StrategySupport__c: '<p>Strategy body</p>',
     bcm_ArchitecturalNuance__c: '<p>Nuance body</p>',
     bcm_HideFromDiagram__c: false,
-    Tags__r: [],
+    Tags__r: []
 };
 
 const SAMPLE_BREADCRUMB = [
     { id: 'L1-1', label: 'Capability A' },
-    { id: 'L2-1', label: 'Sub-Capability A' },
+    { id: 'L2-1', label: 'Sub-Capability A' }
 ];
 
-function mount({ capability = null, breadcrumb = [], isLoading = false, errorMessage = null, canEdit = false } = {}) {
+function mount({
+    capability = null,
+    breadcrumb = [],
+    isLoading = false,
+    errorMessage = null,
+    canEdit = false
+} = {}) {
     const element = createElement('c-bcm_-capability-detail', { is: BcmCapabilityDetail });
-    element.capability   = capability;
-    element.breadcrumb   = breadcrumb;
-    element.isLoading    = isLoading;
+    element.capability = capability;
+    element.breadcrumb = breadcrumb;
+    element.isLoading = isLoading;
     element.errorMessage = errorMessage;
-    element.canEdit      = canEdit;
+    element.canEdit = canEdit;
     document.body.appendChild(element);
     return element;
 }
@@ -77,10 +86,16 @@ describe('bcm_CapabilityDetail rendering', () => {
 
     it('Renders all detail fields', () => {
         const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB });
-        const labels = Array.from(el.shadowRoot.querySelectorAll('.bcm-detail-field-label'))
-            .map(n => n.textContent);
+        const labels = Array.from(el.shadowRoot.querySelectorAll('.bcm-detail-field-label')).map(
+            (n) => n.textContent
+        );
         expect(labels).toEqual(
-            expect.arrayContaining(['Definition', 'Strategy Support', 'Architectural Nuance', 'Hide From Diagram'])
+            expect.arrayContaining([
+                'Definition',
+                'Strategy Support',
+                'Architectural Nuance',
+                'Hide From Diagram'
+            ])
         );
     });
 
@@ -93,7 +108,7 @@ describe('bcm_CapabilityDetail rendering', () => {
     it('Hide From Diagram shows "Yes" when true', () => {
         const el = mount({
             capability: { ...SAMPLE_CAPABILITY, bcm_HideFromDiagram__c: true },
-            breadcrumb: SAMPLE_BREADCRUMB,
+            breadcrumb: SAMPLE_BREADCRUMB
         });
         const value = el.shadowRoot.querySelector('.bcm-detail-field-value');
         expect(value.textContent).toBe('Yes');
@@ -102,7 +117,7 @@ describe('bcm_CapabilityDetail rendering', () => {
     it('Loading shows spinner and hides body', () => {
         const el = mount({ isLoading: true });
         const spinner = el.shadowRoot.querySelector('lightning-spinner');
-        const body    = el.shadowRoot.querySelector('.bcm-detail-body');
+        const body = el.shadowRoot.querySelector('.bcm-detail-body');
         expect(spinner).not.toBeNull();
         expect(body).toBeNull();
     });
@@ -127,9 +142,13 @@ describe('bcm_CapabilityDetail rendering', () => {
 
     it('aria-hidden true when closed, false when open', () => {
         const closed = mount({});
-        expect(closed.shadowRoot.querySelector('.bcm-detail-panel').getAttribute('aria-hidden')).toBe('true');
+        expect(
+            closed.shadowRoot.querySelector('.bcm-detail-panel').getAttribute('aria-hidden')
+        ).toBe('true');
         const open = mount({ capability: SAMPLE_CAPABILITY });
-        expect(open.shadowRoot.querySelector('.bcm-detail-panel').getAttribute('aria-hidden')).toBe('false');
+        expect(open.shadowRoot.querySelector('.bcm-detail-panel').getAttribute('aria-hidden')).toBe(
+            'false'
+        );
     });
 
     it('Renders error message when errorMessage set', () => {
@@ -152,20 +171,33 @@ describe('bcm_CapabilityDetail rendering', () => {
 
 describe('bcm_CapabilityDetail edit mode', () => {
     it('Viewer (canEdit=false) sees no Edit button', () => {
-        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: false });
+        const el = mount({
+            capability: SAMPLE_CAPABILITY,
+            breadcrumb: SAMPLE_BREADCRUMB,
+            canEdit: false
+        });
         expect(el.shadowRoot.querySelector('.bcm-detail-edit')).toBeNull();
     });
 
     it('Editor (canEdit=true) sees Edit button in read mode', () => {
-        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: true });
+        const el = mount({
+            capability: SAMPLE_CAPABILITY,
+            breadcrumb: SAMPLE_BREADCRUMB,
+            canEdit: true
+        });
         expect(el.shadowRoot.querySelector('.bcm-detail-edit')).not.toBeNull();
         expect(el.shadowRoot.querySelector('.bcm-detail-save')).toBeNull();
         expect(el.shadowRoot.querySelector('.bcm-detail-cancel')).toBeNull();
     });
 
     it('Click Edit shows inputs and Save+Cancel; hides Edit', async () => {
-        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: true });
-        el.shadowRoot.querySelector('.bcm-detail-edit')
+        const el = mount({
+            capability: SAMPLE_CAPABILITY,
+            breadcrumb: SAMPLE_BREADCRUMB,
+            canEdit: true
+        });
+        el.shadowRoot
+            .querySelector('.bcm-detail-edit')
             .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
         await flushPromises();
         expect(el.shadowRoot.querySelector('.bcm-detail-input-name')).not.toBeNull();
@@ -178,11 +210,16 @@ describe('bcm_CapabilityDetail edit mode', () => {
     });
 
     it('Save fires saved event with draft payload', async () => {
-        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: true });
+        const el = mount({
+            capability: SAMPLE_CAPABILITY,
+            breadcrumb: SAMPLE_BREADCRUMB,
+            canEdit: true
+        });
         const handler = jest.fn();
         el.addEventListener('saved', handler);
 
-        el.shadowRoot.querySelector('.bcm-detail-edit')
+        el.shadowRoot
+            .querySelector('.bcm-detail-edit')
             .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
         await flushPromises();
 
@@ -192,7 +229,8 @@ describe('bcm_CapabilityDetail edit mode', () => {
         nameInput.dispatchEvent(new CustomEvent('change'));
         await flushPromises();
 
-        el.shadowRoot.querySelector('.bcm-detail-save')
+        el.shadowRoot
+            .querySelector('.bcm-detail-save')
             .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
         await flushPromises();
 
@@ -207,11 +245,17 @@ describe('bcm_CapabilityDetail edit mode', () => {
     });
 
     it('Save keeps edit mode until parent re-feeds capability prop (success path)', async () => {
-        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: true });
-        el.shadowRoot.querySelector('.bcm-detail-edit')
+        const el = mount({
+            capability: SAMPLE_CAPABILITY,
+            breadcrumb: SAMPLE_BREADCRUMB,
+            canEdit: true
+        });
+        el.shadowRoot
+            .querySelector('.bcm-detail-edit')
             .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
         await flushPromises();
-        el.shadowRoot.querySelector('.bcm-detail-save')
+        el.shadowRoot
+            .querySelector('.bcm-detail-save')
             .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
         await flushPromises();
         // Still in edit mode immediately after Save dispatch — parent has not confirmed yet
@@ -225,11 +269,17 @@ describe('bcm_CapabilityDetail edit mode', () => {
     });
 
     it('Save error keeps edit mode and surfaces error message', async () => {
-        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: true });
-        el.shadowRoot.querySelector('.bcm-detail-edit')
+        const el = mount({
+            capability: SAMPLE_CAPABILITY,
+            breadcrumb: SAMPLE_BREADCRUMB,
+            canEdit: true
+        });
+        el.shadowRoot
+            .querySelector('.bcm-detail-edit')
             .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
         await flushPromises();
-        el.shadowRoot.querySelector('.bcm-detail-save')
+        el.shadowRoot
+            .querySelector('.bcm-detail-save')
             .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
         await flushPromises();
 
@@ -244,8 +294,13 @@ describe('bcm_CapabilityDetail edit mode', () => {
     });
 
     it('Switching to a different capability id resets edit mode to read', async () => {
-        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: true });
-        el.shadowRoot.querySelector('.bcm-detail-edit')
+        const el = mount({
+            capability: SAMPLE_CAPABILITY,
+            breadcrumb: SAMPLE_BREADCRUMB,
+            canEdit: true
+        });
+        el.shadowRoot
+            .querySelector('.bcm-detail-edit')
             .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
         await flushPromises();
         expect(el.shadowRoot.querySelector('.bcm-detail-input-name')).not.toBeNull();
@@ -257,14 +312,20 @@ describe('bcm_CapabilityDetail edit mode', () => {
     });
 
     it('Cancel reverts to read mode without firing saved', async () => {
-        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: true });
+        const el = mount({
+            capability: SAMPLE_CAPABILITY,
+            breadcrumb: SAMPLE_BREADCRUMB,
+            canEdit: true
+        });
         const handler = jest.fn();
         el.addEventListener('saved', handler);
 
-        el.shadowRoot.querySelector('.bcm-detail-edit')
+        el.shadowRoot
+            .querySelector('.bcm-detail-edit')
             .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
         await flushPromises();
-        el.shadowRoot.querySelector('.bcm-detail-cancel')
+        el.shadowRoot
+            .querySelector('.bcm-detail-cancel')
             .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
         await flushPromises();
 
@@ -273,7 +334,9 @@ describe('bcm_CapabilityDetail edit mode', () => {
         expect(el.shadowRoot.querySelector('.bcm-detail-name')).not.toBeNull();
         expect(el.shadowRoot.querySelector('.bcm-detail-input-name')).toBeNull();
         // Read-mode shows the original (unedited) name
-        expect(el.shadowRoot.querySelector('.bcm-detail-name').textContent).toBe('Sub-Capability A');
+        expect(el.shadowRoot.querySelector('.bcm-detail-name').textContent).toBe(
+            'Sub-Capability A'
+        );
     });
 });
 
@@ -289,9 +352,14 @@ describe('bcm_CapabilityDetail record page link', () => {
     });
 
     it('Record page link is rendered in edit mode', async () => {
-        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: true });
+        const el = mount({
+            capability: SAMPLE_CAPABILITY,
+            breadcrumb: SAMPLE_BREADCRUMB,
+            canEdit: true
+        });
         await flushPromises();
-        el.shadowRoot.querySelector('.bcm-detail-edit')
+        el.shadowRoot
+            .querySelector('.bcm-detail-edit')
             .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
         await flushPromises();
         const link = el.shadowRoot.querySelector('.bcm-detail-record-link a');
@@ -299,7 +367,11 @@ describe('bcm_CapabilityDetail record page link', () => {
     });
 
     it('Record page link renders when canEdit is false', async () => {
-        const el = mount({ capability: SAMPLE_CAPABILITY, breadcrumb: SAMPLE_BREADCRUMB, canEdit: false });
+        const el = mount({
+            capability: SAMPLE_CAPABILITY,
+            breadcrumb: SAMPLE_BREADCRUMB,
+            canEdit: false
+        });
         await flushPromises();
         expect(el.shadowRoot.querySelector('.bcm-detail-record-link a')).not.toBeNull();
     });

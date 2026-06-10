@@ -3,7 +3,6 @@
  */
 @IsTest
 private class bcm_TagControllerTest {
-
     @TestSetup
     static void setupTestData() {
         TestDataFactory.createTag('Zebra Tag', '#A8C7FF', true);
@@ -29,8 +28,16 @@ private class bcm_TagControllerTest {
         Test.stopTest();
 
         // Then
-        Assert.areEqual('Alpha Tag', result[0].Name, 'First tag should be Alpha Tag (alphabetical)');
-        Assert.areEqual('Zebra Tag', result[1].Name, 'Second tag should be Zebra Tag (alphabetical)');
+        Assert.areEqual(
+            'Alpha Tag',
+            result[0].Name,
+            'First tag should be Alpha Tag (alphabetical)'
+        );
+        Assert.areEqual(
+            'Zebra Tag',
+            result[1].Name,
+            'Second tag should be Zebra Tag (alphabetical)'
+        );
     }
 
     @IsTest

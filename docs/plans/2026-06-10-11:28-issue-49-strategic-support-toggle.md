@@ -36,23 +36,23 @@ No new functional process. The exclusion-table row in `docs/design/99-cosmic-fun
 
 ## Locked design decisions (from grilling)
 
-| Decision | Choice |
-|---|---|
-| Marker style | Left-edge amber stripe (`#E8A33D`) |
-| Levels | All (L1 chevron, L2 box, L3 bullet, cross-cutting band) |
-| L1 stripe geometry | Vertical 3px bar inside chevron, just right of left edge, with 4px top/bottom inset |
-| L2 stripe geometry | Vertical 3px bar at left edge of box, full height minus 4px inset |
-| L3 stripe geometry | 3px vertical bar in indent gutter (`x = bulletBaseX - 8`, height = bullet group height) |
-| Band stripe geometry | Same pattern as L1 (3px vertical bar, inset from left edge) |
-| Toolbar button | `utility:strategy`, title `Strategic Support`, neutral→brand variant, rightmost |
-| Visibility | Viewers + Editors |
-| Empty detection | Regex strip + `&nbsp;` replace + trim + `length > 0` |
-| sessionStorage key | `bcm.visualisation.strategicSupportOn` (value `'true'`, removed when off) |
-| Map switch | Visible toggle resets to off, sessionStorage untouched |
-| Hidden interaction | Stripe respects existing visibility rules (no override) |
-| Compute timing | In `_buildLayout`, attached as `node.strategyStripe` |
-| Helper location | Module-scope `isStrategic(html)`, near `wrapText` |
-| E2E selector | `.bcm-strategy-stripe` CSS class |
+| Decision             | Choice                                                                                  |
+| -------------------- | --------------------------------------------------------------------------------------- |
+| Marker style         | Left-edge amber stripe (`#E8A33D`)                                                      |
+| Levels               | All (L1 chevron, L2 box, L3 bullet, cross-cutting band)                                 |
+| L1 stripe geometry   | Vertical 3px bar inside chevron, just right of left edge, with 4px top/bottom inset     |
+| L2 stripe geometry   | Vertical 3px bar at left edge of box, full height minus 4px inset                       |
+| L3 stripe geometry   | 3px vertical bar in indent gutter (`x = bulletBaseX - 8`, height = bullet group height) |
+| Band stripe geometry | Same pattern as L1 (3px vertical bar, inset from left edge)                             |
+| Toolbar button       | `utility:strategy`, title `Strategic Support`, neutral→brand variant, rightmost         |
+| Visibility           | Viewers + Editors                                                                       |
+| Empty detection      | Regex strip + `&nbsp;` replace + trim + `length > 0`                                    |
+| sessionStorage key   | `bcm.visualisation.strategicSupportOn` (value `'true'`, removed when off)               |
+| Map switch           | Visible toggle resets to off, sessionStorage untouched                                  |
+| Hidden interaction   | Stripe respects existing visibility rules (no override)                                 |
+| Compute timing       | In `_buildLayout`, attached as `node.strategyStripe`                                    |
+| Helper location      | Module-scope `isStrategic(html)`, near `wrapText`                                       |
+| E2E selector         | `.bcm-strategy-stripe` CSS class                                                        |
 
 ---
 
@@ -71,6 +71,7 @@ No new functional process. The exclusion-table row in `docs/design/99-cosmic-fun
 ## Task 1: Module-scope `isStrategic` helper + Jest unit tests
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js`
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js`
 
@@ -78,10 +79,12 @@ No new functional process. The exclusion-table row in `docs/design/99-cosmic-fun
 
 ```javascript
 function isStrategic(html) {
-    return String(html || '')
-        .replace(/<[^>]*>/g, '')
-        .replace(/&nbsp;/gi, ' ')
-        .trim().length > 0;
+    return (
+        String(html || '')
+            .replace(/<[^>]*>/g, '')
+            .replace(/&nbsp;/gi, ' ')
+            .trim().length > 0
+    );
 }
 ```
 
@@ -95,14 +98,25 @@ const SESSION_KEY_STRATEGIC = 'bcm.visualisation.strategicSupportOn';
 
 ```javascript
 it('isStrategic normalisation — empty / whitespace / bare-tag inputs', () => {
-    [null, undefined, '', '   ', '<p></p>', '<p><br></p>', '<p>&nbsp;</p>', '<p>   </p>', '<div><br/></div>']
-        .forEach(v => expect(isStrategic(v)).toBe(false));
-    ['x', '<p>x</p>', '<p>Strategy text</p>', '<p>&nbsp;Strategy</p>']
-        .forEach(v => expect(isStrategic(v)).toBe(true));
+    [
+        null,
+        undefined,
+        '',
+        '   ',
+        '<p></p>',
+        '<p><br></p>',
+        '<p>&nbsp;</p>',
+        '<p>   </p>',
+        '<div><br/></div>'
+    ].forEach((v) => expect(isStrategic(v)).toBe(false));
+    ['x', '<p>x</p>', '<p>Strategy text</p>', '<p>&nbsp;Strategy</p>'].forEach((v) =>
+        expect(isStrategic(v)).toBe(true)
+    );
 });
 ```
 
 `isStrategic` must be importable — export it from the LWC module:
+
 ```javascript
 export { isStrategic };
 ```
@@ -110,6 +124,7 @@ export { isStrategic };
 - [x] **Step 4: Run test** — `npx jest -t "isStrategic normalisation"`. Expected: PASS.
 
 - [x] **Step 5: Commit** —
+
 ```bash
 git add force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js \
         force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js
@@ -121,6 +136,7 @@ git commit -m "feat(visualisation): add isStrategic helper for strategic support
 ## Task 2: Toggle state, button, sessionStorage write/restore
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js`
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.html`
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js`
@@ -190,8 +206,9 @@ this.showStrategicSupport = false;
         data-id="strategic-support-toggle"
         icon-name="utility:strategy"
         title="Strategic Support"
-        variant={strategicSupportVariant}
-        onclick={handleToggleStrategicSupport}>
+        variant="{strategicSupportVariant}"
+        onclick="{handleToggleStrategicSupport}"
+    >
     </lightning-button-icon>
 </div>
 ```
@@ -248,7 +265,13 @@ it('Restores showStrategicSupport from sessionStorage on init', async () => {
 ```javascript
 it('Map switch resets toggle to off but keeps sessionStorage key', async () => {
     sessionStorage.setItem('bcm.visualisation.strategicSupportOn', 'true');
-    mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }, { Id: 'MAP-2', Name: 'Map 2' }], error: undefined });
+    mockGetMaps.emit({
+        data: [
+            { Id: 'MAP-1', Name: 'Map 1' },
+            { Id: 'MAP-2', Name: 'Map 2' }
+        ],
+        error: undefined
+    });
     mockGetTags.emit({ data: [], error: undefined });
     await flushPromises();
     const btn = element.shadowRoot.querySelector('[data-id="strategic-support-toggle"]');
@@ -265,8 +288,9 @@ it('Map switch resets toggle to off but keeps sessionStorage key', async () => {
 
 ```javascript
 it('Silent fallback when sessionStorage.setItem throws on toggle', async () => {
-    const setItemSpy = jest.spyOn(Storage.prototype, 'setItem')
-        .mockImplementation(() => { throw new Error('QuotaExceeded'); });
+    const setItemSpy = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('QuotaExceeded');
+    });
     try {
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
         mockGetTags.emit({ data: [], error: undefined });
@@ -284,6 +308,7 @@ it('Silent fallback when sessionStorage.setItem throws on toggle', async () => {
 - [x] **Step 12: Run jest** — `npx jest -t "strategic support highlight"`. Expected: 4 tests PASS.
 
 - [x] **Step 13: Commit** —
+
 ```bash
 git add force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js \
         force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.html \
@@ -296,6 +321,7 @@ git commit -m "feat(visualisation): add Strategic Support toolbar toggle with se
 ## Task 3: Stripe geometry in `_buildLayout` (L1, L2, L3, band) + render
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js`
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.html`
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.css`
@@ -304,9 +330,9 @@ git commit -m "feat(visualisation): add Strategic Support toolbar toggle with se
 Stripe constants (top of file, near layout constants):
 
 ```javascript
-const STRATEGY_STRIPE_W       = 3;
+const STRATEGY_STRIPE_W = 3;
 const STRATEGY_STRIPE_INSET_Y = 4;
-const STRATEGY_STRIPE_INSET_X = 4;  // distance from left edge / left notch tip
+const STRATEGY_STRIPE_INSET_X = 4; // distance from left edge / left notch tip
 ```
 
 - [x] **Step 1: L1 chevron stripe** — inside `_buildLayout` L1 push block, compute and attach:
@@ -368,12 +394,14 @@ strategyStripe: (this.showStrategicSupport && isStrategic(cc.bcm_StrategySupport
 - [x] **Step 5: Render in HTML — L1 chevron** — inside the `<g>` for L1 (around line 211, after `<polygon>`):
 
 ```html
-<template if:true={node.strategyStripe}>
-    <rect class="bcm-strategy-stripe"
-          x={node.strategyStripe.x}
-          y={node.strategyStripe.y}
-          width={node.strategyStripe.width}
-          height={node.strategyStripe.height}>
+<template if:true="{node.strategyStripe}">
+    <rect
+        class="bcm-strategy-stripe"
+        x="{node.strategyStripe.x}"
+        y="{node.strategyStripe.y}"
+        width="{node.strategyStripe.width}"
+        height="{node.strategyStripe.height}"
+    >
     </rect>
 </template>
 ```
@@ -381,12 +409,14 @@ strategyStripe: (this.showStrategicSupport && isStrategic(cc.bcm_StrategySupport
 - [x] **Step 6: Render in HTML — L2 box** — inside the L2 `<g>` (after the box `<rect>`, around line 117):
 
 ```html
-<template if:true={node.strategyStripe}>
-    <rect class="bcm-strategy-stripe"
-          x={node.strategyStripe.x}
-          y={node.strategyStripe.y}
-          width={node.strategyStripe.width}
-          height={node.strategyStripe.height}>
+<template if:true="{node.strategyStripe}">
+    <rect
+        class="bcm-strategy-stripe"
+        x="{node.strategyStripe.x}"
+        y="{node.strategyStripe.y}"
+        width="{node.strategyStripe.width}"
+        height="{node.strategyStripe.height}"
+    >
     </rect>
 </template>
 ```
@@ -394,12 +424,14 @@ strategyStripe: (this.showStrategicSupport && isStrategic(cc.bcm_StrategySupport
 - [x] **Step 7: Render in HTML — L3 bullet group** — inside the `<g class="bcm-l3-group">` (e.g. after `tagRect` template, before `lines` template):
 
 ```html
-<template if:true={group.strategyStripe}>
-    <rect class="bcm-strategy-stripe"
-          x={group.strategyStripe.x}
-          y={group.strategyStripe.y}
-          width={group.strategyStripe.width}
-          height={group.strategyStripe.height}>
+<template if:true="{group.strategyStripe}">
+    <rect
+        class="bcm-strategy-stripe"
+        x="{group.strategyStripe.x}"
+        y="{group.strategyStripe.y}"
+        width="{group.strategyStripe.width}"
+        height="{group.strategyStripe.height}"
+    >
     </rect>
 </template>
 ```
@@ -407,12 +439,14 @@ strategyStripe: (this.showStrategicSupport && isStrategic(cc.bcm_StrategySupport
 - [x] **Step 8: Render in HTML — band chevron** — inside the band `<g>` (after `<polygon>`, around line 287):
 
 ```html
-<template if:true={node.strategyStripe}>
-    <rect class="bcm-strategy-stripe"
-          x={node.strategyStripe.x}
-          y={node.strategyStripe.y}
-          width={node.strategyStripe.width}
-          height={node.strategyStripe.height}>
+<template if:true="{node.strategyStripe}">
+    <rect
+        class="bcm-strategy-stripe"
+        x="{node.strategyStripe.x}"
+        y="{node.strategyStripe.y}"
+        width="{node.strategyStripe.width}"
+        height="{node.strategyStripe.height}"
+    >
     </rect>
 </template>
 ```
@@ -421,7 +455,7 @@ strategyStripe: (this.showStrategicSupport && isStrategic(cc.bcm_StrategySupport
 
 ```css
 .bcm-strategy-stripe {
-    fill: #E8A33D;
+    fill: #e8a33d;
     pointer-events: none;
 }
 ```
@@ -432,12 +466,27 @@ strategyStripe: (this.showStrategicSupport && isStrategic(cc.bcm_StrategySupport
 it('Marker present when toggle on and capability has strategy support content', async () => {
     mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
     mockGetTags.emit({ data: [], error: undefined });
-    mockGetCapabilities.emit({ data: [
-        { Id: 'L2-A', Name: 'L2 A', bcm_Level__c: 2, bcm_SortOrder__c: 1, bcm_Parent__c: 'L1-A',
-          bcm_StrategySupport__c: '<p>Real content</p>' },
-        { Id: 'L1-A', Name: 'L1 A', bcm_Level__c: 1, bcm_SortOrder__c: 1, bcm_Parent__c: null,
-          bcm_StrategySupport__c: '' },
-    ], error: undefined });
+    mockGetCapabilities.emit({
+        data: [
+            {
+                Id: 'L2-A',
+                Name: 'L2 A',
+                bcm_Level__c: 2,
+                bcm_SortOrder__c: 1,
+                bcm_Parent__c: 'L1-A',
+                bcm_StrategySupport__c: '<p>Real content</p>'
+            },
+            {
+                Id: 'L1-A',
+                Name: 'L1 A',
+                bcm_Level__c: 1,
+                bcm_SortOrder__c: 1,
+                bcm_Parent__c: null,
+                bcm_StrategySupport__c: ''
+            }
+        ],
+        error: undefined
+    });
     await flushPromises();
     const mapCombobox = element.shadowRoot.querySelector('lightning-combobox[label="Map"]');
     mapCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'MAP-1' } }));
@@ -445,7 +494,9 @@ it('Marker present when toggle on and capability has strategy support content', 
     const btn = element.shadowRoot.querySelector('[data-id="strategic-support-toggle"]');
     btn.click();
     await flushPromises();
-    expect(element.shadowRoot.querySelectorAll('rect.bcm-strategy-stripe').length).toBeGreaterThan(0);
+    expect(element.shadowRoot.querySelectorAll('rect.bcm-strategy-stripe').length).toBeGreaterThan(
+        0
+    );
 });
 ```
 
@@ -455,10 +506,19 @@ it('Marker present when toggle on and capability has strategy support content', 
 it('Marker absent when toggle off even if capabilities have content', async () => {
     mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
     mockGetTags.emit({ data: [], error: undefined });
-    mockGetCapabilities.emit({ data: [
-        { Id: 'L1-A', Name: 'L1 A', bcm_Level__c: 1, bcm_SortOrder__c: 1, bcm_Parent__c: null,
-          bcm_StrategySupport__c: '<p>Real content</p>' },
-    ], error: undefined });
+    mockGetCapabilities.emit({
+        data: [
+            {
+                Id: 'L1-A',
+                Name: 'L1 A',
+                bcm_Level__c: 1,
+                bcm_SortOrder__c: 1,
+                bcm_Parent__c: null,
+                bcm_StrategySupport__c: '<p>Real content</p>'
+            }
+        ],
+        error: undefined
+    });
     await flushPromises();
     expect(element.shadowRoot.querySelectorAll('rect.bcm-strategy-stripe').length).toBe(0);
 });
@@ -469,6 +529,7 @@ it('Marker absent when toggle off even if capabilities have content', async () =
 - [x] **Step 12: Run jest** — `npm test`. Expected: full suite green; new strategic support describe = 6 tests PASS.
 
 - [x] **Step 13: Commit** —
+
 ```bash
 git add force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js \
         force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.html \
@@ -482,6 +543,7 @@ git commit -m "feat(visualisation): render amber strategic-support stripe on L1/
 ## Task 4: e2e seed — set strategy support on one seeded capability
 
 **Files:**
+
 - Modify: `tests/e2e/diagram.seed.ts`
 
 - [x] **Step 1: Add export for the capability name reused by the test** — add near the existing `DIAGRAM_TAG_CAP_NAME`:
@@ -504,6 +566,7 @@ update sc;
 - [x] **Step 3: Verify compile** — `npx playwright test tests/e2e/diagram.spec.ts --list`. Expected: no TS errors.
 
 - [x] **Step 4: Commit** —
+
 ```bash
 git add tests/e2e/diagram.seed.ts
 git commit -m "test(e2e): seed strategy support content on one diagram capability (GH #49)"
@@ -514,6 +577,7 @@ git commit -m "test(e2e): seed strategy support content on one diagram capabilit
 ## Task 5: e2e — assert toggle visible state + persist across reload
 
 **Files:**
+
 - Modify: `tests/e2e/diagram.spec.ts`
 
 - [x] **Step 1: Add e2e test** — append to the existing diagram describe (or add a new `Strategic Support` describe parallel to the tag one):
@@ -532,15 +596,13 @@ test('Strategic Support toggle reveals stripes and persists across reload', asyn
     await btn.click();
 
     // Stripes visible
-    await expect(page.locator('rect.bcm-strategy-stripe').first())
-        .toBeVisible({ timeout: 5000 });
+    await expect(page.locator('rect.bcm-strategy-stripe').first()).toBeVisible({ timeout: 5000 });
 
     // Reload — stripe state restored from sessionStorage
     await page.reload();
     await page.locator('.bcm-canvas').waitFor({ state: 'visible', timeout: 20000 });
     await page.locator('.bcm-canvas polygon').first().waitFor({ state: 'visible', timeout: 20000 });
-    await expect(page.locator('rect.bcm-strategy-stripe').first())
-        .toBeVisible({ timeout: 20000 });
+    await expect(page.locator('rect.bcm-strategy-stripe').first()).toBeVisible({ timeout: 20000 });
 });
 ```
 
@@ -549,6 +611,7 @@ Imports — `MAP_NAME` already imported; `STRATEGY_CAP_NAME` only needed if asse
 - [x] **Step 2: Verify list** — `npx playwright test tests/e2e/diagram.spec.ts --list`. Expected: new test name appears.
 
 - [x] **Step 3: Commit** —
+
 ```bash
 git add tests/e2e/diagram.spec.ts
 git commit -m "test(e2e): assert Strategic Support toggle reveals stripes and persists across reload (GH #49)"
@@ -559,12 +622,12 @@ git commit -m "test(e2e): assert Strategic Support toggle reveals stripes and pe
 ## Task 6: spec — `docs/specs/diagram.md`
 
 **Files:**
+
 - Modify: `docs/specs/diagram.md`
 
 - [x] **Step 1: Insert new feature block** — after the existing `Feature: Colour-by-tag selection persists for session` (currently ends ~line 75), before the `---` separator:
 
 ```markdown
-
 ## Feature: Strategic Support highlight
 
 **Scenario: Toggle on shows amber stripe on capabilities with non-empty strategy support**
@@ -615,6 +678,7 @@ And stripes are rendered on capabilities with non-empty strategy support
 ```
 
 - [x] **Step 2: Commit** —
+
 ```bash
 git add docs/specs/diagram.md
 git commit -m "docs(specs): add Strategic Support highlight feature scenarios (GH #49)"
@@ -625,16 +689,19 @@ git commit -m "docs(specs): add Strategic Support highlight feature scenarios (G
 ## Task 7: glossary — `CONTEXT.md`
 
 **Files:**
+
 - Modify: `CONTEXT.md`
 
 - [x] **Step 1: Add glossary term** — append a new section (alphabetically near `Sort Order` / before `Tag`):
 
 ```markdown
 ## Strategic Support
+
 Free-text rationale stored on `bcm_Capability__c` (`bcm_StrategySupport__c`) explaining how a capability supports business strategy. The diagram offers a Strategic Support toolbar toggle that, when on, marks every capability whose Strategic Support content is non-empty (after stripping HTML and whitespace) with a visual highlight. The highlight is a display option only — it does not change underlying data.
 ```
 
 - [x] **Step 2: Commit** —
+
 ```bash
 git add CONTEXT.md
 git commit -m "docs(context): add Strategic Support glossary term (GH #49)"
@@ -645,6 +712,7 @@ git commit -m "docs(context): add Strategic Support glossary term (GH #49)"
 ## Task 8: COSMIC FP exclusion — broaden existing row
 
 **Files:**
+
 - Modify: `docs/design/99-cosmic-function-point-count.md`
 
 - [x] **Step 1: Replace the existing exclusion row** — currently:
@@ -660,6 +728,7 @@ with:
 ```
 
 - [x] **Step 2: Commit** —
+
 ```bash
 git add docs/design/99-cosmic-function-point-count.md
 git commit -m "docs(cfp): broaden sessionStorage exclusion row to cover strategicSupportOn (GH #49)"
@@ -684,11 +753,13 @@ git commit -m "docs(cfp): broaden sessionStorage exclusion row to cover strategi
 - [x] **Step 4: Mark plan complete** — tick every `- [x]` above to `- [x]` and update header with completion date.
 
 - [x] **Step 5: Push branch** —
+
 ```bash
 git push -u origin sf_businesscapability-49
 ```
 
 - [x] **Step 6: Open PR (do NOT auto-merge)** —
+
 ```bash
 gh pr create --title "feat: Strategic Support toggle on diagram toolbar (GH #49)" --body "$(cat <<'EOF'
 ## Summary
@@ -713,7 +784,7 @@ EOF
 ## Self-Review Notes
 
 - **Spec coverage:** Issue #49 acceptance criteria mapped — UX decisions captured in this plan (preamble + Locked design decisions table) before implementation; toolbar button added; brand/neutral variant flip; markers shown on caps with content; markers hidden on empty/`<p></p>`/whitespace; map-switch resets visible toggle; reload restores from sessionStorage; silent fallback when storage throws (covered by existing `safeSession*` helpers); jest covers all six scenarios; playwright covers toggle + reload; spec doc updated.
-- **Persistence vs. reset semantics:** Map-switch resets *visible* state but not the persisted key — chosen explicitly during grilling (Q "Map-switch reset"). Reload after a switch will turn the toggle back on. The Jest `Map switch resets toggle to off but keeps sessionStorage key` test pins this behaviour.
+- **Persistence vs. reset semantics:** Map-switch resets _visible_ state but not the persisted key — chosen explicitly during grilling (Q "Map-switch reset"). Reload after a switch will turn the toggle back on. The Jest `Map switch resets toggle to off but keeps sessionStorage key` test pins this behaviour.
 - **Cross-cutting parity:** Band chevrons get the stripe per design — keeps semantics consistent across layout layers.
 - **No FP added:** Pure UI display + sessionStorage UI state. Rule 7 Note 2 exclusion broadened (Task 8). [[feedback_mark_complete_fp_table]] — no FP row to tick because there is none for this issue.
 - **Placeholder scan:** Clean — no TBD / TODO / "implement later".

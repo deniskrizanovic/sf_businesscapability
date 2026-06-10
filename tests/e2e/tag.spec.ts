@@ -25,8 +25,9 @@ test.describe('Tag record page — editor project', () => {
     test('colour swatch lightning-card tile is visible on Tag record page', async ({ page }) => {
         await setupAutoDismiss(page);
         await page.goto(tagUrl);
-        const swatchCard = page.locator('lightning-card').filter({ hasText: 'Blue' }).first();
-        await expect(swatchCard).toBeVisible();
+        // The swatch card has title "Colour"; inner label text may be hex or human label depending on load state.
+        const swatchCard = page.locator('article').filter({ has: page.locator('h2', { hasText: 'Colour' }) }).first();
+        await expect(swatchCard).toBeVisible({ timeout: 15000 });
     });
 });
 

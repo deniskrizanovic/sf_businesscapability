@@ -1,55 +1,57 @@
 # Plan 02: Import Utility
 
 ## Purpose
+
 Allow an admin to load a full capability map from a nested JSON document by pasting it into an LWC textarea. The Apex controller parses the JSON, upserts the Map record, then recursively upserts all Capabilities and their Tags.
 
 ## JSON Format
 
 ```json
 {
-  "mapName": "Homes NSW Business Capability Model",
-  "mapDescription": "Strategy 2025-2035 capability model",
-  "capabilities": [
-    {
-      "externalId": "domain-1",
-      "name": "Portfolio Planning & Development",
-      "level": 1,
-      "sortOrder": 1,
-      "definition": "...",
-      "strategySupport": "...",
-      "architecturalNuance": "...",
-      "tags": ["NEW"],
-      "children": [
+    "mapName": "Homes NSW Business Capability Model",
+    "mapDescription": "Strategy 2025-2035 capability model",
+    "capabilities": [
         {
-          "externalId": "domain-1-group-1",
-          "name": "Housing Needs Analysis",
-          "level": 2,
-          "sortOrder": 1,
-          "definition": "...",
-          "strategySupport": "...",
-          "architecturalNuance": "",
-          "tags": [],
-          "children": [
-            {
-              "externalId": "domain-1-group-1-cap-1",
-              "name": "Waitlist Trend Modelling",
-              "level": 3,
-              "sortOrder": 1,
-              "definition": "...",
-              "strategySupport": "...",
-              "architecturalNuance": "...",
-              "tags": [],
-              "children": []
-            }
-          ]
+            "externalId": "domain-1",
+            "name": "Portfolio Planning & Development",
+            "level": 1,
+            "sortOrder": 1,
+            "definition": "...",
+            "strategySupport": "...",
+            "architecturalNuance": "...",
+            "tags": ["NEW"],
+            "children": [
+                {
+                    "externalId": "domain-1-group-1",
+                    "name": "Housing Needs Analysis",
+                    "level": 2,
+                    "sortOrder": 1,
+                    "definition": "...",
+                    "strategySupport": "...",
+                    "architecturalNuance": "",
+                    "tags": [],
+                    "children": [
+                        {
+                            "externalId": "domain-1-group-1-cap-1",
+                            "name": "Waitlist Trend Modelling",
+                            "level": 3,
+                            "sortOrder": 1,
+                            "definition": "...",
+                            "strategySupport": "...",
+                            "architecturalNuance": "...",
+                            "tags": [],
+                            "children": []
+                        }
+                    ]
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 }
 ```
 
 **Rules:**
+
 - `mapName` is required and used as the upsert key for `bcm_Map__c` (matched on `Name`)
 - `externalId` is required on every capability node and maps to `bcm_ExternalId__c`
 - `level` must match the depth implied by nesting (enforced by Apex, not assumed from structure)
@@ -63,6 +65,7 @@ Allow an admin to load a full capability map from a nested JSON document by past
 **Decision: the JSON source supplies HTML strings for all rich text fields.** The Apex controller passes these values directly to the field — no transformation is applied. The importer does not accept or convert plain text for these fields.
 
 Example JSON values for rich text fields:
+
 ```json
 "definition": "<p>A named, persistent ability the business has.</p>",
 "strategySupport": "<p>Supports <strong>Strategy 2025–2035</strong> objective 3.</p>",
@@ -74,12 +77,14 @@ Source data must be prepared with HTML markup before import. Plain text strings 
 ## Apex Controller: `bcm_ImportController`
 
 ### Method
+
 ```apex
 @AuraEnabled
 public static bcm_ImportResult importCapabilities(String jsonPayload)
 ```
 
 ### Processing Steps
+
 1. **Parse JSON** — deserialise into a typed Apex wrapper class tree
 2. **Upsert Map** — `upsert` `bcm_Map__c` by `Name`; capture the Map Id
 3. **Collect all Tags** — walk the entire tree, collect unique tag names; `upsert` all `bcm_Tag__c` records by `Name`; build a `Map<String, Id>` of tag name → Id
@@ -90,11 +95,13 @@ public static bcm_ImportResult importCapabilities(String jsonPayload)
 8. **Return result** — return `bcm_ImportResult` with counts of inserted/updated/failed records and any error messages
 
 ### Error Handling
+
 - If JSON is malformed: catch `JSONException`, return error message to LWC
 - If any DML fails: use `Database.upsert` with `allOrNone = false`; collect errors and include in result
 - Import is designed to be **idempotent** — running the same JSON twice produces the same result
 
 ### Apex Wrapper Classes
+
 ```apex
 public class bcm_ImportPayload {
     public String mapName;
@@ -126,6 +133,7 @@ public class bcm_ImportResult {
 ## LWC: `bcm_ImportUtility`
 
 ### Template Structure
+
 ```
 bcm_ImportUtility
 ├── Header: "Capability Map Import"
@@ -138,17 +146,20 @@ bcm_ImportUtility
 ```
 
 ### JS Controller Responsibilities
+
 - Bind textarea value to a tracked property
 - On button click: validate textarea is not empty, call `importCapabilities` imperatively
 - Show/hide spinner during async call
 - Display result or error message on completion
 
 ### Placement
+
 - Hosted inside the `bcm_ImportButton` quick action panel on the `bcm_Map__c` record page
 - Opened via the Import button in the highlights panel — no dedicated tab or app page
 - Visible to all BCM users; import execution is guarded by `bcm_CanEdit` custom permission inside the LWC
 
 ## Governor Limit Considerations
+
 - A full capability map from the source document has approximately 150-200 capability records
 - Well within single-transaction DML limits (10,000 rows)
 - No need for async/batch processing at this data volume

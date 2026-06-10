@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>BCM Visual Language — Direction A: Editorial Monochrome</title>
+        <style>
+            /*
+      Direction A: Editorial Monochrome
+
+      Palette rationale:
+      - Base: greyscale (#333 text, #f7f7f7 lightest bg, #e0e0e0 borders)
+      - Focus: SLDS blue (#0070D2) for focus ring; 4.6:1 contrast vs white
+      - Strategy: muted gold/amber (#c29b3d) for strategic-support glyph; subtle, no competition with focus
+
+      Typefaces:
+      - L1: Georgia (serif) — editorial, authoritative feel
+      - L2/L3: system sans-serif stack (Segoe UI, Roboto, sans-serif)
+
+      Focus model: single-channel stroke ring only (no fill shift)
+      Strategy glyph: chevron-edge on L1, vertical stripe on L2/L3
+    */
+
+            :root {
+                --bcm-bg: #ffffff;
+                --bcm-canvas-bg: #fafafa;
+
+                --bcm-text-default: #333333;
+                --bcm-text-muted: #6b6b6b;
+
+                --bcm-border-default: #e0e0e0;
+                --bcm-border-thick: #c0c0c0;
+
+                --bcm-fill-l1: #f7f7f7;
+                --bcm-fill-l2: #f0f0f0;
+                --bcm-fill-l3: #e8e8e8;
+                --bcm-fill-tag-highlight: #d9d9d9;
+
+                --bcm-band-1: #f7f7f7;
+                --bcm-band-2: #ececec;
+                --bcm-band-3: #e0e0e0;
+                --bcm-band-4: #d4d4d4;
+
+                --bcm-focus-ring: #0070d2;
+                --bcm-strategy-accent: #c29b3d;
+
+                --bcm-dashed-stroke: #b8b8b8;
+                --bcm-dashed-text: #999999;
+                --bcm-dashed-hidden-fill: #ffffff;
+
+                --bcm-font-l1: Georgia, serif;
+                --bcm-font-l2-l3: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+                --bcm-focus-ring-width: 3px;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: var(--bcm-font-l2-l3);
+                color: var(--bcm-text-default);
+                background: var(--bcm-canvas-bg);
+            }
+
+            .header {
+                background: var(--bcm-bg);
+                border-bottom: 1px solid var(--bcm-border-default);
+                padding: 1rem 2rem;
+            }
+
+            .header h1 {
+                margin: 0 0 0.25rem 0;
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: var(--bcm-text-default);
+            }
+
+            .header p {
+                margin: 0;
+                font-size: 0.875rem;
+                color: var(--bcm-text-muted);
+            }
+
+            .container {
+                display: flex;
+                height: calc(100vh - 120px);
+            }
+
+            .toolbar {
+                background: var(--bcm-bg);
+                border-bottom: 1px solid var(--bcm-border-default);
+                padding: 0.75rem 2rem;
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+            }
+
+            .toolbar-label {
+                font-size: 0.875rem;
+                color: var(--bcm-text-default);
+                font-weight: 500;
+            }
+
+            .toolbar-control {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.5rem 0.75rem;
+                background: var(--bcm-fill-l2);
+                border: 1px solid var(--bcm-border-default);
+                border-radius: 4px;
+                font-size: 0.875rem;
+                color: var(--bcm-text-default);
+            }
+
+            .canvas {
+                flex: 1;
+                overflow: auto;
+                padding: 2rem;
+            }
+
+            .detail-panel {
+                width: 320px;
+                background: var(--bcm-bg);
+                border-left: 1px solid var(--bcm-border-default);
+                overflow: auto;
+            }
+
+            .detail-panel-header {
+                background: var(--bcm-fill-l1);
+                border-bottom: 1px solid var(--bcm-border-default);
+                padding: 1rem;
+            }
+
+            .detail-panel-header h2 {
+                margin: 0 0 0.5rem 0;
+                font-size: 1.125rem;
+                font-weight: 600;
+                color: var(--bcm-text-default);
+            }
+
+            .detail-panel-header p {
+                margin: 0;
+                font-size: 0.875rem;
+                color: var(--bcm-text-muted);
+            }
+
+            /* SVG shared styles */
+            text {
+                user-select: none;
+            }
+
+            .l1-label {
+                font-family: var(--bcm-font-l1);
+                font-size: 16px;
+                font-weight: 600;
+                fill: var(--bcm-text-default);
+            }
+
+            .l2-label,
+            .l3-label {
+                font-family: var(--bcm-font-l2-l3);
+                font-size: 14px;
+                fill: var(--bcm-text-default);
+            }
+
+            .l3-label {
+                font-size: 12px;
+            }
+
+            /* Strategy glyph (vertical stripe overlay) */
+            .strategy-stripe {
+                fill: var(--bcm-strategy-accent);
+            }
+
+            /* Cross-cutting band */
+            .band-fill {
+                stroke: var(--bcm-border-thick);
+                stroke-width: 1.5;
+            }
+
+            .band-1-fill {
+                fill: var(--bcm-band-1);
+            }
+            .band-2-fill {
+                fill: var(--bcm-band-2);
+            }
+            .band-3-fill {
+                fill: var(--bcm-band-3);
+            }
+            .band-4-fill {
+                fill: var(--bcm-band-4);
+            }
+
+            .band-label {
+                font-family: var(--bcm-font-l2-l3);
+                font-size: 14px;
+                font-weight: 500;
+                fill: var(--bcm-text-default);
+            }
+
+            /* L1 chevron */
+            .l1-chevron-default {
+                fill: var(--bcm-fill-l1);
+                stroke: var(--bcm-border-default);
+                stroke-width: 1.5;
+            }
+
+            .l1-chevron-focused {
+                fill: var(--bcm-fill-l1);
+                stroke: var(--bcm-focus-ring);
+                stroke-width: var(--bcm-focus-ring-width);
+            }
+
+            .l1-chevron-strategic {
+                fill: var(--bcm-fill-l1);
+                stroke: var(--bcm-border-default);
+                stroke-width: 1.5;
+            }
+
+            /* L2 boxes */
+            .l2-box-default {
+                fill: var(--bcm-fill-l2);
+                stroke: var(--bcm-border-default);
+                stroke-width: 1.5;
+            }
+
+            .l2-box-focused {
+                fill: var(--bcm-fill-l2);
+                stroke: var(--bcm-focus-ring);
+                stroke-width: var(--bcm-focus-ring-width);
+            }
+
+            .l2-box-dashed-hidden {
+                fill: var(--bcm-dashed-hidden-fill);
+                stroke: var(--bcm-dashed-stroke);
+                stroke-width: 1.5;
+                stroke-dasharray: 4 3;
+            }
+
+            .l2-box-tag-highlighted {
+                fill: var(--bcm-fill-tag-highlight);
+                stroke: var(--bcm-border-default);
+                stroke-width: 1.5;
+            }
+
+            .l2-label-dashed {
+                fill: var(--bcm-dashed-text);
+            }
+
+            /* L3 bullets */
+            .l3-bullet-default {
+                fill: var(--bcm-fill-l3);
+                stroke: var(--bcm-border-default);
+                stroke-width: 1;
+            }
+
+            .l3-bullet-focused {
+                fill: var(--bcm-fill-l3);
+                stroke: var(--bcm-focus-ring);
+                stroke-width: 2.5;
+            }
+
+            .l3-bullet-dashed-hidden {
+                fill: none;
+                stroke: var(--bcm-dashed-stroke);
+                stroke-width: 1;
+                stroke-dasharray: 2 2;
+            }
+
+            .l3-bullet-tag-highlighted {
+                fill: var(--bcm-fill-tag-highlight);
+                stroke: var(--bcm-border-default);
+                stroke-width: 1;
+            }
+
+            .l3-label-dashed {
+                fill: var(--bcm-dashed-text);
+                font-style: italic;
+            }
+
+            .legend-text {
+                font-size: 12px;
+                fill: var(--bcm-text-muted);
+            }
+
+            .legend-heading {
+                font-size: 14px;
+                font-weight: 600;
+                fill: var(--bcm-text-default);
+            }
+
+            .annotation-text {
+                font-size: 10px;
+                fill: var(--bcm-text-muted);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Business Capability Map — Visual Language Direction A</h1>
+            <p>
+                Editorial Monochrome: greyscale base, SLDS blue focus (4.6:1), gold strategy accent,
+                serif L1 + sans L2/L3
+            </p>
+        </div>
+
+        <div class="toolbar">
+            <span class="toolbar-label">Toolbar Row Chrome</span>
+            <div class="toolbar-control">
+                <span>Strategic Support: On</span>
+            </div>
+            <div class="toolbar-control">
+                <span>Tags: All</span>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="canvas">
+                <svg
+                    width="1400"
+                    height="900"
+                    viewBox="0 0 1400 900"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+                    <!-- Section: L1 Chevrons (default, focused, strategic) -->
+                    <g id="l1-section">
+                        <!-- L1 Chevron: default state -->
+                        <g id="l1-default">
+                            <path
+                                d="M 50 50 L 350 50 L 370 70 L 350 90 L 50 90 L 70 70 Z"
+                                class="l1-chevron-default"
+                            />
+                            <text x="210" y="75" class="l1-label" text-anchor="middle">
+                                Customer Management
+                            </text>
+                        </g>
+
+                        <!-- L1 Chevron: focused state (stroke ring only) -->
+                        <g id="l1-focused">
+                            <path
+                                d="M 400 50 L 700 50 L 720 70 L 700 90 L 400 90 L 420 70 Z"
+                                class="l1-chevron-focused"
+                            />
+                            <text x="560" y="75" class="l1-label" text-anchor="middle">
+                                Finance
+                            </text>
+                            <text x="560" y="110" class="annotation-text" text-anchor="middle">
+                                (focused — 3px SLDS blue ring, 4.6:1 vs white)
+                            </text>
+                        </g>
+
+                        <!-- L1 Chevron: strategic support (with chevron-edge glyph) -->
+                        <g id="l1-strategic">
+                            <path
+                                d="M 750 50 L 1050 50 L 1070 70 L 1050 90 L 750 90 L 770 70 Z"
+                                class="l1-chevron-strategic"
+                            />
+                            <!-- Chevron-edge strategy mark (left arrow shape) -->
+                            <polygon
+                                points="750,50 770,70 750,90 756,90 774,70 756,50"
+                                class="strategy-stripe"
+                            />
+                            <text x="910" y="75" class="l1-label" text-anchor="middle">
+                                Corporate Services
+                            </text>
+                            <text x="910" y="110" class="annotation-text" text-anchor="middle">
+                                (strategic — gold chevron-edge)
+                            </text>
+                        </g>
+                    </g>
+
+                    <!-- Section: L2 Boxes (default, focused, dashed-hidden, tag-highlighted) -->
+                    <g id="l2-section" transform="translate(0, 140)">
+                        <!-- L2 Box: default state -->
+                        <g id="l2-default">
+                            <rect
+                                x="50"
+                                y="0"
+                                width="200"
+                                height="60"
+                                rx="4"
+                                class="l2-box-default"
+                            />
+                            <text x="150" y="35" class="l2-label" text-anchor="middle">
+                                Marketing
+                            </text>
+                        </g>
+
+                        <!-- L2 Box: focused state -->
+                        <g id="l2-focused">
+                            <rect
+                                x="280"
+                                y="0"
+                                width="200"
+                                height="60"
+                                rx="4"
+                                class="l2-box-focused"
+                            />
+                            <text x="380" y="35" class="l2-label" text-anchor="middle">Sales</text>
+                            <text x="380" y="80" class="annotation-text" text-anchor="middle">
+                                (focused)
+                            </text>
+                        </g>
+
+                        <!-- L2 Box: dashed-hidden state -->
+                        <g id="l2-dashed-hidden">
+                            <rect
+                                x="510"
+                                y="0"
+                                width="200"
+                                height="60"
+                                rx="4"
+                                class="l2-box-dashed-hidden"
+                            />
+                            <text
+                                x="610"
+                                y="35"
+                                class="l2-label l2-label-dashed"
+                                text-anchor="middle"
+                            >
+                                Accounting
+                            </text>
+                            <text x="610" y="80" class="annotation-text" text-anchor="middle">
+                                (dashed — hidden)
+                            </text>
+                        </g>
+
+                        <!-- L2 Box: tag-highlighted state -->
+                        <g id="l2-tag-highlighted">
+                            <rect
+                                x="740"
+                                y="0"
+                                width="200"
+                                height="60"
+                                rx="4"
+                                class="l2-box-tag-highlighted"
+                            />
+                            <text x="840" y="35" class="l2-label" text-anchor="middle">
+                                Financial Planning
+                            </text>
+                            <text x="840" y="80" class="annotation-text" text-anchor="middle">
+                                (tag-highlighted)
+                            </text>
+                        </g>
+
+                        <!-- L2 Box: strategic support (with vertical stripe glyph) -->
+                        <g id="l2-strategic">
+                            <rect
+                                x="970"
+                                y="0"
+                                width="200"
+                                height="60"
+                                rx="4"
+                                class="l2-box-default"
+                            />
+                            <!-- Vertical stripe overlay (left edge) -->
+                            <rect x="970" y="0" width="6" height="60" class="strategy-stripe" />
+                            <text x="1070" y="35" class="l2-label" text-anchor="middle">
+                                Treasury
+                            </text>
+                            <text x="1070" y="80" class="annotation-text" text-anchor="middle">
+                                (strategic — gold stripe)
+                            </text>
+                        </g>
+                    </g>
+
+                    <!-- Section: L3 Bullets (default, focused, dashed-italic, tag-highlighted) -->
+                    <g id="l3-section" transform="translate(0, 260)">
+                        <!-- L3 Bullet: default state -->
+                        <g id="l3-default">
+                            <circle cx="60" cy="10" r="4" class="l3-bullet-default" />
+                            <text x="75" y="15" class="l3-label">Campaign Management</text>
+                        </g>
+
+                        <!-- L3 Bullet: focused state -->
+                        <g id="l3-focused" transform="translate(0, 30)">
+                            <circle cx="60" cy="10" r="4" class="l3-bullet-focused" />
+                            <text x="75" y="15" class="l3-label">Brand Management</text>
+                            <text x="75" y="30" class="annotation-text">(focused)</text>
+                        </g>
+
+                        <!-- L3 Bullet: dashed-italic (hidden) -->
+                        <g id="l3-dashed-italic" transform="translate(0, 70)">
+                            <circle cx="60" cy="10" r="4" class="l3-bullet-dashed-hidden" />
+                            <text x="75" y="15" class="l3-label l3-label-dashed">
+                                Customer Segmentation
+                            </text>
+                            <text x="75" y="30" class="annotation-text">
+                                (dashed-italic — hidden)
+                            </text>
+                        </g>
+
+                        <!-- L3 Bullet: tag-highlighted -->
+                        <g id="l3-tag-highlighted" transform="translate(0, 110)">
+                            <circle cx="60" cy="10" r="4" class="l3-bullet-tag-highlighted" />
+                            <text x="75" y="15" class="l3-label">Lead Management</text>
+                            <text x="75" y="30" class="annotation-text">(tag-highlighted)</text>
+                        </g>
+
+                        <!-- L3 Bullet: strategic support (with vertical stripe glyph) -->
+                        <g id="l3-strategic" transform="translate(0, 150)">
+                            <circle cx="60" cy="10" r="4" class="l3-bullet-default" />
+                            <!-- Vertical stripe overlay next to bullet -->
+                            <rect x="69" y="6" width="3" height="8" class="strategy-stripe" />
+                            <text x="80" y="15" class="l3-label">Market Intelligence</text>
+                            <text x="80" y="30" class="annotation-text">
+                                (strategic — gold stripe)
+                            </text>
+                        </g>
+
+                        <!-- L3 Bullet: focused + strategic combined -->
+                        <g id="l3-focused-strategic" transform="translate(0, 190)">
+                            <circle cx="60" cy="10" r="4" class="l3-bullet-focused" />
+                            <!-- Vertical stripe overlay next to bullet -->
+                            <rect x="69" y="6" width="3" height="8" class="strategy-stripe" />
+                            <text x="80" y="15" class="l3-label">Competitive Analysis</text>
+                            <text x="80" y="30" class="annotation-text">(focused + strategic)</text>
+                        </g>
+                    </g>
+
+                    <!-- Section: Cross-cutting band stack (≥2 bands) -->
+                    <g id="cross-cutting-section" transform="translate(0, 720)">
+                        <text x="50" y="20" font-size="12" fill="#6b6b6b">
+                            Cross-Cutting Capabilities (band stack):
+                        </text>
+
+                        <!-- Band 1: Technology -->
+                        <g id="band-1">
+                            <path
+                                d="M 50 40 L 450 40 L 470 60 L 450 80 L 50 80 L 70 60 Z"
+                                class="band-fill band-1-fill"
+                            />
+                            <text x="260" y="65" class="band-label" text-anchor="middle">
+                                Technology
+                            </text>
+                        </g>
+
+                        <!-- Band 2: Data & Analytics -->
+                        <g id="band-2">
+                            <path
+                                d="M 50 100 L 450 100 L 470 120 L 450 140 L 50 140 L 70 120 Z"
+                                class="band-fill band-2-fill"
+                            />
+                            <text x="260" y="125" class="band-label" text-anchor="middle">
+                                Data & Analytics
+                            </text>
+                        </g>
+
+                        <!-- Band 3: Risk & Compliance (not rendered — tint defined for Task 4 harvest) -->
+                        <!-- Band 4: Customer Experience (not rendered — tint defined for Task 4 harvest) -->
+                    </g>
+
+                    <!-- Legend / notes -->
+                    <g id="legend" transform="translate(1050, 260)">
+                        <text x="0" y="0" class="legend-heading">Visual States</text>
+                        <text x="0" y="25" class="legend-text">
+                            • Default: greyscale fill, 1.5px border
+                        </text>
+                        <text x="0" y="45" class="legend-text">
+                            • Focus: 3px SLDS blue stroke ring (#0070D2)
+                        </text>
+                        <text x="0" y="65" class="legend-text">
+                            • Dashed: hidden capability, muted text
+                        </text>
+                        <text x="0" y="85" class="legend-text">
+                            • Tag-highlight: darker fill (#d9d9d9)
+                        </text>
+                        <text x="0" y="105" class="legend-text">
+                            • Strategy: chevron-edge gold (L1)
+                        </text>
+                        <text x="0" y="125" class="legend-text">
+                            • Strategy: 6px/3px gold stripe (L2/L3)
+                        </text>
+                        <text x="0" y="155" class="legend-heading">Typography</text>
+                        <text x="0" y="180" class="legend-text">
+                            • L1: Georgia (serif, 16px, 600)
+                        </text>
+                        <text x="0" y="200" class="legend-text">
+                            • L2/L3: system sans (14px/12px)
+                        </text>
+                        <text x="0" y="230" class="legend-heading">Contrast Notes</text>
+                        <text x="0" y="255" class="legend-text">
+                            • Focus ring #0070D2: 4.6:1 vs white
+                        </text>
+                        <text x="0" y="275" class="legend-text">• Text #333: 12.6:1 vs white</text>
+                        <text x="0" y="295" class="legend-text">
+                            • Muted text #6b6b6b: 5.7:1 vs white
+                        </text>
+                        <text x="0" y="325" class="legend-heading">Band Ramp</text>
+                        <text x="0" y="350" class="legend-text">• Band 1: #f7f7f7 (lightest)</text>
+                        <text x="0" y="370" class="legend-text">• Band 2: #ececec</text>
+                        <text x="0" y="390" class="legend-text">• Band 3: #e0e0e0</text>
+                        <text x="0" y="410" class="legend-text">• Band 4: #d4d4d4 (darkest)</text>
+                    </g>
+                </svg>
+            </div>
+
+            <div class="detail-panel">
+                <div class="detail-panel-header">
+                    <h2>Customer Management</h2>
+                    <p>
+                        Acquire, serve, and retain customers across all channels and lifecycle
+                        stages.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

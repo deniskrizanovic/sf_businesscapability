@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>IsCrossCutting_Only_On_Level_1</fullName>
     <active>true</active>
-    <errorConditionFormula><![CDATA[AND(bcm_IsCrossCutting__c, bcm_Level__c <> 1)]]></errorConditionFormula>
+    <errorConditionFormula
+    ><![CDATA[AND(bcm_IsCrossCutting__c, bcm_Level__c <> 1)]]></errorConditionFormula>
     <errorDisplayField>bcm_IsCrossCutting__c</errorDisplayField>
     <errorMessage>The Cross-Cutting flag may only be set on Level 1 capabilities.</errorMessage>
 </ValidationRule>

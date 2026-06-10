@@ -1,7 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>66.0</apiVersion>
-    <description>Screen Flow that accepts a JSON payload, calls bcm_ImportController.execute, and displays a success or error screen.</description>
+    <description
+    >Screen Flow that accepts a JSON payload, calls bcm_ImportController.execute, and displays a success or error screen.</description>
     <interviewLabel>Import Capability Map {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Import Capability Map</label>
     <processMetadataValues>

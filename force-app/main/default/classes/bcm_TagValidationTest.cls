@@ -1,6 +1,5 @@
 @IsTest(SeeAllData=false)
 private class bcm_TagValidationTest {
-
     // ─── Valid picklist values save successfully ──────────────────────────────
 
     // @spec tag-object.md · "Tag colour picklist enforces allowed values" · "Valid picklist value saves successfully"
@@ -85,16 +84,14 @@ private class bcm_TagValidationTest {
     static void viewer_cannotInsertTag() {
         Test.startTest();
         ObjectPermissions op = [
-            SELECT PermissionsCreate FROM ObjectPermissions
+            SELECT PermissionsCreate
+            FROM ObjectPermissions
             WHERE Parent.Name = 'bcm_Viewer' AND SObjectType = 'bcm_Tag__c'
             LIMIT 1
         ];
         Test.stopTest();
 
-        Assert.isFalse(
-            op.PermissionsCreate,
-            'bcm_Viewer must not grant Create on bcm_Tag__c'
-        );
+        Assert.isFalse(op.PermissionsCreate, 'bcm_Viewer must not grant Create on bcm_Tag__c');
     }
 
     // @spec tag-object.md · "Permission sets grant correct access to Tags" · "Editor can create, edit, and delete a Tag record"

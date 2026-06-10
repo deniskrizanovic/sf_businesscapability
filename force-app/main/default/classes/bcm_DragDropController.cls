@@ -12,9 +12,8 @@
  * invariants; platform DML errors are re-thrown as {@link AuraHandledException}.</p>
  */
 public with sharing class bcm_DragDropController {
-
     private static final String ERROR_ACCESS_DENIED = 'Access denied.';
-    private static final String ERROR_CROSS_MAP     = 'Cannot move a capability across Maps.';
+    private static final String ERROR_CROSS_MAP = 'Cannot move a capability across Maps.';
 
     /**
      * AuraHandledException strips the constructor message from getMessage() —
@@ -49,10 +48,7 @@ public with sharing class bcm_DragDropController {
             List<bcm_Capability__c> toUpdate = new List<bcm_Capability__c>();
             Integer order = 1;
             for (Id capId : orderedIds) {
-                toUpdate.add(new bcm_Capability__c(
-                    Id               = capId,
-                    bcm_SortOrder__c = order
-                ));
+                toUpdate.add(new bcm_Capability__c(Id = capId, bcm_SortOrder__c = order));
                 order++;
             }
             update as user toUpdate;
@@ -117,9 +113,9 @@ public with sharing class bcm_DragDropController {
             Map<Id, bcm_Capability__c> updatesById = new Map<Id, bcm_Capability__c>();
 
             bcm_Capability__c movedUpdate = new bcm_Capability__c(
-                Id            = moved.Id,
+                Id = moved.Id,
                 bcm_Parent__c = newParentId,
-                bcm_Level__c  = newLevel
+                bcm_Level__c = newLevel
             );
             updatesById.put(moved.Id, movedUpdate);
 
@@ -175,7 +171,7 @@ public with sharing class bcm_DragDropController {
                 nextParents.add(child.Id);
             }
             currentParents = nextParents;
-            parentLevel    = childLevel;
+            parentLevel = childLevel;
         }
         return levelById;
     }

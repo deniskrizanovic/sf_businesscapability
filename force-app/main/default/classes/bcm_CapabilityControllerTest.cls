@@ -3,7 +3,6 @@
  */
 @IsTest
 private class bcm_CapabilityControllerTest {
-
     @TestSetup
     static void setupTestData() {
         bcm_Map__c mapA = TestDataFactory.createMap('Test Map A', true);
@@ -70,8 +69,11 @@ private class bcm_CapabilityControllerTest {
         }
         Assert.isNotNull(l2, 'L2 capability should be in result');
         Assert.areEqual(1, l2.Tags__r.size(), 'L2 should have 1 CapabilityTag junction');
-        Assert.areEqual('#F8B4B4', l2.Tags__r[0].bcm_Tag__r.bcm_Colour__c,
-            'Tag colour should match inserted value');
+        Assert.areEqual(
+            '#F8B4B4',
+            l2.Tags__r[0].bcm_Tag__r.bcm_Colour__c,
+            'Tag colour should match inserted value'
+        );
     }
 
     @IsTest
@@ -147,11 +149,13 @@ private class bcm_CapabilityControllerTest {
         // Given — populate detail fields on the L2 capability
         bcm_Map__c mapA = [SELECT Id FROM bcm_Map__c WHERE Name = 'Test Map A' LIMIT 1];
         bcm_Capability__c l2 = [
-            SELECT Id FROM bcm_Capability__c
-            WHERE bcm_Map__c = :mapA.Id AND bcm_Level__c = 2 LIMIT 1
+            SELECT Id
+            FROM bcm_Capability__c
+            WHERE bcm_Map__c = :mapA.Id AND bcm_Level__c = 2
+            LIMIT 1
         ];
-        l2.bcm_Definition__c          = '<p>Definition body</p>';
-        l2.bcm_StrategySupport__c     = '<p>Strategy body</p>';
+        l2.bcm_Definition__c = '<p>Definition body</p>';
+        l2.bcm_StrategySupport__c = '<p>Strategy body</p>';
         l2.bcm_ArchitecturalNuance__c = '<p>Nuance body</p>';
         update l2;
 
@@ -168,10 +172,13 @@ private class bcm_CapabilityControllerTest {
         Assert.isNotNull(result, 'Should return capability record');
         Assert.areEqual(l2.Id, result.Id, 'Should return requested record');
         Assert.areEqual('<p>Definition body</p>', result.bcm_Definition__c);
-        Assert.areEqual('<p>Strategy body</p>',   result.bcm_StrategySupport__c);
-        Assert.areEqual('<p>Nuance body</p>',     result.bcm_ArchitecturalNuance__c);
+        Assert.areEqual('<p>Strategy body</p>', result.bcm_StrategySupport__c);
+        Assert.areEqual('<p>Nuance body</p>', result.bcm_ArchitecturalNuance__c);
         Assert.areEqual(2, (Integer) result.bcm_Level__c);
-        Assert.isTrue(result.Tags__r.size() >= 1, 'Tags subquery should return at least 1 junction');
+        Assert.isTrue(
+            result.Tags__r.size() >= 1,
+            'Tags subquery should return at least 1 junction'
+        );
     }
 
     @IsTest
@@ -191,15 +198,17 @@ private class bcm_CapabilityControllerTest {
         // Given
         bcm_Map__c mapA = [SELECT Id FROM bcm_Map__c WHERE Name = 'Test Map A' LIMIT 1];
         bcm_Capability__c l2 = [
-            SELECT Id FROM bcm_Capability__c
-            WHERE bcm_Map__c = :mapA.Id AND bcm_Level__c = 2 LIMIT 1
+            SELECT Id
+            FROM bcm_Capability__c
+            WHERE bcm_Map__c = :mapA.Id AND bcm_Level__c = 2
+            LIMIT 1
         ];
         bcm_Capability__c input = new bcm_Capability__c(
-            Id                          = l2.Id,
-            Name                        = 'Renamed L2',
-            bcm_Definition__c           = '<p>Edited def</p>',
-            bcm_StrategySupport__c      = '<p>Edited strategy</p>',
-            bcm_ArchitecturalNuance__c  = '<p>Edited nuance</p>'
+            Id = l2.Id,
+            Name = 'Renamed L2',
+            bcm_Definition__c = '<p>Edited def</p>',
+            bcm_StrategySupport__c = '<p>Edited strategy</p>',
+            bcm_ArchitecturalNuance__c = '<p>Edited nuance</p>'
         );
 
         // When
@@ -210,12 +219,13 @@ private class bcm_CapabilityControllerTest {
         // Then
         bcm_Capability__c after = [
             SELECT Name, bcm_Definition__c, bcm_StrategySupport__c, bcm_ArchitecturalNuance__c
-            FROM bcm_Capability__c WHERE Id = :l2.Id
+            FROM bcm_Capability__c
+            WHERE Id = :l2.Id
         ];
-        Assert.areEqual('Renamed L2',                after.Name);
-        Assert.areEqual('<p>Edited def</p>',         after.bcm_Definition__c);
-        Assert.areEqual('<p>Edited strategy</p>',    after.bcm_StrategySupport__c);
-        Assert.areEqual('<p>Edited nuance</p>',      after.bcm_ArchitecturalNuance__c);
+        Assert.areEqual('Renamed L2', after.Name);
+        Assert.areEqual('<p>Edited def</p>', after.bcm_Definition__c);
+        Assert.areEqual('<p>Edited strategy</p>', after.bcm_StrategySupport__c);
+        Assert.areEqual('<p>Edited nuance</p>', after.bcm_ArchitecturalNuance__c);
     }
 
     @IsTest
@@ -254,8 +264,10 @@ private class bcm_CapabilityControllerTest {
         User restrictedUser = TestDataFactory.createUserWithPermSet('bcm_ReadOnly');
         bcm_Map__c mapA = [SELECT Id FROM bcm_Map__c WHERE Name = 'Test Map A' LIMIT 1];
         bcm_Capability__c l2 = [
-            SELECT Id FROM bcm_Capability__c
-            WHERE bcm_Map__c = :mapA.Id AND bcm_Level__c = 2 LIMIT 1
+            SELECT Id
+            FROM bcm_Capability__c
+            WHERE bcm_Map__c = :mapA.Id AND bcm_Level__c = 2
+            LIMIT 1
         ];
 
         Test.startTest();
@@ -274,8 +286,10 @@ private class bcm_CapabilityControllerTest {
         // Given — flip the L1 record's flag on, leave L2 default false
         bcm_Map__c mapA = [SELECT Id FROM bcm_Map__c WHERE Name = 'Test Map A' LIMIT 1];
         bcm_Capability__c l1 = [
-            SELECT Id FROM bcm_Capability__c
-            WHERE bcm_Map__c = :mapA.Id AND bcm_Level__c = 1 LIMIT 1
+            SELECT Id
+            FROM bcm_Capability__c
+            WHERE bcm_Map__c = :mapA.Id AND bcm_Level__c = 1
+            LIMIT 1
         ];
         l1.bcm_IsCrossCutting__c = true;
         update l1;
@@ -289,10 +303,12 @@ private class bcm_CapabilityControllerTest {
         Boolean l1Flag = null;
         Boolean l2Flag = null;
         for (bcm_Capability__c cap : result) {
-            if (cap.bcm_Level__c == 1) l1Flag = cap.bcm_IsCrossCutting__c;
-            if (cap.bcm_Level__c == 2) l2Flag = cap.bcm_IsCrossCutting__c;
+            if (cap.bcm_Level__c == 1)
+                l1Flag = cap.bcm_IsCrossCutting__c;
+            if (cap.bcm_Level__c == 2)
+                l2Flag = cap.bcm_IsCrossCutting__c;
         }
-        Assert.areEqual(true,  l1Flag, 'L1 should round-trip the cross-cutting flag as true');
+        Assert.areEqual(true, l1Flag, 'L1 should round-trip the cross-cutting flag as true');
         Assert.areEqual(false, l2Flag, 'L2 default should round-trip as false');
     }
 
@@ -302,8 +318,10 @@ private class bcm_CapabilityControllerTest {
         User restrictedUser = TestDataFactory.createUserWithPermSet('bcm_ReadOnly');
         bcm_Map__c mapA = [SELECT Id FROM bcm_Map__c WHERE Name = 'Test Map A' LIMIT 1];
         bcm_Capability__c l1 = [
-            SELECT Id FROM bcm_Capability__c
-            WHERE bcm_Map__c = :mapA.Id AND bcm_Level__c = 1 LIMIT 1
+            SELECT Id
+            FROM bcm_Capability__c
+            WHERE bcm_Map__c = :mapA.Id AND bcm_Level__c = 1
+            LIMIT 1
         ];
 
         Test.startTest();

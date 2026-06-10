@@ -1,9 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>bcm_IsCrossCutting__c</fullName>
     <label>Is Cross-Cutting</label>
-    <description>When checked, this capability applies across all other capabilities at the same map (e.g. Security, Compliance). Intended for Level 1 records; downstream visualisation may render cross-cutting capabilities differently.</description>
-    <inlineHelpText>Tick to mark this capability as cross-cutting (applies across all other capabilities). Typically used on Level 1 records.</inlineHelpText>
+    <description
+    >When checked, this capability applies across all other capabilities at the same map (e.g. Security, Compliance). Intended for Level 1 records; downstream visualisation may render cross-cutting capabilities differently.</description>
+    <inlineHelpText
+    >Tick to mark this capability as cross-cutting (applies across all other capabilities). Typically used on Level 1 records.</inlineHelpText>
     <type>Checkbox</type>
     <defaultValue>false</defaultValue>
 </CustomField>

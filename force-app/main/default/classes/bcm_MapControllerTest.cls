@@ -3,7 +3,6 @@
  */
 @IsTest
 private class bcm_MapControllerTest {
-
     @TestSetup
     static void setupTestData() {
         TestDataFactory.createMap('Map Alpha', true);
@@ -29,8 +28,16 @@ private class bcm_MapControllerTest {
         Test.stopTest();
 
         // Then
-        Assert.areEqual('Map Alpha', result[0].Name, 'First record should be Map Alpha (alphabetical)');
-        Assert.areEqual('Map Beta',  result[1].Name, 'Second record should be Map Beta (alphabetical)');
+        Assert.areEqual(
+            'Map Alpha',
+            result[0].Name,
+            'First record should be Map Alpha (alphabetical)'
+        );
+        Assert.areEqual(
+            'Map Beta',
+            result[1].Name,
+            'Second record should be Map Beta (alphabetical)'
+        );
     }
 
     @IsTest

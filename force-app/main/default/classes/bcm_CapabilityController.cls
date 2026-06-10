@@ -3,7 +3,6 @@
  * Includes CapabilityTag subquery for tag colour data used by bcm_CapabilityMap LWC.
  */
 public with sharing class bcm_CapabilityController {
-
     /**
      * Returns all Capabilities for the given Map, ordered by level then sort order.
      * Includes a subquery on bcm_CapabilityTags__r for tag colour highlight data.
@@ -20,12 +19,22 @@ public with sharing class bcm_CapabilityController {
         }
         try {
             return [
-                SELECT Id, Name, bcm_Parent__c, bcm_Level__c, bcm_SortOrder__c,
-                       bcm_ExternalId__c, bcm_Definition__c,
-                       bcm_StrategySupport__c, bcm_ArchitecturalNuance__c,
-                       bcm_HideFromDiagram__c, bcm_IsCrossCutting__c,
-                       (SELECT bcm_Tag__c, bcm_Tag__r.Name, bcm_Tag__r.bcm_Colour__c
-                        FROM Tags__r)
+                SELECT
+                    Id,
+                    Name,
+                    bcm_Parent__c,
+                    bcm_Level__c,
+                    bcm_SortOrder__c,
+                    bcm_ExternalId__c,
+                    bcm_Definition__c,
+                    bcm_StrategySupport__c,
+                    bcm_ArchitecturalNuance__c,
+                    bcm_HideFromDiagram__c,
+                    bcm_IsCrossCutting__c,
+                    (
+                        SELECT bcm_Tag__c, bcm_Tag__r.Name, bcm_Tag__r.bcm_Colour__c
+                        FROM Tags__r
+                    )
                 FROM bcm_Capability__c
                 WHERE bcm_Map__c = :mapId
                 WITH USER_MODE
@@ -50,12 +59,20 @@ public with sharing class bcm_CapabilityController {
         }
         try {
             return [
-                SELECT Id, Name, bcm_Parent__c, bcm_Level__c,
-                       bcm_Definition__c, bcm_StrategySupport__c,
-                       bcm_ArchitecturalNuance__c, bcm_HideFromDiagram__c,
-                       bcm_IsCrossCutting__c,
-                       (SELECT bcm_Tag__c, bcm_Tag__r.Name, bcm_Tag__r.bcm_Colour__c
-                          FROM Tags__r)
+                SELECT
+                    Id,
+                    Name,
+                    bcm_Parent__c,
+                    bcm_Level__c,
+                    bcm_Definition__c,
+                    bcm_StrategySupport__c,
+                    bcm_ArchitecturalNuance__c,
+                    bcm_HideFromDiagram__c,
+                    bcm_IsCrossCutting__c,
+                    (
+                        SELECT bcm_Tag__c, bcm_Tag__r.Name, bcm_Tag__r.bcm_Colour__c
+                        FROM Tags__r
+                    )
                 FROM bcm_Capability__c
                 WHERE Id = :capabilityId
                 WITH USER_MODE

@@ -23,6 +23,7 @@
 ## Task 1: Suppress canvas outline via CSS
 
 **Files:**
+
 - Modify: `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.css`
 
 - [x] **Step 1: Add outline-none rules** (2026-06-03)
@@ -50,6 +51,7 @@ git commit -m "fix(visualisation): suppress browser focus outline on SVG canvas 
 ## Task 2: e2e — assert no visible outline after click
 
 **Files:**
+
 - Modify: `tests/e2e/diagram.spec.ts`
 
 - [x] **Step 1: Add e2e test inside `Keyboard navigation — editor project` describe** (2026-06-03)
@@ -60,14 +62,10 @@ Append after the `'Clicking a node sets focus and ArrowRight moves to next colum
 test('No visible focus outline on canvas after click', async ({ page }) => {
     await openDiagram(page);
     const svg = page.locator('svg.bcm-canvas');
-    await svg.click();                       // gives focus
-    await expect(svg).toBeFocused();          // confirm focus acquired
-    const outlineStyle = await svg.evaluate(
-        (el) => window.getComputedStyle(el).outlineStyle
-    );
-    const outlineWidth = await svg.evaluate(
-        (el) => window.getComputedStyle(el).outlineWidth
-    );
+    await svg.click(); // gives focus
+    await expect(svg).toBeFocused(); // confirm focus acquired
+    const outlineStyle = await svg.evaluate((el) => window.getComputedStyle(el).outlineStyle);
+    const outlineWidth = await svg.evaluate((el) => window.getComputedStyle(el).outlineWidth);
     // Either outline-style:none OR outline-width:0px is sufficient
     expect(outlineStyle === 'none' || outlineWidth === '0px').toBe(true);
 });
@@ -90,6 +88,7 @@ git commit -m "test(e2e): assert no visible focus outline on canvas (GH #34)"
 ## Task 3: Update spec — `docs/specs/diagram.md`
 
 **Files:**
+
 - Modify: `docs/specs/diagram.md`
 
 - [x] **Step 1: Add new scenario at end of `Feature: Keyboard navigation` block (before the `---` separator that precedes `Feature: Keyboard navigation — L3 level`)** (2026-06-03)
@@ -97,13 +96,12 @@ git commit -m "test(e2e): assert no visible focus outline on canvas (GH #34)"
 Insert after the "Focused L3 bullet shows highlight background rect" scenario block:
 
 ```markdown
-
 **Scenario: SVG canvas does not show a default browser focus outline**
 
 Given the user clicks, tabs to, or drags within the diagram canvas  
 When the canvas element gains keyboard focus  
 Then no visible blue focus outline is rendered around the canvas  
-And keyboard handlers (`handleKeyDown`) still fire normally  
+And keyboard handlers (`handleKeyDown`) still fire normally
 
 > Tested by: diagram.spec.ts — "No visible focus outline on canvas after click"
 ```
@@ -120,6 +118,7 @@ git commit -m "docs(specs): add no-focus-outline scenario for canvas (GH #34)"
 ## Task 4: Note exclusion in COSMIC FP doc
 
 **Files:**
+
 - Modify: `docs/design/99-cosmic-function-point-count.md`
 
 - [x] **Step 1: Add row to §6 Excluded Processes table** (2026-06-03)

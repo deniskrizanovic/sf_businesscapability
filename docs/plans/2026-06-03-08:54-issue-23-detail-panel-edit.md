@@ -12,6 +12,7 @@
 Vertical end-to-end slice: editor with `bcm_CanEdit` toggles edit mode in the existing Capability Detail panel and saves Name + Definition + Strategy Support + Architectural Nuance via Apex; container reloads diagram so renamed nodes appear updated. Cancel reverts unsaved changes. Hide From Diagram excluded (already covered by `hideCapability`).
 
 **In scope (#23):**
+
 - New `bcm_CapabilityService` class (per ADR 0002 layered Apex architecture)
 - `bcm_CapabilityController.updateCapability` — thin pass-through to service
 - `bcm_CapabilityDetail` LWC — edit state, Save / Cancel, rich-text inputs
@@ -19,6 +20,7 @@ Vertical end-to-end slice: editor with `bcm_CanEdit` toggles edit mode in the ex
 - Apex tests + Jest tests + Playwright e2e
 
 **Out of scope:**
+
 - Hide From Diagram editing in panel (separate flow already lives in `hideCapability`)
 - Tag editing in panel (separate FP not yet on the roadmap)
 - Optimistic concurrency / lock detection
@@ -27,28 +29,28 @@ Vertical end-to-end slice: editor with `bcm_CanEdit` toggles edit mode in the ex
 
 ## Decisions
 
-| Decision | Choice |
-|---|---|
-| Edit affordance | Edit button in panel header (only when `canEdit`) toggles edit mode |
-| Save / Cancel placement | Footer of panel, only visible while in edit mode |
-| Field set | Name (`lightning-input`), Definition / Strategy / Nuance (`lightning-input-rich-text`) |
-| Apex layer | New `bcm_CapabilityService.updateCapability` — `update as user`; controller delegates only |
-| Service exception strategy | Service throws `IllegalArgumentException` for null; lets DML errors surface; controller wraps every throwable as `AuraHandledException` |
-| Field whitelist | Service builds a fresh `bcm_Capability__c` from input — only Id + four whitelisted fields are written; prevents mass assignment of fields outside scope |
-| Panel error region | Existing `errorMessage` slot reused; `_detailRequestSeq` already guards stale responses |
-| Diagram refresh | After save resolves, container calls `_loadCapabilities()` (existing fn) — refetches all caps, rebuilds layout |
-| Panel post-save state | Stays open; switches back to read mode; shows latest record (re-fetched in container response) |
-| Cancel revert source | Snapshot of original `capability` prop captured on edit-mode entry; replay-only client side, no Apex |
-| Viewer (no `bcm_CanEdit`) | No Edit button; no Save / Cancel; no rich-text inputs ever rendered |
-| `canEdit` propagation | Container reads `@salesforce/customPermission/bcm_CanEdit` (already imported) and passes `can-edit` to `c-bcm_-capability-detail` |
+| Decision                   | Choice                                                                                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Edit affordance            | Edit button in panel header (only when `canEdit`) toggles edit mode                                                                                     |
+| Save / Cancel placement    | Footer of panel, only visible while in edit mode                                                                                                        |
+| Field set                  | Name (`lightning-input`), Definition / Strategy / Nuance (`lightning-input-rich-text`)                                                                  |
+| Apex layer                 | New `bcm_CapabilityService.updateCapability` — `update as user`; controller delegates only                                                              |
+| Service exception strategy | Service throws `IllegalArgumentException` for null; lets DML errors surface; controller wraps every throwable as `AuraHandledException`                 |
+| Field whitelist            | Service builds a fresh `bcm_Capability__c` from input — only Id + four whitelisted fields are written; prevents mass assignment of fields outside scope |
+| Panel error region         | Existing `errorMessage` slot reused; `_detailRequestSeq` already guards stale responses                                                                 |
+| Diagram refresh            | After save resolves, container calls `_loadCapabilities()` (existing fn) — refetches all caps, rebuilds layout                                          |
+| Panel post-save state      | Stays open; switches back to read mode; shows latest record (re-fetched in container response)                                                          |
+| Cancel revert source       | Snapshot of original `capability` prop captured on edit-mode entry; replay-only client side, no Apex                                                    |
+| Viewer (no `bcm_CanEdit`)  | No Edit button; no Save / Cancel; no rich-text inputs ever rendered                                                                                     |
+| `canEdit` propagation      | Container reads `@salesforce/customPermission/bcm_CanEdit` (already imported) and passes `can-edit` to `c-bcm_-capability-detail`                       |
 
 ---
 
 ## Function Points (COSMIC)
 
-| FP | Process | CFP | Status this slice |
-|---|---|---|---|
-| FP30 | Edit Capability via Panel — Save | 3 | **Delivered in #23 (2026-06-03)** |
+| FP   | Process                          | CFP | Status this slice                 |
+| ---- | -------------------------------- | --- | --------------------------------- |
+| FP30 | Edit Capability via Panel — Save | 3   | **Delivered in #23 (2026-06-03)** |
 
 `docs/design/99-cosmic-function-point-count.md` already enumerates FP30 with running total **122 CFP** — no arithmetic change. Update delivery status note.
 
@@ -85,30 +87,30 @@ bcm_CapabilityController (LWC boundary)
 
 ## Files to create
 
-| File | Purpose |
-|---|---|
-| `force-app/main/default/classes/bcm_CapabilityService.cls` | Service layer (per ADR 0002) — `updateCapability(bcm_Capability__c)` |
-| `force-app/main/default/classes/bcm_CapabilityService.cls-meta.xml` | API version metadata |
-| `force-app/main/default/classes/bcm_CapabilityServiceTest.cls` | Service unit tests |
-| `force-app/main/default/classes/bcm_CapabilityServiceTest.cls-meta.xml` | API version metadata |
+| File                                                                    | Purpose                                                              |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `force-app/main/default/classes/bcm_CapabilityService.cls`              | Service layer (per ADR 0002) — `updateCapability(bcm_Capability__c)` |
+| `force-app/main/default/classes/bcm_CapabilityService.cls-meta.xml`     | API version metadata                                                 |
+| `force-app/main/default/classes/bcm_CapabilityServiceTest.cls`          | Service unit tests                                                   |
+| `force-app/main/default/classes/bcm_CapabilityServiceTest.cls-meta.xml` | API version metadata                                                 |
 
 ## Files to modify
 
-| File | Change |
-|---|---|
-| `force-app/main/default/classes/bcm_CapabilityController.cls` | Add `updateCapability(bcm_Capability__c)` — delegates to service, wraps as `AuraHandledException` |
-| `force-app/main/default/classes/bcm_CapabilityControllerTest.cls` | Add `updateCapability_persists` + `updateCapability_nullCapability_throws` |
-| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.js` | Add `canEdit` prop, edit-mode state, save/cancel handlers, draft tracking, `saved` event |
-| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.html` | Edit button (header), Save/Cancel (footer), field inputs in edit mode |
-| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.css` | Footer button row + label/input alignment |
-| `force-app/main/default/lwc/bcm_CapabilityDetail/__tests__/bcm_CapabilityDetail.test.js` | Add edit-mode tests (button visibility, save event payload, cancel revert) |
-| `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js` | `handleDetailSaved` — call `updateCapability` then `_loadCapabilities`; pass `canEdit` to detail panel |
-| `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.html` | Bind `can-edit={canEdit}` and `onsaved={handleDetailSaved}` to `c-bcm_-capability-detail` |
-| `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js` | Add `saved` event test — Apex called, layout rebuilt with new name |
-| `tests/e2e/capability-detail.spec.ts` | Add editor-only edit/save scenario, viewer-no-save, cancel revert |
-| `docs/specs/diagram.md` | Replace `> Deferred: edit affordances out of scope for #22; FP30 in #3` markers with `> Tested by:` lines for delivered scenarios; update viewer-no-save to point at e2e |
-| `docs/design/99-cosmic-function-point-count.md` | Update delivery-status footer line: FP30 delivered in #23 (2026-06-03) |
-| `docs/design/05-lwc-architecture.md` | Add `updateCapability` controller import + `canEdit` prop on `bcm_CapabilityDetail` + `saved` event flow in container |
+| File                                                                                     | Change                                                                                                                                                                   |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `force-app/main/default/classes/bcm_CapabilityController.cls`                            | Add `updateCapability(bcm_Capability__c)` — delegates to service, wraps as `AuraHandledException`                                                                        |
+| `force-app/main/default/classes/bcm_CapabilityControllerTest.cls`                        | Add `updateCapability_persists` + `updateCapability_nullCapability_throws`                                                                                               |
+| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.js`                | Add `canEdit` prop, edit-mode state, save/cancel handlers, draft tracking, `saved` event                                                                                 |
+| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.html`              | Edit button (header), Save/Cancel (footer), field inputs in edit mode                                                                                                    |
+| `force-app/main/default/lwc/bcm_CapabilityDetail/bcm_CapabilityDetail.css`               | Footer button row + label/input alignment                                                                                                                                |
+| `force-app/main/default/lwc/bcm_CapabilityDetail/__tests__/bcm_CapabilityDetail.test.js` | Add edit-mode tests (button visibility, save event payload, cancel revert)                                                                                               |
+| `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.js`                      | `handleDetailSaved` — call `updateCapability` then `_loadCapabilities`; pass `canEdit` to detail panel                                                                   |
+| `force-app/main/default/lwc/bcm_CapabilityMap/bcm_CapabilityMap.html`                    | Bind `can-edit={canEdit}` and `onsaved={handleDetailSaved}` to `c-bcm_-capability-detail`                                                                                |
+| `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js`       | Add `saved` event test — Apex called, layout rebuilt with new name                                                                                                       |
+| `tests/e2e/capability-detail.spec.ts`                                                    | Add editor-only edit/save scenario, viewer-no-save, cancel revert                                                                                                        |
+| `docs/specs/diagram.md`                                                                  | Replace `> Deferred: edit affordances out of scope for #22; FP30 in #3` markers with `> Tested by:` lines for delivered scenarios; update viewer-no-save to point at e2e |
+| `docs/design/99-cosmic-function-point-count.md`                                          | Update delivery-status footer line: FP30 delivered in #23 (2026-06-03)                                                                                                   |
+| `docs/design/05-lwc-architecture.md`                                                     | Add `updateCapability` controller import + `canEdit` prop on `bcm_CapabilityDetail` + `saved` event flow in container                                                    |
 
 ---
 
@@ -118,7 +120,6 @@ bcm_CapabilityController (LWC boundary)
 
 ```apex
 public with sharing class bcm_CapabilityService {
-
     /**
      * Persists Name, Definition, Strategy Support, Architectural Nuance.
      * Uses `update as user` (USER_MODE) so FLS/CRUD enforced.
@@ -133,11 +134,11 @@ public with sharing class bcm_CapabilityService {
         // Whitelist: only persist fields in edit panel scope. Prevents
         // unintended writes if caller passes a record with extra populated fields.
         bcm_Capability__c toUpdate = new bcm_Capability__c(
-            Id                          = cap.Id,
-            Name                        = cap.Name,
-            bcm_Definition__c           = cap.bcm_Definition__c,
-            bcm_StrategySupport__c      = cap.bcm_StrategySupport__c,
-            bcm_ArchitecturalNuance__c  = cap.bcm_ArchitecturalNuance__c
+            Id = cap.Id,
+            Name = cap.Name,
+            bcm_Definition__c = cap.bcm_Definition__c,
+            bcm_StrategySupport__c = cap.bcm_StrategySupport__c,
+            bcm_ArchitecturalNuance__c = cap.bcm_ArchitecturalNuance__c
         );
         update as user toUpdate;
     }
@@ -160,12 +161,14 @@ public static void updateCapability(bcm_Capability__c capability) {
 **Apex tests:**
 
 `bcm_CapabilityServiceTest`:
+
 - `updateCapability_persists_whitelistedFields` — seed Capability, call service with Name + Definition + Strategy + Nuance, assert all four updated
 - `updateCapability_ignoresFieldsOutsideWhitelist` — pass record with `bcm_HideFromDiagram__c=true`; assert original value unchanged
 - `updateCapability_nullCapability_throws_IllegalArgument`
 - `updateCapability_nullId_throws_IllegalArgument`
 
 `bcm_CapabilityControllerTest` additions:
+
 - `updateCapability_persists` — happy path; record reflects new Name
 - `updateCapability_nullCapability_throws` — `AuraHandledException`
 
@@ -233,6 +236,7 @@ handleSave() {
 ```
 
 Template additions:
+
 - Header: `lightning-button-icon` Edit (utility:edit) when `canShowEditButton`
 - Body in edit mode: `lightning-input` for Name, three `lightning-input-rich-text` for Definition / Strategy / Nuance
 - Footer: `lightning-button` Save (variant=brand) + Cancel — only when `canShowSaveCancel`
@@ -276,6 +280,7 @@ Add `import updateCapability from '@salesforce/apex/bcm_CapabilityController.upd
 ### Step 4 — Jest tests
 
 `bcm_CapabilityDetail.test.js` additions:
+
 - `canEdit=false` -> no Edit button rendered
 - `canEdit=true` -> Edit button rendered when capability set
 - Click Edit -> rich-text inputs visible, Save+Cancel visible, Edit hidden
@@ -284,6 +289,7 @@ Add `import updateCapability from '@salesforce/apex/bcm_CapabilityController.upd
 - Save handler does not fire when `canEdit=false` (safety regression)
 
 `bcm_CapabilityMap.test.js` additions:
+
 - saved event triggers `updateCapability` mock with built payload
 - After save resolves, `getCapabilities` mock is called again (diagram refresh)
 
@@ -301,15 +307,16 @@ If viewer storage state path is not yet wired, leave viewer-no-save coverage to 
 
 `docs/specs/diagram.md` — replace deferred markers under "Detail Panel — inline edit (Editors only)":
 
-| Scenario | New marker |
-|---|---|
-| Editor sees editable fields | `> Tested by: capability-detail.spec.ts — "Editor sees Edit button and can enter edit mode"` |
-| Viewer sees read-only fields | `> Tested by: bcm_CapabilityDetail.test.js — "No Save / Cancel buttons rendered (read-only scope)", "Viewer (canEdit=false) sees no Edit button"` |
-| Save persists field changes | `> Tested by: capability-detail.spec.ts — "Save persists name change and refreshes diagram"; bcm_CapabilityServiceTest.updateCapability_persists_whitelistedFields; bcm_CapabilityControllerTest.updateCapability_persists` |
-| Cancel discards unsaved changes | `> Tested by: capability-detail.spec.ts — "Cancel reverts unsaved name change"; bcm_CapabilityDetail.test.js — "Cancel reverts to read mode without firing saved"` |
-| Save error shows inline message | `> Deferred: requires seeded validation rule; covered by code review (errorMessage prop wired in container catch handler)` |
+| Scenario                        | New marker                                                                                                                                                                                                                  |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Editor sees editable fields     | `> Tested by: capability-detail.spec.ts — "Editor sees Edit button and can enter edit mode"`                                                                                                                                |
+| Viewer sees read-only fields    | `> Tested by: bcm_CapabilityDetail.test.js — "No Save / Cancel buttons rendered (read-only scope)", "Viewer (canEdit=false) sees no Edit button"`                                                                           |
+| Save persists field changes     | `> Tested by: capability-detail.spec.ts — "Save persists name change and refreshes diagram"; bcm_CapabilityServiceTest.updateCapability_persists_whitelistedFields; bcm_CapabilityControllerTest.updateCapability_persists` |
+| Cancel discards unsaved changes | `> Tested by: capability-detail.spec.ts — "Cancel reverts unsaved name change"; bcm_CapabilityDetail.test.js — "Cancel reverts to read mode without firing saved"`                                                          |
+| Save error shows inline message | `> Deferred: requires seeded validation rule; covered by code review (errorMessage prop wired in container catch handler)`                                                                                                  |
 
 `docs/design/99-cosmic-function-point-count.md` — update footer line:
+
 > **Delivery status:** FP29 delivered in GH issue #22 (2026-06-02). FP30 delivered in GH issue #23 (2026-06-03).
 
 `docs/design/05-lwc-architecture.md` — append `updateCapability` to controller import list; add `canEdit` prop + `saved` event to `bcm_CapabilityDetail` row.
