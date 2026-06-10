@@ -14,7 +14,7 @@ export default defineConfig({
     // fullyParallel is false. Revert to workers: 1 if cross-project flake returns.
     workers: 2,
     retries: 1,
-    reporter: [['html', { outputFolder: 'playwright-report', open: 'never' }]],
+    reporter: [['line'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],
     use: {
         baseURL: process.env.SF_BASE_URL,
         trace: 'on-first-retry',
