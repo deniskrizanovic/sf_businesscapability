@@ -88,19 +88,19 @@ const PAYLOAD = {
 
 // After the import, flip the cross-cutting flag on Foo/Bar.
 // Importer does not yet expose bcm_IsCrossCutting__c.
-const EDITOR_USERNAME = process.env.SF_EDITOR_USERNAME;
-if (!EDITOR_USERNAME) throw new Error('SF_EDITOR_USERNAME not set — required for diagram seed');
-
 const apexEscape = (s: string): string => s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
-const POST_SEED_APEX = `
+function buildPostSeedApex(): string {
+    const editorUsername = process.env.SF_EDITOR_USERNAME;
+    if (!editorUsername) throw new Error('SF_EDITOR_USERNAME not set — required for diagram seed');
+    return `
 {
     List<bcm_Capability__c> cc = [SELECT Id FROM bcm_Capability__c
         WHERE Name IN ('Cross-cutting Foo ${RUN_ID}', 'Cross-cutting Bar ${RUN_ID}')];
     for (bcm_Capability__c c : cc) c.bcm_IsCrossCutting__c = true;
     update cc;
 
-    Id editorUserId = [SELECT Id FROM User WHERE Username = '${apexEscape(EDITOR_USERNAME)}' LIMIT 1].Id;
+    Id editorUserId = [SELECT Id FROM User WHERE Username = '${apexEscape(editorUsername)}' LIMIT 1].Id;
     bcm_Tag__c t = new bcm_Tag__c(Name = '${apexEscape(DIAGRAM_TAG_NAME)}', bcm_Colour__c = '${DIAGRAM_TAG_COLOUR}');
     insert t;
     t.OwnerId = editorUserId;
@@ -111,9 +111,10 @@ const POST_SEED_APEX = `
     insert new bcm_CapabilityTag__c(bcm_Capability__c = tagged.Id, bcm_Tag__c = t.Id);
 }
 `.trim();
+}
 
 export const diagramSeed: SeedSpec = {
     label: 'diagram',
     payload: PAYLOAD,
-    postSeedApex: POST_SEED_APEX,
+    get postSeedApex() { return buildPostSeedApex(); },
 };

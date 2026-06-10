@@ -1558,6 +1558,11 @@ describe('BcmCapabilityMap tag session persistence', () => {
         jest.clearAllMocks();
     });
 
+    // lwc-jest stubs don't reflect `label` to a DOM attribute, so attribute
+    // selectors fail. Combobox order in template: [0] Map, [1] Colour by Tag.
+    const getTagCombobox = () =>
+        element.shadowRoot.querySelectorAll('lightning-combobox')[1];
+
     it('Writes selectedTagId to sessionStorage on tag change', async () => {
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
         mockGetTags.emit({ data: [
@@ -1565,7 +1570,7 @@ describe('BcmCapabilityMap tag session persistence', () => {
             { Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' },
         ], error: undefined });
         await flushPromises();
-        const tagCombobox = element.shadowRoot.querySelectorAll('lightning-combobox')[1];
+        const tagCombobox = getTagCombobox();
         tagCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'TAG-2' } }));
         await flushPromises();
         expect(sessionStorage.getItem('bcm.visualisation.selectedTagId')).toBe('TAG-2');
@@ -1576,7 +1581,7 @@ describe('BcmCapabilityMap tag session persistence', () => {
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
         mockGetTags.emit({ data: [{ Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' }], error: undefined });
         await flushPromises();
-        const tagCombobox = element.shadowRoot.querySelectorAll('lightning-combobox')[1];
+        const tagCombobox = getTagCombobox();
         tagCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: '' } }));
         await flushPromises();
         expect(sessionStorage.getItem('bcm.visualisation.selectedTagId')).toBeNull();
@@ -1593,8 +1598,7 @@ describe('BcmCapabilityMap tag session persistence', () => {
             { Id: 'TAG-2', Name: 'Green', bcm_Colour__c: '#00FF00' },
         ], error: undefined });
         await flushPromises();
-        const tagCombobox = element.shadowRoot.querySelectorAll('lightning-combobox')[1];
-        expect(tagCombobox.value).toBe('TAG-2');
+        expect(getTagCombobox().value).toBe('TAG-2');
     });
 
     it('Clears persisted tag id and leaves selector at None when id is not in tagOptions', async () => {
@@ -1605,8 +1609,7 @@ describe('BcmCapabilityMap tag session persistence', () => {
         mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
         mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
         await flushPromises();
-        const tagCombobox = element.shadowRoot.querySelectorAll('lightning-combobox')[1];
-        expect(tagCombobox.value).toBeFalsy();
+        expect(getTagCombobox().value).toBe('');
         expect(sessionStorage.getItem('bcm.visualisation.selectedTagId')).toBeNull();
     });
 
@@ -1617,7 +1620,7 @@ describe('BcmCapabilityMap tag session persistence', () => {
             mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
             mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
             await flushPromises();
-            const tagCombobox = element.shadowRoot.querySelectorAll('lightning-combobox')[1];
+            const tagCombobox = getTagCombobox();
             expect(() => {
                 tagCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'TAG-1' } }));
             }).not.toThrow();
@@ -1640,8 +1643,7 @@ describe('BcmCapabilityMap tag session persistence', () => {
                 mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
             }).not.toThrow();
             await flushPromises();
-            const tagCombobox = element.shadowRoot.querySelectorAll('lightning-combobox')[1];
-            expect(tagCombobox.value).toBeFalsy();
+            expect(getTagCombobox().value).toBe('');
         } finally {
             getItemSpy.mockRestore();
         }
@@ -1660,8 +1662,7 @@ describe('BcmCapabilityMap tag session persistence', () => {
                 mockGetTags.emit({ data: [{ Id: 'TAG-1', Name: 'Red', bcm_Colour__c: '#FF0000' }], error: undefined });
             }).not.toThrow();
             await flushPromises();
-            const tagCombobox = element.shadowRoot.querySelectorAll('lightning-combobox')[1];
-            expect(tagCombobox.value).toBeFalsy();
+            expect(getTagCombobox().value).toBe('');
         } finally {
             removeItemSpy.mockRestore();
         }

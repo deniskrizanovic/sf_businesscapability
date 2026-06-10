@@ -280,12 +280,10 @@ test.describe('Tag highlight — editor project', () => {
         await page.locator('.bcm-canvas').waitFor({ state: 'visible', timeout: 20000 });
         await page.locator('.bcm-canvas polygon').first().waitFor({ state: 'visible', timeout: 20000 });
 
-        // Tag combobox displays the seeded tag name
+        // lightning-combobox renders the selected option's label as text;
+        // its `value` is the Tag Id, so assert on visible text.
         const restored = page.getByRole('combobox', { name: 'Colour by Tag' }).first();
-        await expect(restored).toHaveValue(DIAGRAM_TAG_NAME).catch(async () => {
-            // lightning-combobox surfaces selection via aria-activedescendant; fall back to text
-            await expect(restored).toContainText(DIAGRAM_TAG_NAME);
-        });
+        await expect(restored).toContainText(DIAGRAM_TAG_NAME);
 
         // Canvas re-applies tag colouring on the tagged L3 capability
         await expect(page.locator('.bcm-canvas rect.bcm-l3-tag-rect').first())
