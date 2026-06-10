@@ -12,7 +12,21 @@
     display: flex;
     flex-direction: column;
     position: relative;
+    overflow: visible;
+}
+
+/* Clip wrapper for the detail panel only. Keeps the parked-off-screen
+   translateX(100%) state from leaking past the LWC right edge while
+   leaving toolbar combobox overlays free to paint outside the root. */
+.bcm-panel-clip {
+    position: absolute;
+    inset: 0;
     overflow: hidden;
+    pointer-events: none;
+}
+
+.bcm-panel-clip > c-bcm_-capability-detail {
+    pointer-events: auto;
 }
 
 .bcm-toolbar {

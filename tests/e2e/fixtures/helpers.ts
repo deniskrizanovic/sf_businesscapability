@@ -1,4 +1,4 @@
-import type { FrameLocator, Page } from '@playwright/test';
+import type { FrameLocator, Locator, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 import { getRunId } from './run-id';
 
@@ -213,4 +213,93 @@ export async function clickFlowNext(
     await handle.waitForElementState('hidden', { timeout: 30000 });
     await handle.dispose();
     await body.waitFor({ state: 'visible', timeout: 30000 });
+}
+
+/**
+ * Assert that the given element is not visually clipped by any ancestor.
+ *
+ * Catches the specific bug where SLDS overlays render under an
+ * `overflow: hidden` container that visually crops them even though
+ * `getBoundingClientRect()` returns the full layout rect (so `toBeVisible()`
+ * would lie).
+ *
+ * Approach: sample points across the element's rect (top, middle, bottom rows
+ * × left, centre, right cols) and use `elementFromPoint` — recursing into
+ * shadow roots — to find what actually paints there. Each sample point must
+ * resolve to the element itself or one of its descendants. If a sample point
+ * is outside the viewport, or hit-tests to an unrelated ancestor/sibling,
+ * the element is clipped at that point.
+ *
+ * `overflow: hidden` clips both paint AND hit-testing for descendants, so
+ * `elementFromPoint` is a faithful proxy for "is this pixel actually the
+ * element from the user's perspective".
+ */
+export async function expectNotClippedByAncestor(locator: Locator): Promise<void> {
+    const violation = await locator.evaluate((el: Element) => {
+        const rect = el.getBoundingClientRect();
+        const vw = document.documentElement.clientWidth;
+        const vh = document.documentElement.clientHeight;
+
+        // Recursive elementFromPoint that pierces open shadow roots.
+        const deepElementFromPoint = (x: number, y: number): Element | null => {
+            let scope: Document | ShadowRoot = document;
+            let last: Element | null = null;
+            for (let i = 0; i < 16; i++) {
+                const hit = scope.elementFromPoint(x, y);
+                if (!hit || hit === last) return last;
+                last = hit;
+                if (hit.shadowRoot) {
+                    scope = hit.shadowRoot;
+                } else {
+                    return hit;
+                }
+            }
+            return last;
+        };
+
+        const isOrContains = (candidate: Element | null): boolean => {
+            if (!candidate) return false;
+            // Walk up through parents and shadow hosts looking for `el`.
+            let node: Element | null = candidate;
+            while (node) {
+                if (node === el) return true;
+                node = node.parentElement
+                    ?? (node.getRootNode() instanceof ShadowRoot
+                        ? (node.getRootNode() as ShadowRoot).host
+                        : null);
+            }
+            return false;
+        };
+
+        // Sample 9 points: 3 rows × 3 cols, inset 2px from edges.
+        const inset = 2;
+        const xs = [rect.left + inset, rect.left + rect.width / 2, rect.right - inset];
+        const ys = [rect.top + inset, rect.top + rect.height / 2, rect.bottom - inset];
+
+        for (const y of ys) {
+            for (const x of xs) {
+                if (x < 0 || y < 0 || x > vw || y > vh) {
+                    return {
+                        reason: 'sample point outside viewport',
+                        point: { x, y },
+                        viewport: { w: vw, h: vh },
+                        elRect: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right },
+                    };
+                }
+                const hit = deepElementFromPoint(x, y);
+                if (!isOrContains(hit)) {
+                    return {
+                        reason: 'sample point hit-tests to unrelated element',
+                        point: { x, y },
+                        hit: hit
+                            ? { tag: hit.tagName.toLowerCase(), className: (hit as HTMLElement).className || '' }
+                            : null,
+                        elRect: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right },
+                    };
+                }
+            }
+        }
+        return null;
+    });
+    expect(violation, `Element visually clipped: ${JSON.stringify(violation)}`).toBeNull();
 }

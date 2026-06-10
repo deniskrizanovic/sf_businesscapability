@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { RUN_ID, selectMap, openDiagram } from './fixtures/helpers';
+import { RUN_ID, selectMap, openDiagram, expectNotClippedByAncestor } from './fixtures/helpers';
 import { MAP_NAME, DIAGRAM_TAG_NAME } from './diagram.seed';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -410,6 +410,28 @@ test.describe('Keyboard navigation — editor project', () => {
             (el) => window.getComputedStyle(el).outlineWidth
         );
         expect(outlineStyle === 'none' || outlineWidth === '0px').toBe(true);
+    });
+});
+
+// ── Toolbar dropdown clipping ─────────────────────────────────────────────────
+
+test.describe('Toolbar dropdown clipping — editor project', () => {
+    test('Map combobox option panel is not clipped when no map selected', async ({ page }) => {
+        await openDiagram(page); // do NOT call selectMap — bug only surfaces with short canvas
+        const combo = page.getByRole('combobox', { name: 'Map' }).first();
+        await combo.click();
+        const option = page.getByRole('option').first();
+        await expect(option).toBeVisible();
+        await expectNotClippedByAncestor(option);
+    });
+
+    test('Colour by Tag combobox option panel is not clipped when no map selected', async ({ page }) => {
+        await openDiagram(page);
+        const combo = page.getByRole('combobox', { name: 'Colour by Tag' }).first();
+        await combo.click();
+        const option = page.getByRole('option').first();
+        await expect(option).toBeVisible();
+        await expectNotClippedByAncestor(option);
     });
 });
 
