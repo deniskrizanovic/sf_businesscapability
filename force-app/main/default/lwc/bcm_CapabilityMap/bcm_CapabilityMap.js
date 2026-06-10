@@ -24,6 +24,10 @@ const FONT_SIZE_L2      = 12;
 const FONT_SIZE_L3      = 11;
 const BULLET_INDENT     = Math.round(FONT_SIZE_L3 * 0.6 * 2);
 
+const STRATEGY_STRIPE_W       = 3;
+const STRATEGY_STRIPE_INSET_Y = 4;
+const STRATEGY_STRIPE_INSET_X = 4;
+
 // Cross-cutting band layered visual
 const BAND_ROW_OVERLAP    = 12;
 const BAND_NOTCH          = CHEVRON_NOTCH * 2;
@@ -393,6 +397,15 @@ export default class BcmCapabilityMap extends LightningElement {
             colMap[colIdx]  = l1.Id;
             l2ByCol[colIdx] = [];
 
+            const l1Strategy = (this.showStrategicSupport && isStrategic(l1.bcm_StrategySupport__c))
+                ? {
+                    x      : x + STRATEGY_STRIPE_INSET_X,
+                    y      : y + STRATEGY_STRIPE_INSET_Y,
+                    width  : STRATEGY_STRIPE_W,
+                    height : h - STRATEGY_STRIPE_INSET_Y * 2,
+                }
+                : null;
+
             l1Nodes.push({
                 id          : l1.Id,
                 name        : l1.Name,
@@ -405,6 +418,7 @@ export default class BcmCapabilityMap extends LightningElement {
                 points,
                 handleX     : x + 8,
                 handleY     : y + h / 2 + 4,
+                strategyStripe: l1Strategy,
                 labelLines: textLines.map((text, i) => ({
                     key : l1.Id + '-label-' + i,
                     text,
@@ -468,6 +482,14 @@ export default class BcmCapabilityMap extends LightningElement {
                         l3Name    : l3.Name,
                         isFocused : l3Focused,
                         lines,
+                        strategyStripe: (this.showStrategicSupport && isStrategic(l3.bcm_StrategySupport__c))
+                            ? {
+                                x      : bulletBaseX - 8,
+                                y      : focusRectStartY,
+                                width  : STRATEGY_STRIPE_W,
+                                height : allLines.length * LINE_HEIGHT - 2,
+                            }
+                            : null,
                         focusRect : l3Focused ? {
                             x     : bulletBaseX - 4,
                             y     : focusRectStartY,
@@ -495,6 +517,15 @@ export default class BcmCapabilityMap extends LightningElement {
                 const rowIdx    = l2ByCol[colIdx].length;
                 l2ByCol[colIdx].push(l2.Id);
 
+                const l2Strategy = (this.showStrategicSupport && isStrategic(l2.bcm_StrategySupport__c))
+                    ? {
+                        x      : colX + STRATEGY_STRIPE_INSET_X,
+                        y      : boxY + STRATEGY_STRIPE_INSET_Y,
+                        width  : STRATEGY_STRIPE_W,
+                        height : boxHeight - STRATEGY_STRIPE_INSET_Y * 2,
+                    }
+                    : null;
+
                 l2Nodes.push({
                     id          : l2.Id,
                     name        : l2.Name,
@@ -511,6 +542,7 @@ export default class BcmCapabilityMap extends LightningElement {
                     strokeDash  : l2Dashed ? '4 2' : '',
                     handleX     : colX + 4,
                     handleY     : boxY + 12,
+                    strategyStripe: l2Strategy,
                     labelLines : l2Lines.map((text, i) => ({
                         key  : l2.Id + '-label-' + i,
                         text,
@@ -586,6 +618,14 @@ export default class BcmCapabilityMap extends LightningElement {
                     points,
                     labelX: bandX + BAND_LABEL_PAD_X,
                     labelY: y + h - BAND_LABEL_PAD_BOTTOM,
+                    strategyStripe: (this.showStrategicSupport && isStrategic(cc.bcm_StrategySupport__c))
+                        ? {
+                            x      : bandX + STRATEGY_STRIPE_INSET_X,
+                            y      : y + STRATEGY_STRIPE_INSET_Y,
+                            width  : STRATEGY_STRIPE_W,
+                            height : h - STRATEGY_STRIPE_INSET_Y * 2,
+                        }
+                        : null,
                 });
             }
         }

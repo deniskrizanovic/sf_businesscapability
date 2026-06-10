@@ -100,3 +100,8 @@ g[data-l3-group]:hover text[data-node-level="3"] {
 .bcm-drop-indicator {
     pointer-events: none;
 }
+
+.bcm-strategy-stripe {
+    fill: #E8A33D;
+    pointer-events: none;
+}

@@ -1750,4 +1750,35 @@ describe('BcmCapabilityMap strategic support highlight', () => {
             setItemSpy.mockRestore();
         }
     });
+
+    it('Marker present when toggle on and capability has strategy support content', async () => {
+        const CAPS_WITH_STRATEGY = [
+            { Id: 'L1-A', Name: 'L1 A', bcm_Level__c: 1, bcm_SortOrder__c: 1, bcm_Parent__c: null,
+              bcm_StrategySupport__c: '' },
+            { Id: 'L2-A', Name: 'L2 A', bcm_Level__c: 2, bcm_SortOrder__c: 1, bcm_Parent__c: 'L1-A',
+              bcm_StrategySupport__c: '<p>Real content</p>', Tags__r: [] },
+        ];
+        mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_WITH_STRATEGY);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [], error: undefined });
+        await flushPromises();
+        await seedLayout(element);
+        const btn = element.shadowRoot.querySelector('[data-id="strategic-support-toggle"]');
+        btn.click();
+        await flushPromises();
+        expect(element.shadowRoot.querySelectorAll('rect.bcm-strategy-stripe').length).toBeGreaterThan(0);
+    });
+
+    it('Marker absent when toggle off even if capabilities have content', async () => {
+        const CAPS_WITH_STRATEGY = [
+            { Id: 'L1-A', Name: 'L1 A', bcm_Level__c: 1, bcm_SortOrder__c: 1, bcm_Parent__c: null,
+              bcm_StrategySupport__c: '<p>Real content</p>' },
+        ];
+        mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_WITH_STRATEGY);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [], error: undefined });
+        await flushPromises();
+        await seedLayout(element);
+        expect(element.shadowRoot.querySelectorAll('rect.bcm-strategy-stripe').length).toBe(0);
+    });
 });
