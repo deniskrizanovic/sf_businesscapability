@@ -1,18 +1,8 @@
 import { LightningElement, api, wire, track } from 'lwc';
 import { getRecord } from 'lightning/uiRecordApi';
+import { BCM_TAG_PRESETS } from 'c/bcm_VisualTokens';
 
-const COLOUR_LABELS = {
-    '#A8C7FF': 'Blue',
-    '#B8E0C8': 'Green',
-    '#F8B4B4': 'Red',
-    '#D8C4EC': 'Purple',
-    '#FFD4A8': 'Orange',
-    '#B8DCDC': 'Teal',
-    '#FFC8DC': 'Pink',
-    '#FFE4A8': 'Amber',
-    '#C4C8F0': 'Indigo',
-    '#B8E0C0': 'Emerald'
-};
+const COLOUR_LABELS = Object.fromEntries(BCM_TAG_PRESETS.map(p => [p.hex, p.label]));
 
 export default class BcmColourSwatch extends LightningElement {
     @api recordId;
