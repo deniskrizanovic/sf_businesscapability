@@ -1670,11 +1670,84 @@ describe('BcmCapabilityMap tag session persistence', () => {
     });
 });
 
-describe('BcmCapabilityMap strategic support highlight', () => {
+describe('BcmCapabilityMap strategic support highlight - helper', () => {
     it('isStrategic normalisation — empty / whitespace / bare-tag inputs', () => {
         [null, undefined, '', '   ', '<p></p>', '<p><br></p>', '<p>&nbsp;</p>', '<p>   </p>', '<div><br/></div>']
             .forEach(v => expect(isStrategic(v)).toBe(false));
         ['x', '<p>x</p>', '<p>Strategy text</p>', '<p>&nbsp;Strategy</p>']
             .forEach(v => expect(isStrategic(v)).toBe(true));
+    });
+});
+
+describe('BcmCapabilityMap strategic support highlight', () => {
+    let element;
+    beforeEach(() => {
+        sessionStorage.clear();
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+    });
+    afterEach(() => {
+        document.body.removeChild(element);
+        sessionStorage.clear();
+        jest.clearAllMocks();
+    });
+
+    it('Toggle on writes "true"; toggle off removes the key', async () => {
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [], error: undefined });
+        await flushPromises();
+        const btn = element.shadowRoot.querySelector('[data-id="strategic-support-toggle"]');
+        btn.click();
+        await flushPromises();
+        expect(sessionStorage.getItem('bcm.visualisation.strategicSupportOn')).toBe('true');
+        btn.click();
+        await flushPromises();
+        expect(sessionStorage.getItem('bcm.visualisation.strategicSupportOn')).toBeNull();
+    });
+
+    it('Restores showStrategicSupport from sessionStorage on init', async () => {
+        sessionStorage.setItem('bcm.visualisation.strategicSupportOn', 'true');
+        document.body.removeChild(element);
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [], error: undefined });
+        await flushPromises();
+        const btn = element.shadowRoot.querySelector('[data-id="strategic-support-toggle"]');
+        expect(btn.variant).toBe('brand');
+    });
+
+    it('Map switch resets toggle to off but keeps sessionStorage key', async () => {
+        sessionStorage.setItem('bcm.visualisation.strategicSupportOn', 'true');
+        // Remove and remount to trigger connectedCallback with the stored key
+        document.body.removeChild(element);
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }, { Id: 'MAP-2', Name: 'Map 2' }], error: undefined });
+        mockGetTags.emit({ data: [], error: undefined });
+        await flushPromises();
+        const btn = element.shadowRoot.querySelector('[data-id="strategic-support-toggle"]');
+        expect(btn.variant).toBe('brand');
+        const mapCombobox = element.shadowRoot.querySelector('lightning-combobox');
+        mapCombobox.dispatchEvent(new CustomEvent('change', { detail: { value: 'MAP-2' } }));
+        await flushPromises();
+        expect(btn.variant).toBe('border');
+        expect(sessionStorage.getItem('bcm.visualisation.strategicSupportOn')).toBe('true');
+    });
+
+    it('Silent fallback when sessionStorage.setItem throws on toggle', async () => {
+        const setItemSpy = jest.spyOn(Storage.prototype, 'setItem')
+            .mockImplementation(() => { throw new Error('QuotaExceeded'); });
+        try {
+            mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+            mockGetTags.emit({ data: [], error: undefined });
+            await flushPromises();
+            const btn = element.shadowRoot.querySelector('[data-id="strategic-support-toggle"]');
+            expect(() => btn.click()).not.toThrow();
+            await flushPromises();
+            expect(btn.variant).toBe('brand');
+        } finally {
+            setItemSpy.mockRestore();
+        }
     });
 });

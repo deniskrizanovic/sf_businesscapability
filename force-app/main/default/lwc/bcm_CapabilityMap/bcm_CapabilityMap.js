@@ -83,6 +83,10 @@ function wrapText(text, maxWidth, fontSize, maxLines) {
 
 export default class BcmCapabilityMap extends LightningElement {
 
+    connectedCallback() {
+        this._maybeRestoreStrategicSupport();
+    }
+
     // ── Wired data ────────────────────────────────────────────────────────────
     @track mapOptions   = [];
     @track tagOptions   = [{ label: 'None', value: '' }];
@@ -161,6 +165,14 @@ export default class BcmCapabilityMap extends LightningElement {
         this.selectedTagId = persistedId;
     }
 
+    _maybeRestoreStrategicSupport() {
+        if (this._strategyRestoreAttempted) return;
+        this._strategyRestoreAttempted = true;
+        if (safeSessionGet(SESSION_KEY_STRATEGIC) === 'true') {
+            this.showStrategicSupport = true;
+        }
+    }
+
     // ── State ─────────────────────────────────────────────────────────────────
     @track selectedMapId         = null;
     @track selectedTagId         = '';
@@ -172,6 +184,7 @@ export default class BcmCapabilityMap extends LightningElement {
     @track _panY                 = 0;
     @track showHidden            = false;
     @track showCrossCutting      = false;
+    @track showStrategicSupport  = false;
     @track focusedNodeId         = null;
     @track _layoutL1             = [];
     @track _layoutL2             = [];
@@ -209,6 +222,7 @@ export default class BcmCapabilityMap extends LightningElement {
     _panStartY      = 0;
     _restoreAttempted = false;
     _tagRestoreAttempted = false;
+    _strategyRestoreAttempted = false;
 
     @api get zoom() { return this._zoom; }
     set zoom(v)      { this._zoom = v; }
@@ -233,6 +247,10 @@ export default class BcmCapabilityMap extends LightningElement {
 
     get crossCuttingVariant() {
         return this.showCrossCutting ? 'brand' : 'border';
+    }
+
+    get strategicSupportVariant() {
+        return this.showStrategicSupport ? 'brand' : 'border';
     }
 
     // ── Computed SVG dimensions & transform ───────────────────────────────────
@@ -592,6 +610,8 @@ export default class BcmCapabilityMap extends LightningElement {
         this.panX = 0;
         this.panY = 0;
         this.showCrossCutting = false;
+        this.showStrategicSupport = false;
+        // sessionStorage value intentionally untouched — reload restores user's preference
         if (this.selectedMapId) {
             safeSessionSet(SESSION_KEY_SELECTED_MAP, this.selectedMapId);
         } else {
@@ -626,6 +646,16 @@ export default class BcmCapabilityMap extends LightningElement {
 
     handleToggleCrossCutting() {
         this.showCrossCutting = !this.showCrossCutting;
+    }
+
+    handleToggleStrategicSupport() {
+        this.showStrategicSupport = !this.showStrategicSupport;
+        if (this.showStrategicSupport) {
+            safeSessionSet(SESSION_KEY_STRATEGIC, 'true');
+        } else {
+            safeSessionRemove(SESSION_KEY_STRATEGIC);
+        }
+        this._buildLayout(this._capabilities);
     }
 
     _refreshCapabilities() {
