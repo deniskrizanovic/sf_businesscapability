@@ -476,10 +476,14 @@ test.describe('Toolbar dropdown clipping — editor project', () => {
         await openDiagram(page); // do NOT call selectMap — bug only surfaces with short canvas
         const combo = page.getByRole('combobox', { name: 'Map' }).first();
         await expect(combo).not.toBeDisabled({ timeout: 10000 });
-        await combo.click();
-        const option = page.getByRole('option').first();
-        await expect(option).toBeVisible({ timeout: 10000 });
-        await expectNotClippedByAncestor(option);
+        // Retry open+check: a late-mounting SF notification banner can close the dropdown
+        // between click and evaluate, giving a zero-rect option at (0,0) that hits the banner.
+        await expect(async () => {
+            await combo.click();
+            const option = page.getByRole('option').first();
+            await expect(option).toBeVisible({ timeout: 5000 });
+            await expectNotClippedByAncestor(option);
+        }).toPass({ timeout: 20000, intervals: [500, 1000, 1500] });
     });
 
     test('Colour by Tag combobox option panel is not clipped when no map selected', async ({ page }) => {

@@ -38,11 +38,11 @@ export async function setupAutoDismiss(page: Page) {
             start();
         }
     });
-    // Strip top-of-page promotional banners (Live Preview, security-requirement nags) that
-    // appear inline above the global header. They render synchronously enough to overlap
-    // combobox open/close timing — addLocatorHandler is too coarse, since it can fire
-    // mid-click and steal focus. Match by banner text and remove the closest container with
-    // a "Close" link.
+    // Strip top-of-page promotional banners (Live Preview, security-requirement nags, and
+    // slds-notify_alert system messages) that appear inline above the global header. They
+    // render synchronously enough to overlap combobox open/close timing — addLocatorHandler
+    // is too coarse, since it can fire mid-click and steal focus. Match by banner text or
+    // by SLDS class pattern and remove the element.
     await page.addInitScript(() => {
         const NEEDLES = ['Live Preview is on', 'Salesforce enforces new security requirements'];
         const findBanner = (text: string): Element | null => {
@@ -61,6 +61,11 @@ export async function setupAutoDismiss(page: Page) {
             for (const needle of NEEDLES) {
                 const el = findBanner(needle);
                 if (el) el.remove();
+            }
+            // Also strip SLDS notify/alert banners by class — these don't always contain
+            // predictable text but steal focus from open comboboxes via position:fixed overlay.
+            for (const el of Array.from(document.querySelectorAll('.slds-notify_alert.system-message'))) {
+                el.remove();
             }
         };
         const start = () => {
@@ -270,6 +275,13 @@ export async function expectNotClippedByAncestor(locator: Locator): Promise<void
             }
             return false;
         };
+
+        // If the element has no layout (dropdown closed before evaluate ran), bail early.
+        // Returning a sentinel causes the caller to retry via toPass rather than misfiring
+        // sample points at (0,0) which hit whatever happens to be at the origin.
+        if (rect.width === 0 && rect.height === 0) {
+            return { reason: 'element has zero rect — likely closed before evaluate', elRect: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right } };
+        }
 
         // Sample 9 points: 3 rows × 3 cols, inset 2px from edges.
         const inset = 2;
