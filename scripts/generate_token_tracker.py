@@ -21,7 +21,7 @@ TABLE_HEADER = (
 )
 
 
-def branch_to_issue_number(branch: str):
+def branch_to_issue_number(branch: str) -> Optional[int]:
     m = BRANCH_RE.search(branch)
     return int(m.group(1)) if m else None
 
@@ -98,13 +98,20 @@ def parse_existing_md(md_text: str) -> dict:
         parts = stripped.split("|")
         # parts[0] and parts[-1] are empty (outside pipes)
         cols = [p.strip() for p in parts[1:-1]]
-        if len(cols) != 5:
+        if len(cols) < 5:
             print(
                 f"warning: unexpected column count ({len(cols)}) in row: {line!r}",
                 file=sys.stderr,
             )
             continue
-        branch, issue, summary, _cost, notes = cols
+        branch, issue, summary, _cost = cols[0], cols[1], cols[2], cols[3]
+        # Rejoin extra pipe-split fragments in Notes (user accidentally typed |)
+        notes = "|".join(cols[4:])
+        if len(cols) > 5:
+            print(
+                f"warning: extra pipes in Notes for branch {branch!r} — joined as-is",
+                file=sys.stderr,
+            )
         if branch == "**Total**":
             continue
         result[branch] = {"issue": issue, "summary": summary, "notes": notes}
@@ -233,12 +240,17 @@ def run(
 
 
 def main():
-    repo_root = Path(
-        subprocess.check_output(
-            ["git", "rev-parse", "--show-toplevel"],
-            text=True,
-        ).strip()
-    )
+    try:
+        repo_root = Path(
+            subprocess.check_output(
+                ["git", "rev-parse", "--show-toplevel"],
+                stderr=subprocess.DEVNULL,
+                text=True,
+            ).strip()
+        )
+    except subprocess.CalledProcessError:
+        print("error: not inside a git repository", file=sys.stderr)
+        sys.exit(1)
     csv_path = repo_root / "tokencost" / "cost.csv"
     md_path = repo_root / "docs" / "economics" / "token-tracker.md"
     run(csv_path, md_path)
