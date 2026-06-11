@@ -166,20 +166,66 @@ test.describe('Zoom & pan — editor project', () => {
         return page.locator('svg.bcm-canvas > g').nth(0).getAttribute('transform').catch(() => null);
     }
 
-    test( 'ArrowRight pan -> L2 transform translateX increases (no clip on right)', async ({ page }) => {
+    test('ArrowRight pan -> L2 transform translateX moves within horizontal bounds', async ({ page }) => {
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
         const svg = page.locator('svg.bcm-canvas');
         await svg.focus();
 
         const before = await getL2Transform(page);
-        // Six ArrowRight presses = -300px panX from origin
-        for (let i = 0; i < 6; i++) await svg.press('ArrowRight');
+        await svg.press('ArrowRight');
         const after = await getL2Transform(page);
 
         expect(before).toMatch(/translate\(0,\s*0\)/);
-        // After ArrowRight, panX should be -300 (negative since ArrowRight moves diagram left to reveal right side)
-        expect(after).toMatch(/translate\(-300,\s*0\)/);
+        // ArrowRight reduces panX (negative); -50 from origin is well inside the clamp.
+        expect(after).toMatch(/translate\(-50,\s*0\)/);
+
+        // Press repeatedly past the right-edge clamp; transform stops changing.
+        for (let i = 0; i < 200; i++) await svg.press('ArrowRight');
+        const settled = await getL2Transform(page);
+        for (let i = 0; i < 10; i++) await svg.press('ArrowRight');
+        const afterMore = await getL2Transform(page);
+        expect(afterMore).toBe(settled);
+    });
+
+    test('Cannot pan past left edge — panX clamped to PEEK after repeated ArrowRight from origin', async ({ page }) => {
+        await openDiagram(page);
+        await selectMap(page, MAP_NAME);
+        const svg = page.locator('svg.bcm-canvas');
+        await svg.focus();
+
+        // ArrowRight makes panX go negative until the map's left edge hits the viewport's right side.
+        for (let i = 0; i < 200; i++) await svg.press('ArrowRight');
+        const after = await getL2Transform(page);
+        for (let i = 0; i < 10; i++) await svg.press('ArrowRight');
+        const afterMore = await getL2Transform(page);
+        // Transform stable once clamped
+        expect(afterMore).toBe(after);
+        const m = after?.match(/translate\((-?\d+(?:\.\d+)?),/);
+        expect(m).not.toBeNull();
+        const panX = parseFloat(m![1]);
+        // minX = min(0, slack) - PEEK; PEEK_OFFSET=60. panX is negative, abs >= 60 - epsilon.
+        expect(panX).toBeLessThanOrEqual(0);
+        expect(Math.abs(panX)).toBeGreaterThanOrEqual(60 - 1e-9);
+    });
+
+    test('Cannot pan past right edge — panX clamped after repeated ArrowLeft beyond canvas width', async ({ page }) => {
+        await openDiagram(page);
+        await selectMap(page, MAP_NAME);
+        const svg = page.locator('svg.bcm-canvas');
+        await svg.focus();
+
+        // ArrowLeft makes panX positive until the map's right edge hits the viewport's left side.
+        for (let i = 0; i < 200; i++) await svg.press('ArrowLeft');
+        const after = await getL2Transform(page);
+        for (let i = 0; i < 10; i++) await svg.press('ArrowLeft');
+        const afterMore = await getL2Transform(page);
+        expect(afterMore).toBe(after);
+        const m = after?.match(/translate\((-?\d+(?:\.\d+)?),/);
+        expect(m).not.toBeNull();
+        const panX = parseFloat(m![1]);
+        // maxX = max(0, slack) + PEEK; panX must be >= PEEK once clamped.
+        expect(panX).toBeGreaterThanOrEqual(60 - 1e-9);
     });
 
     test('Cannot pan above top — panY stays at 0 after ArrowUp from origin', async ({ page }) => {
@@ -225,13 +271,15 @@ test.describe('Zoom & pan — editor project', () => {
 
         const svg = page.locator('svg.bcm-canvas');
         await svg.focus();
-        for (let i = 0; i < 4; i++) await svg.press('ArrowRight');
+        const before = await getL2Transform(page);
+        await svg.press('ArrowRight');
         const after = await getL2Transform(page);
 
         // scale at 1.2 after 2 zoom-in clicks
         expect(after).toMatch(/scale\(1\.2\)/);
-        // panX = -200 after 4 ArrowRight
-        expect(after).toMatch(/translate\(-200,\s*0\)/);
+        // First ArrowRight is well within bounds — panX moves by -50.
+        expect(before).toMatch(/translate\(0,\s*0\)/);
+        expect(after).toMatch(/translate\(-50,\s*0\)/);
     });
 
     test('L1 chevron band stays at translateY=0 even when L2 panY is non-zero', async ({ page }) => {

@@ -21,6 +21,7 @@ L1 chevrons (`l1Transform`) and L2 content (`viewportTransform`) and the cross-c
 - **Bound model:** container-relative + peek. `slack = _containerWidth − canvasWidth × _zoom`.
 - **Peek:** reuse `PEEK_OFFSET = 60` (viewport-px) — same constant introduced for Y in #71. Promote to module-scope const if not already; share between `_clampPanX` and `_clampPanY`.
 - **Unified clamp formula** (handles both content-overflows and content-fits cases):
+
     ```
     minX = Math.min(0, slack) − PEEK_OFFSET
     maxX = Math.max(0, slack) + PEEK_OFFSET
@@ -28,6 +29,7 @@ L1 chevrons (`l1Transform`) and L2 content (`viewportTransform`) and the cross-c
 
     - When content overflows (`slack < 0`): `minX = slack − PEEK`, `maxX = −0 + PEEK = PEEK` → drag right shows up to PEEK px of empty space on the left of canvas; drag left shows up to PEEK px on the right.
     - When content fits (`slack ≥ 0`): `minX = 0 − PEEK = −PEEK`, `maxX = slack + PEEK` → user can move the narrow map within the empty container width plus PEEK on either side.
+
 - **Container width tracking:** ResizeObserver on `.bcm-canvas-container`, stored in `_containerWidth`. Setup in `renderedCallback` (lazy, once). Teardown in `disconnectedCallback`. Width-only — no `_containerHeight` needed since Y stays content-relative.
 - **Clamp method:** new private `_clampPanX(panX)` mirroring shape of `_clampPanY`.
 - **Clamp sites:** four — drag-to-pan, keyboard ArrowLeft/Right, wheel zoom-to-cursor, zoom in/out buttons. **Skip** `handleFitToWindow` — its centering math `(cw − dw·zoom) / 2` is provably in-bounds (`fitZoom ≤ cw/dw` ⇒ `dw·zoom ≤ cw` ⇒ `panX = slack/2 ∈ [0, slack] ⊂ [−PEEK, slack+PEEK]`). Adding a clamp there could subtly drift the centered position if the `_containerWidth` cache lags `getBoundingClientRect()`.
@@ -66,20 +68,20 @@ If `PEEK_OFFSET` is currently a function-local in `_clampPanY`, promote to modul
 
 ## Implementation tasks
 
-| #   | Change                                                                                                                                      | File                        | Status |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- | ------ |
-| 1   | Promote `PEEK_OFFSET = 60` to module-scope const if currently inline in `_clampPanY`                                                        | `bcm_CapabilityMap.js`      | [ ]    |
-| 2   | Add `_containerWidth = 0` and `_resizeObserver = null` fields                                                                               | `bcm_CapabilityMap.js`      | [ ]    |
-| 3   | In `renderedCallback`, lazily attach ResizeObserver to `.bcm-canvas-container`; seed `_containerWidth` from `getBoundingClientRect().width` | `bcm_CapabilityMap.js`      | [ ]    |
-| 4   | In `disconnectedCallback`, disconnect observer and null out the field                                                                       | `bcm_CapabilityMap.js`      | [ ]    |
-| 5   | Add `_clampPanX(panX)` private method                                                                                                       | `bcm_CapabilityMap.js`      | [ ]    |
-| 6   | Apply clamp in `handleSvgMouseMove` (drag-to-pan, X axis)                                                                                   | `bcm_CapabilityMap.js`      | [ ]    |
-| 7   | Apply clamp in `handleKeyDown` ArrowLeft / ArrowRight branches                                                                              | `bcm_CapabilityMap.js`      | [ ]    |
-| 8   | Apply clamp in `handleWheel` after zoom-to-cursor `panX` calculation                                                                        | `bcm_CapabilityMap.js`      | [ ]    |
-| 9   | Apply clamp in `handleZoomIn` and `handleZoomOut` after zoom update                                                                         | `bcm_CapabilityMap.js`      | [ ]    |
-| 10  | Add Jest unit tests for `_clampPanX` formula + each path                                                                                    | `bcm_CapabilityMap.test.js` | [ ]    |
-| 11  | Update e2e: rewrite `"ArrowRight pan -> L2 transform translateX increases (no clip on right)"`; add 2 new clamp tests                       | `diagram.spec.ts`           | [ ]    |
-| 12  | Update spec `diagram.md`: rewrite line 225 scenario to reflect bounded pan; add 2 new clamp scenarios                                       | `docs/specs/diagram.md`     | [ ]    |
+| #   | Change                                                                                                                                      | File                        | Status         |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- | -------------- |
+| 1   | Promote `PEEK_OFFSET = 60` to module-scope const if currently inline in `_clampPanY`                                                        | `bcm_CapabilityMap.js`      | [x] 2026-06-11 |
+| 2   | Add `_containerWidth = 0` and `_resizeObserver = null` fields                                                                               | `bcm_CapabilityMap.js`      | [x] 2026-06-11 |
+| 3   | In `renderedCallback`, lazily attach ResizeObserver to `.bcm-canvas-container`; seed `_containerWidth` from `getBoundingClientRect().width` | `bcm_CapabilityMap.js`      | [x] 2026-06-11 |
+| 4   | In `disconnectedCallback`, disconnect observer and null out the field                                                                       | `bcm_CapabilityMap.js`      | [x] 2026-06-11 |
+| 5   | Add `_clampPanX(panX)` private method                                                                                                       | `bcm_CapabilityMap.js`      | [x] 2026-06-11 |
+| 6   | Apply clamp in `handleSvgMouseMove` (drag-to-pan, X axis)                                                                                   | `bcm_CapabilityMap.js`      | [x] 2026-06-11 |
+| 7   | Apply clamp in `handleKeyDown` ArrowLeft / ArrowRight branches                                                                              | `bcm_CapabilityMap.js`      | [x] 2026-06-11 |
+| 8   | Apply clamp in `handleWheel` after zoom-to-cursor `panX` calculation                                                                        | `bcm_CapabilityMap.js`      | [x] 2026-06-11 |
+| 9   | Apply clamp in `handleZoomIn` and `handleZoomOut` after zoom update                                                                         | `bcm_CapabilityMap.js`      | [x] 2026-06-11 |
+| 10  | Add Jest unit tests for `_clampPanX` formula + each path                                                                                    | `bcm_CapabilityMap.test.js` | [x] 2026-06-11 |
+| 11  | Update e2e: rewrite `"ArrowRight pan -> L2 transform translateX increases (no clip on right)"`; add 2 new clamp tests                       | `diagram.spec.ts`           | [x] 2026-06-11 |
+| 12  | Update spec `diagram.md`: rewrite line 225 scenario to reflect bounded pan; add 2 new clamp scenarios                                       | `docs/specs/diagram.md`     | [x] 2026-06-11 |
 
 ---
 
@@ -266,5 +268,5 @@ Test infrastructure / helpers: no new fixtures required. Reuses existing diagram
 ## Open implementation risks
 
 1. **`renderedCallback` re-entry under Salesforce rerenders.** The lazy guard `if (this._resizeObserver) return` makes the setup idempotent, but if the `.bcm-canvas-container` DOM node is replaced across rerenders, the observer keeps observing a detached node. If symptoms appear, switch to: re-querying the container each render and re-attaching only when `container !== this._observedContainer`.
-2. **`_containerWidth` lag at first paint.** First `renderedCallback` runs after the SVG is in the DOM, so initial `_containerWidth` should be valid. If the SVG container starts at width 0 (e.g. parent flex hasn't laid out yet), the clamp degenerates to `[−PEEK, +PEEK]` and any pan attempt collapses to ±PEEK. Mitigation: ResizeObserver fires again as soon as layout settles, so this self-corrects within one frame. Acceptable.
+2. **`_containerWidth` lag at first paint.** First `renderedCallback` runs after the SVG is in the DOM, so initial `_containerWidth` should be valid. If the SVG container starts at width 0 (e.g. parent flex hasn't laid out yet) while content is non-empty, `slack < 0` and the clamp range is the asymmetric `[slack − PEEK, +PEEK]` — over-permissive leftward, tight rightward, until the observer fires. Mitigation: ResizeObserver fires again as soon as layout settles, so this self-corrects within one frame. Acceptable.
 3. **Cross-axis interaction with #71 Y clamp.** Both clamps are independent (different inputs, different formulae). Drag and wheel call both. No coupling expected; verify tests still pass for #71 after the X work lands.
