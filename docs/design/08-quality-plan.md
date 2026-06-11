@@ -33,7 +33,7 @@ Playwright, or a documented deferral) is incomplete.
 ### Function Points as a gap-identification and AC-authorship tool
 
 This project uses COSMIC v5.0 (ISO 19761) functional size measurement, documented
-in `docs/design/99-cosmic-function-point-count.md`. The FP exercise has served two
+in `docs/economics/function-point-count.md`. The FP exercise has served two
 purposes:
 
 **Gap identification.** Enumerating data movements (Entry, Exit, Read, Write) for
@@ -414,7 +414,7 @@ Before marking any implementation step complete:
 
 - [ ]  Org: objects, fields, and permission grants visible in Setup → Object Manager
 - [ ]  Org: manual CRUD and cascade-delete scenarios verified in the browser
-- [ ]  FP count updated in `docs/design/99-cosmic-function-point-count.md` if new functional processes were added
+- [ ]  FP count updated in `docs/economics/function-point-count.md` if new functional processes were added
 - [ ]  Implementation plan row marked complete with date in `docs/plan/implementation-plan.md`
 
 ---

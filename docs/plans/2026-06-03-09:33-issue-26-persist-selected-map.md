@@ -16,7 +16,7 @@
 - **Modify** `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js` — new describe block for persistence
 - **Modify** `docs/specs/diagram.md` — add scenarios under a new "Map selection persists for session" feature
 - **Modify** `tests/e2e/diagram.spec.ts` — add new test in `Map selector` suite (reload + assert dropdown retained, polygon present)
-- **Modify** `docs/design/99-cosmic-function-point-count.md` — add row to §6 "Excluded Processes" (sessionStorage = persistent UI state, not a functional user per Rule 7 Note 2)
+- **Modify** `docs/economics/function-point-count.md` — add row to §6 "Excluded Processes" (sessionStorage = persistent UI state, not a functional user per Rule 7 Note 2)
 
 **No new FP — sessionStorage is UI state, not the application's persistent storage. Same exclusion class as zoom/pan.**
 
@@ -384,7 +384,7 @@ git commit -m "test(e2e): assert selected map persists across page reload (GH #2
 ## Task 7: Note exclusion in COSMIC FP doc
 
 **Files:**
-- Modify: `docs/design/99-cosmic-function-point-count.md`
+- Modify: `docs/economics/function-point-count.md`
 
 - [ ] **Step 1: Add row to §6 Excluded Processes table**
 
@@ -397,7 +397,7 @@ Append after the existing "Context menu display" row in the §6 Excluded Process
 - [ ] **Step 2: Commit**
 
 ```bash
-git add docs/design/99-cosmic-function-point-count.md
+git add docs/economics/function-point-count.md
 git commit -m "docs(cfp): exclude session-persistence from FP count (GH #26)"
 ```
 

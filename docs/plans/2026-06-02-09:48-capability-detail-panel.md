@@ -44,7 +44,7 @@ Slide-out panel (400px overlay, CSS transition) triggered by "View detail" conte
 | FP29 | View Capability Detail via Panel | 1 | 1 | 3 | 0 | 5 | `getCapabilityDetail` in `bcm_CapabilityController` |
 | FP30 | Edit Capability via Panel — Save | 1 | 1 | 0 | 1 | 3 | `updateCapability` in `bcm_CapabilityController` + `bcm_CapabilityService` |
 
-Full data movement breakdown in `docs/design/99-cosmic-function-point-count.md`.  
+Full data movement breakdown in `docs/economics/function-point-count.md`.  
 Running total: 111 → **119 CFP**.
 
 ---
@@ -105,7 +105,7 @@ Update before writing any code (already done as part of planning):
 | File | Change |
 |---|---|
 | `docs/design/05-lwc-architecture.md` | Add `bcm_CapabilityDetail` component row; add `getCapabilityDetail`/`updateCapability` imports; add `detail*` tracked state; update template snippet; rewrite `bcm_ContextMenu` section; add new `bcm_CapabilityDetail` section; add methods to Apex controllers table |
-| `docs/design/99-cosmic-function-point-count.md` | Add FP29 (View detail via panel, 5 CFP) and FP30 (Edit via panel save, 3 CFP); update summary table to 119 CFP; clarify section 6 context menu exclusion note |
+| `docs/economics/function-point-count.md` | Add FP29 (View detail via panel, 5 CFP) and FP30 (Edit via panel save, 3 CFP); update summary table to 119 CFP; clarify section 6 context menu exclusion note |
 
 ---
 

@@ -62,7 +62,7 @@ Removed from template (`bcm_CapabilityMap.html:217-227`): the `<template if:true
 - **Modify** `tests/e2e/capability-detail.spec.ts` — drop the menu helper step from `openDetailPanelOnL1/L2/L3` (just two clicks on the node, expect panel)
 - **Modify** `tests/e2e/diagram.spec.ts` — drop the "Hide menu action" test; drop the "Viewer cannot see Hide button in context menu" test (Hide is panel-edit-mode-only, gated elsewhere); fix the unhide-cleanup `afterEach` accordingly
 - **Modify** `docs/specs/diagram.md` — remove "Feature: Context menu actions" section + "Feature: Context menu appears on node click" section; replace second-click scenarios under "Feature: Node click UX — focus then menu" with "Second click opens Detail Panel" wording
-- **Modify** `docs/design/99-cosmic-function-point-count.md` — update FP31 row (Hide via context menu → no longer applies; Hide is now part of FP30 panel save)
+- **Modify** `docs/economics/function-point-count.md` — update FP31 row (Hide via context menu → no longer applies; Hide is now part of FP30 panel save)
 
 ---
 
@@ -330,7 +330,7 @@ Removed from template (`bcm_CapabilityMap.html:217-227`): the `<template if:true
 ## Task 6: Update FP table
 
 **Files:**
-- Modify: `docs/design/99-cosmic-function-point-count.md`
+- Modify: `docs/economics/function-point-count.md`
 
 - [x] **Step 1: Mark FP31 obsolete**
 

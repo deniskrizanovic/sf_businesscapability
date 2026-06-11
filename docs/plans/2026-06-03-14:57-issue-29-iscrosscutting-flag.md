@@ -21,7 +21,7 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
 5. **Apex** — extend SOQL in `bcm_CapabilityController.getCapabilities` and `bcm_CapabilityController.getCapabilityDetail` to select `bcm_IsCrossCutting__c`.
 6. **Apex tests** — add roundtrip test in `bcm_CapabilityControllerTest` (true/false through `getCapabilities`); add validation tests in `bcm_CapabilityValidationTest` (true on L1 succeeds; true on L2/L3 fails).
 7. **Spec** — add scenarios to `docs/specs/capability-object.md` under a new feature block "Cross-cutting flag", including the L1-only validation rule.
-8. **No new FP** — single new attribute on existing entity; validation rule is a constraint, not a functional process. Add row to §6 Excluded Processes in `docs/design/99-cosmic-function-point-count.md`.
+8. **No new FP** — single new attribute on existing entity; validation rule is a constraint, not a functional process. Add row to §6 Excluded Processes in `docs/economics/function-point-count.md`.
 
 **Generation rule:** Per CLAUDE.md, all `*-meta.xml` files MUST be created via the matching skill. Use `generating-custom-field` for the field; `generating-validation-rule` for the validation rule. Permset and FlexiPage edits are minor additions to existing files — invoke matching skill if available; otherwise hand-edit using the existing siblings as the shape source of truth.
 
@@ -39,7 +39,7 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
 - **Modify** `force-app/main/default/classes/bcm_CapabilityControllerTest.cls` — add roundtrip test
 - **Modify** `force-app/main/default/classes/bcm_CapabilityValidationTest.cls` — add validation rule tests (L1 succeeds; L2/L3 rejected)
 - **Modify** `docs/specs/capability-object.md` — add scenarios for the new flag
-- **Modify** `docs/design/99-cosmic-function-point-count.md` — add row to §6 Excluded Processes
+- **Modify** `docs/economics/function-point-count.md` — add row to §6 Excluded Processes
 
 ---
 
@@ -372,7 +372,7 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
 ## Task 8: COSMIC FP exclusion note
 
 **Files:**
-- Modify: `docs/design/99-cosmic-function-point-count.md`
+- Modify: `docs/economics/function-point-count.md`
 
 - [x] **Step 1: Append row to §6 Excluded Processes table**
 
@@ -383,7 +383,7 @@ L1-only enforcement is added via a validation rule — the flag may only be `tru
 - [x] **Step 2: Commit**
 
   ```bash
-  git add docs/design/99-cosmic-function-point-count.md
+  git add docs/economics/function-point-count.md
   git commit -m "docs(cfp): exclude bcm_IsCrossCutting__c addition from FP count (GH #29)"
   ```
 
