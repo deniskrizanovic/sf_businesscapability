@@ -70,6 +70,8 @@ const ZOOM_MIN = 0.2;
 const ZOOM_MAX = 3.0;
 const ZOOM_STEP = 0.1;
 const ZOOM_DEFAULT = 1.0;
+const PEEK_OFFSET = 60;
+const PAN_STEP = 50;
 
 const SESSION_KEY_SELECTED_MAP = 'bcm.visualisation.selectedMapId';
 const SESSION_KEY_SELECTED_TAG = 'bcm.visualisation.selectedTagId';
@@ -135,6 +137,77 @@ function wrapText(text, maxWidth, fontSize, maxLines) {
 export default class BcmCapabilityMap extends LightningElement {
     connectedCallback() {
         this._maybeRestoreStrategicSupport();
+        this._rootKeyDownBound = this._handleRootKeyDown.bind(this);
+        // Shadow-root listener catches keydown events that originate inside the
+        // component (e.g. focus on a toolbar button). Window listener catches
+        // events when focus is on <body> or anywhere outside the shadow tree.
+        // Same event can hit both in a real browser (composed=true on native
+        // keyboard events) — guard with a per-event marker.
+        this.template.addEventListener('keydown', this._rootKeyDownBound);
+        window.addEventListener('keydown', this._rootKeyDownBound);
+    }
+
+    disconnectedCallback() {
+        if (this._rootKeyDownBound) {
+            this.template.removeEventListener('keydown', this._rootKeyDownBound);
+            window.removeEventListener('keydown', this._rootKeyDownBound);
+            this._rootKeyDownBound = null;
+        }
+        if (this._resizeObserver) {
+            this._resizeObserver.disconnect();
+            this._resizeObserver = null;
+        }
+    }
+
+    renderedCallback() {
+        if (this._resizeObserver) return;
+        const container = this.template.querySelector('.bcm-canvas-container');
+        if (!container) return;
+        if (typeof ResizeObserver === 'undefined') return;
+        this._resizeObserver = new ResizeObserver((entries) => {
+            this._containerWidth = entries[0].contentRect.width;
+        });
+        this._resizeObserver.observe(container);
+        this._containerWidth = container.getBoundingClientRect().width;
+    }
+
+    _handleRootKeyDown(evt) {
+        if (evt.__bcmHandled) return;
+        const ARROW_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+        if (!ARROW_KEYS.includes(evt.key) && evt.key !== 'Escape') return;
+        // Skip when typing in a form control inside the toolbar/combobox.
+        const path = typeof evt.composedPath === 'function' ? evt.composedPath() : [];
+        for (const el of path) {
+            if (!el || !el.tagName) continue;
+            const tag = el.tagName.toLowerCase();
+            if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+            if (tag === 'lightning-combobox' || tag === 'lightning-input') return;
+        }
+        // Component must still be in DOM (window listener could fire after disconnect race).
+        if (!this.template.querySelector('svg.bcm-canvas')) return;
+        evt.__bcmHandled = true;
+        this.handleKeyDown(evt);
+    }
+
+    _clampPanY(panY) {
+        // Upper bound: don't pan content top below viewport top (panY ≤ 0).
+        // Lower bound: stop when the lowest L2 box has been pushed PEEK_OFFSET
+        // below the chevron strip — leaves a peek of content above so the user
+        // sees there is more content to scroll back through.
+        const layoutL2 = this._layoutL2 || [];
+        let lowestTop = 0;
+        for (const n of layoutL2) {
+            if (n.y > lowestTop) lowestTop = n.y;
+        }
+        const minY = Math.min(0, this.l2ClipY + PEEK_OFFSET - lowestTop * this._zoom);
+        return Math.max(minY, Math.min(0, panY));
+    }
+
+    _clampPanX(panX) {
+        const slack = this._containerWidth - this.canvasWidth * this._zoom;
+        const minX = Math.min(0, slack) - PEEK_OFFSET;
+        const maxX = Math.max(0, slack) + PEEK_OFFSET;
+        return Math.max(minX, Math.min(maxX, panX));
     }
 
     // ── Wired data ────────────────────────────────────────────────────────────
@@ -275,6 +348,8 @@ export default class BcmCapabilityMap extends LightningElement {
     _restoreAttempted = false;
     _tagRestoreAttempted = false;
     _strategyRestoreAttempted = false;
+    _containerWidth = 0;
+    _resizeObserver = null;
 
     @api get zoom() {
         return this._zoom;
@@ -827,10 +902,14 @@ export default class BcmCapabilityMap extends LightningElement {
 
     handleZoomIn() {
         this._zoom = Math.min(ZOOM_MAX, Math.round((this._zoom + ZOOM_STEP) * 10) / 10);
+        this._panX = this._clampPanX(this._panX);
+        this._panY = this._clampPanY(this._panY);
     }
 
     handleZoomOut() {
         this._zoom = Math.max(ZOOM_MIN, Math.round((this._zoom - ZOOM_STEP) * 10) / 10);
+        this._panX = this._clampPanX(this._panX);
+        this._panY = this._clampPanY(this._panY);
     }
 
     handleResetView() {
@@ -872,8 +951,8 @@ export default class BcmCapabilityMap extends LightningElement {
         const rect = evt.currentTarget.getBoundingClientRect();
         const mouseX = evt.clientX - rect.left;
         const mouseY = evt.clientY - rect.top;
-        this._panX = mouseX - (mouseX - this._panX) * (newZoom / this._zoom);
-        this._panY = mouseY - (mouseY - this._panY) * (newZoom / this._zoom);
+        this._panX = this._clampPanX(mouseX - (mouseX - this._panX) * (newZoom / this._zoom));
+        this._panY = this._clampPanY(mouseY - (mouseY - this._panY) * (newZoom / this._zoom));
         this._zoom = newZoom;
     }
 
@@ -1317,8 +1396,8 @@ export default class BcmCapabilityMap extends LightningElement {
 
     handleSvgMouseMove(evt) {
         if (!this._isDragging) return;
-        this._panX = this._panStartX + (evt.clientX - this._dragStartX);
-        this._panY = this._panStartY + (evt.clientY - this._dragStartY);
+        this._panX = this._clampPanX(this._panStartX + (evt.clientX - this._dragStartX));
+        this._panY = this._clampPanY(this._panStartY + (evt.clientY - this._dragStartY));
     }
 
     handleSvgMouseUp() {
@@ -1452,12 +1531,11 @@ export default class BcmCapabilityMap extends LightningElement {
         if (this.isDragging) return;
         const ARROW_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
         if (ARROW_KEYS.includes(evt.key)) evt.preventDefault();
-        const PAN_STEP = 50;
         if (!this._keyNavMode) {
-            if (evt.key === 'ArrowLeft') this._panX += PAN_STEP;
-            if (evt.key === 'ArrowRight') this._panX -= PAN_STEP;
-            if (evt.key === 'ArrowUp') this._panY += PAN_STEP;
-            if (evt.key === 'ArrowDown') this._panY -= PAN_STEP;
+            if (evt.key === 'ArrowLeft') this._panX = this._clampPanX(this._panX + PAN_STEP);
+            if (evt.key === 'ArrowRight') this._panX = this._clampPanX(this._panX - PAN_STEP);
+            if (evt.key === 'ArrowUp') this._panY = this._clampPanY(this._panY + PAN_STEP);
+            if (evt.key === 'ArrowDown') this._panY = this._clampPanY(this._panY - PAN_STEP);
         } else {
             if (evt.key === 'Escape') {
                 this._keyNavMode = false;

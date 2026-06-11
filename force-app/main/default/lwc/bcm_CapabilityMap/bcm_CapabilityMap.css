@@ -105,7 +105,7 @@
     flex: 1;
     min-height: 0;
     min-width: 0;
-    overflow: auto;
+    overflow: hidden;
     background: var(--bcm-canvas-bg);
 }
 
@@ -113,6 +113,9 @@
     display: block;
     overflow: visible;
     cursor: grab;
+    /* CSS height overrides the SVG height attribute — keeps SVG from expanding
+       the container beyond its flex-allocated viewport height. */
+    height: 100%;
 }
 
 .bcm-canvas:active {

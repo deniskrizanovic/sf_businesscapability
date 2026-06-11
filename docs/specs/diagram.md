@@ -222,23 +222,46 @@ Then the zoom does not increase further
 
 > Tested by: bcm_CapabilityMap.test.js — "Zoom In clamped at 300%", bcm_CapabilityMap.test.js — "Zoom Out clamped at 20%"
 
-**Scenario: Pan in any direction updates the L2 viewport transform without clip**
+**Scenario: Horizontal pan transforms reflect panX within bounds**
 
 Given a map is loaded and the diagram is visible  
-When the user pans the diagram in any direction  
-Then the L2 layer `transform` attribute reflects the cumulative panX / panY offset  
-And content beyond the initial canvas bounds is no longer clipped by the SVG element
+When the user pans the diagram horizontally within the clamped range  
+Then the L2 layer `transform` attribute reflects the updated panX offset  
+And panning past the bound has no effect
 
-> Tested by: diagram.spec.ts — "ArrowRight pan -> L2 transform translateX increases (no clip on right)", "ArrowDown pan -> L2 transform translateY decreases (free vertical pan, no clamp)"
+> Tested by: diagram.spec.ts — "ArrowRight pan -> L2 transform translateX moves within horizontal bounds"
 
-**Scenario: Vertical pan is unrestricted in both directions**
+**Scenario: Cannot pan above the top of the map**
 
 Given the diagram is at pan origin (panY = 0)  
-When the user presses ArrowUp from origin  
-Then panY moves into positive territory  
-And no clamp pins panY to ≤ 0
+When the user presses ArrowUp  
+Then panY remains 0 — further upward pan is blocked
 
-> Tested by: diagram.spec.ts — "ArrowUp from origin -> positive panY (was previously clamped to 0)"; bcm_CapabilityMap.test.js — "ArrowUp pans diagram down (positive panY) — no clamp", "ArrowDown pans diagram up (negative panY) — no clamp"
+> Tested by: diagram.spec.ts — "Cannot pan above top — panY stays at 0 after ArrowUp from origin"; bcm_CapabilityMap.test.js — "ArrowUp at top is clamped to 0"
+
+**Scenario: Cannot pan below the bottom of the map**
+
+Given the diagram canvas is taller than the viewport  
+When the user presses ArrowDown until the bottom capabilities reach the viewport edge  
+Then further ArrowDown presses do not move the canvas
+
+> Tested by: diagram.spec.ts — "Cannot pan below bottom — panY clamped after ArrowDown beyond canvas height"; bcm_CapabilityMap.test.js — "ArrowDown pans diagram up within canvas bounds", "Repeated ArrowDown presses clamp at canvas bottom"
+
+**Scenario: Cannot pan past the left edge of the map**
+
+Given the diagram is at pan origin (panX = 0)  
+When the user presses ArrowRight repeatedly  
+Then panX clamps at the left-peek bound — further right pan is blocked
+
+> Tested by: diagram.spec.ts — "Cannot pan past left edge — panX clamped to PEEK after repeated ArrowRight from origin"; bcm_CapabilityMap.test.js — "content-overflows: ArrowLeft past max clamps to PEEK", "content-fits: ArrowLeft past max clamps to slack+PEEK"
+
+**Scenario: Cannot pan past the right edge of the map**
+
+Given the diagram canvas is wider than the viewport  
+When the user presses ArrowLeft until the rightmost columns reach the viewport edge  
+Then further ArrowLeft presses do not move the canvas
+
+> Tested by: diagram.spec.ts — "Cannot pan past right edge — panX clamped after repeated ArrowLeft beyond canvas width"; bcm_CapabilityMap.test.js — "content-overflows: ArrowRight past min clamps to slack-PEEK", "content-fits: ArrowRight past min clamps to -PEEK"
 
 **Scenario: Zoom + pan compose correctly in the L2 transform**
 

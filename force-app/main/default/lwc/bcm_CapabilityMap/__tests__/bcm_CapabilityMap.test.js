@@ -186,6 +186,30 @@ async function flushPromises() {
     await Promise.resolve();
 }
 
+// jsdom lacks ResizeObserver; component seeds _containerWidth via observer callback.
+let resizeObservers = [];
+beforeEach(() => {
+    resizeObservers = [];
+});
+global.ResizeObserver = class {
+    constructor(cb) {
+        this._cb = cb;
+        resizeObservers.push(this);
+    }
+    observe(el) {
+        this._el = el;
+    }
+    disconnect() {
+        resizeObservers = resizeObservers.filter((o) => o !== this);
+    }
+};
+
+function setContainerWidth(width) {
+    const obs = resizeObservers[resizeObservers.length - 1];
+    if (!obs) throw new Error('No ResizeObserver attached');
+    obs._cb([{ contentRect: { width } }]);
+}
+
 // Seeds a map selection so _buildLayout is populated. Emits through the
 // `mockGetCapabilities` wire adapter and records the call against
 // `mockCapabilitiesImpl` for legacy `toHaveBeenCalledWith({ mapId })` checks.
@@ -815,18 +839,66 @@ describe('BcmCapabilityMap canvas click clears focus', () => {
         expect(element.panX).toBe(before + 50);
     });
 
-    it('ArrowUp pans diagram down (positive panY) — no clamp', async () => {
+    it('ArrowUp at top is clamped to 0', async () => {
         expect(element.panY).toBe(0);
         svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
         await flushPromises();
-        expect(element.panY).toBe(50);
+        expect(element.panY).toBe(0);
     });
 
-    it('ArrowDown pans diagram up (negative panY) — no clamp', async () => {
+    it('ArrowDown pans diagram up within canvas bounds', async () => {
         expect(element.panY).toBe(0);
         svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
         await flushPromises();
+        // Step is 50; clamp lower bound is comfortably below -50 in this fixture.
         expect(element.panY).toBe(-50);
+    });
+
+    it('Repeated ArrowDown presses clamp at canvas bottom', async () => {
+        for (let i = 0; i < 1000; i++) {
+            svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        }
+        await flushPromises();
+        // panY must not go below 0 (upper bound) and must not exceed -(canvasHeight)
+        expect(element.panY).toBeLessThanOrEqual(0);
+        expect(element.panY).toBeGreaterThan(-99999);
+    });
+
+    it('Drag upward from origin clamps panY to 0', async () => {
+        const down = new MouseEvent('mousedown', {
+            bubbles: true,
+            composed: true,
+            clientX: 100,
+            clientY: 100
+        });
+        svg.dispatchEvent(down);
+        const move = new MouseEvent('mousemove', {
+            bubbles: true,
+            composed: true,
+            clientX: 100,
+            clientY: 200
+        });
+        svg.dispatchEvent(move);
+        await flushPromises();
+        expect(element.panY).toBe(0);
+    });
+
+    it('Zoom-in button re-clamps panY to valid range', async () => {
+        // Public setter bypasses clamp — set panY above maxY (0)
+        element.panY = 100;
+        const zoomInBtn = element.shadowRoot.querySelector('[title="Zoom In"]');
+        zoomInBtn.click();
+        await flushPromises();
+        expect(element.panY).toBe(0);
+    });
+
+    it('Zoom-out button clamps panY when canvas bottom rises above current pan', async () => {
+        // Set panY far below zero (valid at zoom=1, but gets clamped after repeated zoom-out)
+        element.panY = -5000;
+        const zoomOutBtn = element.shadowRoot.querySelector('[title="Zoom Out"]');
+        for (let i = 0; i < 8; i++) zoomOutBtn.click();
+        await flushPromises();
+        expect(element.panY).toBeLessThanOrEqual(0);
     });
 });
 
@@ -2114,5 +2186,159 @@ describe('BcmCapabilityMap strategic support highlight', () => {
         await flushPromises();
         await seedLayout(element);
         expect(element.shadowRoot.querySelectorAll('rect.bcm-strategy-stripe').length).toBe(0);
+    });
+});
+
+describe('BcmCapabilityMap horizontal pan clamp (GH #72)', () => {
+    let element;
+    let svg;
+    const PEEK = 60;
+    // CAPS_DATA -> 2 visible L1 cols (L1-A, L1-B)
+    // canvasWidth = DIAGRAM_PADDING*2 + 2*COLUMN_WIDTH + 1*COLUMN_GAP
+    //             = 48 + 440 + 16 = 504
+
+    beforeEach(async () => {
+        mockCapabilitiesImpl = jest.fn().mockResolvedValue(CAPS_DATA);
+        element = createElement('c-bcm-capability-map', { is: BcmCapabilityMap });
+        document.body.appendChild(element);
+        mockGetMaps.emit({ data: [{ Id: 'MAP-1', Name: 'Map 1' }], error: undefined });
+        mockGetTags.emit({ data: [], error: undefined });
+        await flushPromises();
+        await seedLayout(element);
+        svg = getSvg(element);
+    });
+
+    afterEach(() => {
+        while (document.body.firstChild) {
+            document.body.removeChild(document.body.firstChild);
+        }
+    });
+
+    it('content-overflows: ArrowLeft past max clamps to PEEK', async () => {
+        // containerWidth < canvasWidth*zoom -> slack < 0
+        setContainerWidth(300);
+        // slack = 300 - 504 = -204; maxX = 0 + 60 = 60
+        for (let i = 0; i < 10; i++) {
+            svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+        }
+        await flushPromises();
+        expect(element.panX).toBe(PEEK);
+    });
+
+    it('content-overflows: ArrowRight past min clamps to slack-PEEK', async () => {
+        setContainerWidth(300);
+        // slack = -204; minX = -204 - 60 = -264
+        for (let i = 0; i < 20; i++) {
+            svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        }
+        await flushPromises();
+        expect(element.panX).toBe(-264);
+    });
+
+    it('content-fits: ArrowLeft past max clamps to slack+PEEK', async () => {
+        // containerWidth > canvasWidth -> slack > 0
+        setContainerWidth(800);
+        // slack = 800 - 504 = 296; maxX = 296 + 60 = 356
+        for (let i = 0; i < 20; i++) {
+            svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+        }
+        await flushPromises();
+        expect(element.panX).toBe(356);
+    });
+
+    it('content-fits: ArrowRight past min clamps to -PEEK', async () => {
+        setContainerWidth(800);
+        // minX = -PEEK = -60
+        for (let i = 0; i < 10; i++) {
+            svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        }
+        await flushPromises();
+        expect(element.panX).toBe(-PEEK);
+    });
+
+    it('Drag past left edge clamps panX to maxX', async () => {
+        setContainerWidth(300);
+        const down = new MouseEvent('mousedown', {
+            bubbles: true,
+            composed: true,
+            clientX: 100,
+            clientY: 100
+        });
+        svg.dispatchEvent(down);
+        // Drag right by 1000 px -> raw panX = 1000; clamps to maxX = 60
+        const move = new MouseEvent('mousemove', {
+            bubbles: true,
+            composed: true,
+            clientX: 1100,
+            clientY: 100
+        });
+        svg.dispatchEvent(move);
+        await flushPromises();
+        expect(element.panX).toBe(PEEK);
+    });
+
+    it('Drag past right edge clamps panX to minX', async () => {
+        setContainerWidth(300);
+        const down = new MouseEvent('mousedown', {
+            bubbles: true,
+            composed: true,
+            clientX: 1000,
+            clientY: 100
+        });
+        svg.dispatchEvent(down);
+        // Drag left by 2000px -> raw panX = -2000; clamps to minX = -264
+        const move = new MouseEvent('mousemove', {
+            bubbles: true,
+            composed: true,
+            clientX: -1000,
+            clientY: 100
+        });
+        svg.dispatchEvent(move);
+        await flushPromises();
+        expect(element.panX).toBe(-264);
+    });
+
+    it('Zoom-in button re-clamps panX to valid range', async () => {
+        setContainerWidth(800);
+        // At zoom=1, slack=296, maxX=356; set panX above maxX after zoom-in
+        element.panX = 400;
+        const zoomInBtn = element.shadowRoot.querySelector('[title="Zoom In"]');
+        zoomInBtn.click();
+        await flushPromises();
+        // zoom now 1.1; slack = 800 - 504*1.1 = 800 - 554.4 = 245.6
+        // maxX = 245.6 + 60 = 305.6 — clamps from 400
+        expect(element.panX).toBeLessThanOrEqual(305.6 + 1e-9);
+        expect(element.panX).toBeGreaterThanOrEqual(-60);
+    });
+
+    it('Zoom-out button re-clamps panX', async () => {
+        setContainerWidth(200);
+        // At zoom=1, slack = -304; minX = -364
+        element.panX = -1000;
+        const zoomOutBtn = element.shadowRoot.querySelector('[title="Zoom Out"]');
+        zoomOutBtn.click();
+        await flushPromises();
+        // zoom 0.9; slack = 200 - 504*0.9 = 200 - 453.6 = -253.6
+        // minX = -253.6 - 60 = -313.6
+        expect(element.panX).toBeGreaterThanOrEqual(-313.6 - 1e-9);
+        expect(element.panX).toBeLessThanOrEqual(60);
+    });
+
+    it('Wheel zoom-to-cursor keeps panX within clamped range', async () => {
+        setContainerWidth(300);
+        // Force wheel handler — element passes evt.currentTarget to getBoundingClientRect
+        const wheel = new WheelEvent('wheel', {
+            bubbles: true,
+            composed: true,
+            deltaY: -100,
+            clientX: 50,
+            clientY: 50
+        });
+        // currentTarget on dispatched event is the listener target; svg listens via template
+        svg.dispatchEvent(wheel);
+        await flushPromises();
+        // After zoom-in: slack = 300 - 504*1.1 = -254.4; minX = -314.4; maxX = 60
+        expect(element.panX).toBeLessThanOrEqual(60 + 1e-9);
+        expect(element.panX).toBeGreaterThanOrEqual(-314.4 - 1e-9);
     });
 });
