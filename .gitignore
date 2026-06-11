@@ -78,3 +78,6 @@ retrieved_temp/
 
 # AI session artifacts
 .ai/
+
+# Token cost log — local running log, never clobber on branch switch
+tokencost/cost.csv
