@@ -210,7 +210,7 @@ Why:
 - The user's stated intent was: "stop scrolling before the lowest L2 capability disappears under the L1 chevrons" — i.e. clamp on content edges, not viewport edges.
 - A 60px peek offset leaves a small strip of higher content visible at the bottom-most pan position so the user retains a sense of "there's more above". Value chosen interactively.
 
-Consequence: ResizeObserver / `_containerHeight` field is no longer needed (task #1 superseded). `_measureContainerHeight()` was removed.
+Consequence: ResizeObserver / `_containerHeight` field is no longer needed (task #1 superseded). `_measureContainerHeight()` was never added.
 
 ### 2. Keyboard wiring moved off SVG to shadow-root + window
 
