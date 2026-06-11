@@ -101,7 +101,6 @@
             width={canvasWidth}
             height={canvasHeight}
             tabindex="0"
-            onkeydown={handleKeyDown}
             onmousedown={handleSvgMouseDown}
             onmousemove={handleSvgMouseMove}
             onmouseup={handleSvgMouseUp}
@@ -328,7 +327,7 @@
                 </g>
             </template>
 
-            <!-- Cross-cutting band: pans horizontally with L1 layer; pinned vertically (no panY).
+            <!-- Cross-cutting band: pans with full viewport transform (panX + panY).
                  Full-width layered chevrons — sortOrder 1 paints last → on top. -->
             <template if:true={showCrossCutting}>
                 <g transform={bandTransform}>

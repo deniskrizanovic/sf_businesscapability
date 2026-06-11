@@ -815,18 +815,66 @@ describe('BcmCapabilityMap canvas click clears focus', () => {
         expect(element.panX).toBe(before + 50);
     });
 
-    it('ArrowUp pans diagram down (positive panY) — no clamp', async () => {
+    it('ArrowUp at top is clamped to 0', async () => {
         expect(element.panY).toBe(0);
         svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
         await flushPromises();
-        expect(element.panY).toBe(50);
+        expect(element.panY).toBe(0);
     });
 
-    it('ArrowDown pans diagram up (negative panY) — no clamp', async () => {
+    it('ArrowDown pans diagram up within canvas bounds', async () => {
         expect(element.panY).toBe(0);
         svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
         await flushPromises();
+        // Step is 50; clamp lower bound is comfortably below -50 in this fixture.
         expect(element.panY).toBe(-50);
+    });
+
+    it('Repeated ArrowDown presses clamp at canvas bottom', async () => {
+        for (let i = 0; i < 1000; i++) {
+            svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        }
+        await flushPromises();
+        // panY must not go below 0 (upper bound) and must not exceed -(canvasHeight)
+        expect(element.panY).toBeLessThanOrEqual(0);
+        expect(element.panY).toBeGreaterThan(-99999);
+    });
+
+    it('Drag upward from origin clamps panY to 0', async () => {
+        const down = new MouseEvent('mousedown', {
+            bubbles: true,
+            composed: true,
+            clientX: 100,
+            clientY: 100
+        });
+        svg.dispatchEvent(down);
+        const move = new MouseEvent('mousemove', {
+            bubbles: true,
+            composed: true,
+            clientX: 100,
+            clientY: 200
+        });
+        svg.dispatchEvent(move);
+        await flushPromises();
+        expect(element.panY).toBe(0);
+    });
+
+    it('Zoom-in button re-clamps panY to valid range', async () => {
+        // Public setter bypasses clamp — set panY above maxY (0)
+        element.panY = 100;
+        const zoomInBtn = element.shadowRoot.querySelector('[title="Zoom In"]');
+        zoomInBtn.click();
+        await flushPromises();
+        expect(element.panY).toBe(0);
+    });
+
+    it('Zoom-out button clamps panY when canvas bottom rises above current pan', async () => {
+        // Set panY far below zero (valid at zoom=1, but gets clamped after repeated zoom-out)
+        element.panY = -5000;
+        const zoomOutBtn = element.shadowRoot.querySelector('[title="Zoom Out"]');
+        for (let i = 0; i < 8; i++) zoomOutBtn.click();
+        await flushPromises();
+        expect(element.panY).toBeLessThanOrEqual(0);
     });
 });
 

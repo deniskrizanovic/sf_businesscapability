@@ -182,31 +182,39 @@ test.describe('Zoom & pan — editor project', () => {
         expect(after).toMatch(/translate\(-300,\s*0\)/);
     });
 
-    test('ArrowDown pan -> L2 transform translateY decreases (free vertical pan, no clamp)', async ({ page }) => {
+    test('Cannot pan above top — panY stays at 0 after ArrowUp from origin', async ({ page }) => {
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
         const svg = page.locator('svg.bcm-canvas');
         await svg.focus();
 
-        // Three ArrowDown presses = -150px panY (previously clamped at 0; should now go negative)
-        for (let i = 0; i < 3; i++) await svg.press('ArrowDown');
+        // ArrowUp at origin: clamp prevents panY going positive
+        await svg.press('ArrowUp');
+        await svg.press('ArrowUp');
         const after = await getL2Transform(page);
 
-        expect(after).toMatch(/translate\(0,\s*-150\)/);
+        expect(after).toMatch(/translate\(0,\s*0\)/);
     });
 
-    test('ArrowUp from origin -> positive panY (was previously clamped to 0)', async ({ page }) => {
+    test('Cannot pan below bottom — panY clamped after ArrowDown beyond canvas height', async ({ page }) => {
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
         const svg = page.locator('svg.bcm-canvas');
         await svg.focus();
 
-        // Two ArrowUp presses = +100px panY. Pre-fix: clamped to 0. Post-fix: 100.
-        await svg.press('ArrowUp');
-        await svg.press('ArrowUp');
+        // Press ArrowDown many times to hit clamp boundary
+        for (let i = 0; i < 100; i++) await svg.press('ArrowDown');
         const after = await getL2Transform(page);
 
-        expect(after).toMatch(/translate\(0,\s*100\)/);
+        // panY must be <= 0 (cannot go positive) and the transform must be stable (clamped)
+        const match = after?.match(/translate\((-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)\)/);
+        expect(match).not.toBeNull();
+        const panY = parseFloat(match![2]);
+        expect(panY).toBeLessThanOrEqual(0);
+        // After more presses the value should not change (is clamped)
+        for (let i = 0; i < 10; i++) await svg.press('ArrowDown');
+        const afterMore = await getL2Transform(page);
+        expect(afterMore).toBe(after);
     });
 
     test('Zoom in then ArrowRight -> L2 transform shows scale>1 AND translateX moved', async ({ page }) => {

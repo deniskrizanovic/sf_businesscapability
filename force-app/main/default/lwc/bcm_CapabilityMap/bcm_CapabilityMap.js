@@ -135,6 +135,55 @@ function wrapText(text, maxWidth, fontSize, maxLines) {
 export default class BcmCapabilityMap extends LightningElement {
     connectedCallback() {
         this._maybeRestoreStrategicSupport();
+        this._rootKeyDownBound = this._handleRootKeyDown.bind(this);
+        // Shadow-root listener catches keydown events that originate inside the
+        // component (e.g. focus on a toolbar button). Window listener catches
+        // events when focus is on <body> or anywhere outside the shadow tree.
+        // Same event can hit both in a real browser (composed=true on native
+        // keyboard events) — guard with a per-event marker.
+        this.template.addEventListener('keydown', this._rootKeyDownBound);
+        window.addEventListener('keydown', this._rootKeyDownBound);
+    }
+
+    disconnectedCallback() {
+        if (this._rootKeyDownBound) {
+            this.template.removeEventListener('keydown', this._rootKeyDownBound);
+            window.removeEventListener('keydown', this._rootKeyDownBound);
+            this._rootKeyDownBound = null;
+        }
+    }
+
+    _handleRootKeyDown(evt) {
+        if (evt.__bcmHandled) return;
+        const ARROW_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+        if (!ARROW_KEYS.includes(evt.key) && evt.key !== 'Escape') return;
+        // Skip when typing in a form control inside the toolbar/combobox.
+        const path = typeof evt.composedPath === 'function' ? evt.composedPath() : [];
+        for (const el of path) {
+            if (!el || !el.tagName) continue;
+            const tag = el.tagName.toLowerCase();
+            if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+            if (tag === 'lightning-combobox' || tag === 'lightning-input') return;
+        }
+        // Component must still be in DOM (window listener could fire after disconnect race).
+        if (!this.template.querySelector('svg.bcm-canvas')) return;
+        evt.__bcmHandled = true;
+        this.handleKeyDown(evt);
+    }
+
+    _clampPanY(panY) {
+        // Upper bound: don't pan content top below viewport top (panY ≤ 0).
+        // Lower bound: stop when the lowest L2 box has been pushed PEEK_OFFSET
+        // below the chevron strip — leaves a peek of content above so the user
+        // sees there is more content to scroll back through.
+        const PEEK_OFFSET = 60;
+        const layoutL2 = this._layoutL2 || [];
+        let lowestTop = 0;
+        for (const n of layoutL2) {
+            if (n.y > lowestTop) lowestTop = n.y;
+        }
+        const minY = Math.min(0, this.l2ClipY + PEEK_OFFSET - lowestTop * this._zoom);
+        return Math.max(minY, Math.min(0, panY));
     }
 
     // ── Wired data ────────────────────────────────────────────────────────────
@@ -827,10 +876,12 @@ export default class BcmCapabilityMap extends LightningElement {
 
     handleZoomIn() {
         this._zoom = Math.min(ZOOM_MAX, Math.round((this._zoom + ZOOM_STEP) * 10) / 10);
+        this._panY = this._clampPanY(this._panY);
     }
 
     handleZoomOut() {
         this._zoom = Math.max(ZOOM_MIN, Math.round((this._zoom - ZOOM_STEP) * 10) / 10);
+        this._panY = this._clampPanY(this._panY);
     }
 
     handleResetView() {
@@ -873,7 +924,7 @@ export default class BcmCapabilityMap extends LightningElement {
         const mouseX = evt.clientX - rect.left;
         const mouseY = evt.clientY - rect.top;
         this._panX = mouseX - (mouseX - this._panX) * (newZoom / this._zoom);
-        this._panY = mouseY - (mouseY - this._panY) * (newZoom / this._zoom);
+        this._panY = this._clampPanY(mouseY - (mouseY - this._panY) * (newZoom / this._zoom));
         this._zoom = newZoom;
     }
 
@@ -1318,7 +1369,7 @@ export default class BcmCapabilityMap extends LightningElement {
     handleSvgMouseMove(evt) {
         if (!this._isDragging) return;
         this._panX = this._panStartX + (evt.clientX - this._dragStartX);
-        this._panY = this._panStartY + (evt.clientY - this._dragStartY);
+        this._panY = this._clampPanY(this._panStartY + (evt.clientY - this._dragStartY));
     }
 
     handleSvgMouseUp() {
@@ -1456,8 +1507,8 @@ export default class BcmCapabilityMap extends LightningElement {
         if (!this._keyNavMode) {
             if (evt.key === 'ArrowLeft') this._panX += PAN_STEP;
             if (evt.key === 'ArrowRight') this._panX -= PAN_STEP;
-            if (evt.key === 'ArrowUp') this._panY += PAN_STEP;
-            if (evt.key === 'ArrowDown') this._panY -= PAN_STEP;
+            if (evt.key === 'ArrowUp') this._panY = this._clampPanY(this._panY + PAN_STEP);
+            if (evt.key === 'ArrowDown') this._panY = this._clampPanY(this._panY - PAN_STEP);
         } else {
             if (evt.key === 'Escape') {
                 this._keyNavMode = false;

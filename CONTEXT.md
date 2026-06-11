@@ -32,7 +32,7 @@ A Level 1 Business Capability flagged as cutting across the rest of the capabili
 
 ## Cross-cutting Band
 
-A horizontal stack of full-width chevrons rendered at the bottom of the diagram canvas, one chevron per Cross-cutting Capability. Each chevron spans from the first column to the last and overlaps the row above, exposing only the bottom strip. The capability with the lowest `bcm_SortOrder__c` paints last (DOM-last) so it sits on top of the stack. Labels are uppercased and bottom-left-aligned. Clicking a band chevron opens the Detail Panel via the existing `viewdetail` flow. The band layer is pinned vertically (translateY = 0) when the diagram pans, mirroring the L1 top-row pin.
+A horizontal stack of full-width chevrons rendered at the bottom of the diagram canvas, one chevron per Cross-cutting Capability. Each chevron spans from the first column to the last and overlaps the row above, exposing only the bottom strip. The capability with the lowest `bcm_SortOrder__c` paints last (DOM-last) so it sits on top of the stack. Labels are uppercased and bottom-left-aligned. Clicking a band chevron opens the Detail Panel via the existing `viewdetail` flow. The band layer pans with the full viewport (both panX and panY), so it scrolls with the rest of the diagram content.
 
 ## Sort Order
 
