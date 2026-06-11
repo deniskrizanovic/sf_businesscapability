@@ -52,7 +52,7 @@ Vertical end-to-end slice: "View detail" context-menu action on any L1/L2/L3 nod
 | FP29 | View Capability Detail via Panel | 5   | **Delivered in #22 (2026-06-02)** |
 | FP30 | Edit Capability via Panel — Save | 3   | Deferred (#3)                     |
 
-`docs/design/99-cosmic-function-point-count.md` already enumerates FP29 + FP30 + FP31 with running total **122 CFP** — no arithmetic change in this slice.
+`docs/economics/function-point-count.md` already enumerates FP29 + FP30 + FP31 with running total **122 CFP** — no arithmetic change in this slice.
 
 ---
 
@@ -98,7 +98,7 @@ bcm_CapabilityMap (container)
 | `docs/specs/diagram.md`                                                            | Remove "View detail navigates to the Capability record page" scenario; mark edit scenarios as Deferred (#3)                                                                                               |
 | `docs/design/05-lwc-architecture.md`                                               | Add `bcm_CapabilityDetail` row; add `getCapabilityDetail` import + `detail*` state in container; rewrite `bcm_ContextMenu` "View detail" target from NavigationMixin to panel                             |
 
-No change required in `docs/design/99-cosmic-function-point-count.md` (FP29/FP30/FP31 already enumerated; total 122 unchanged).
+No change required in `docs/economics/function-point-count.md` (FP29/FP30/FP31 already enumerated; total 122 unchanged).
 
 ---
 
@@ -338,7 +338,7 @@ Scenarios (mirroring `docs/specs/diagram.md` §"Detail Panel — open and close"
 - Add `getCapabilityDetail` Apex import + `detail*` state in container section.
 - Rewrite `bcm_ContextMenu` "View detail" target — was `NavigationMixin`; now `viewdetail` event handled by container, opens panel.
 
-**`docs/design/99-cosmic-function-point-count.md`:** no change — FP29 already in summary table; total 122 unchanged.
+**`docs/economics/function-point-count.md`:** no change — FP29 already in summary table; total 122 unchanged.
 
 ### Step 7 — Acceptance pass + deploy
 
@@ -375,4 +375,4 @@ Scenarios (mirroring `docs/specs/diagram.md` §"Detail Panel — open and close"
 - [x] Apex unit tests for `getCapabilityDetail` pass (valid id; null id throws)
 - [x] Playwright e2e covers: open, close-X, close-Escape, switch nodes, breadcrumb (L1/L2/L3), level badge, fields, viewer-no-save
 - [x] `docs/specs/diagram.md` coverage markers conform to project rules (Tested-by or Deferred only)
-- [x] FP29 row in `docs/design/99-cosmic-function-point-count.md` annotated **delivered in #22** (or completion-date column added when merged)
+- [x] FP29 row in `docs/economics/function-point-count.md` annotated **delivered in #22** (or completion-date column added when merged)

@@ -81,3 +81,6 @@ retrieved_temp/
 # AI session artifacts
 .ai/
 /.claude/scheduled_tasks.lock
+
+# Token cost log — local running log, never clobber on branch switch
+tokencost/cost.csv

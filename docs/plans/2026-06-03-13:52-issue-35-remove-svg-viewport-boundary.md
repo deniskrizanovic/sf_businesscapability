@@ -308,7 +308,7 @@ git commit -m "docs(specs): document free pan + no-clip behaviour (GH #35)"
 
 **Files:**
 
-- Modify: `docs/design/99-cosmic-function-point-count.md`
+- Modify: `docs/economics/function-point-count.md`
 
 - [x] **Step 1: Add row to §6 Excluded Processes table** (2026-06-03)
 
@@ -321,7 +321,7 @@ Append after the "Canvas focus outline suppression" row in the §6 Excluded Proc
 - [ ] **Step 2: Commit**
 
 ```bash
-git add docs/design/99-cosmic-function-point-count.md
+git add docs/economics/function-point-count.md
 git commit -m "docs(cfp): exclude svg-viewport-boundary removal from FP count (GH #35)"
 ```
 

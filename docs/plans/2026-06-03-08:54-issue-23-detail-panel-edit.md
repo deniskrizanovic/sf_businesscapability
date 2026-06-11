@@ -52,7 +52,7 @@ Vertical end-to-end slice: editor with `bcm_CanEdit` toggles edit mode in the ex
 | ---- | -------------------------------- | --- | --------------------------------- |
 | FP30 | Edit Capability via Panel — Save | 3   | **Delivered in #23 (2026-06-03)** |
 
-`docs/design/99-cosmic-function-point-count.md` already enumerates FP30 with running total **122 CFP** — no arithmetic change. Update delivery status note.
+`docs/economics/function-point-count.md` already enumerates FP30 with running total **122 CFP** — no arithmetic change. Update delivery status note.
 
 ---
 
@@ -109,7 +109,7 @@ bcm_CapabilityController (LWC boundary)
 | `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js`       | Add `saved` event test — Apex called, layout rebuilt with new name                                                                                                       |
 | `tests/e2e/capability-detail.spec.ts`                                                    | Add editor-only edit/save scenario, viewer-no-save, cancel revert                                                                                                        |
 | `docs/specs/diagram.md`                                                                  | Replace `> Deferred: edit affordances out of scope for #22; FP30 in #3` markers with `> Tested by:` lines for delivered scenarios; update viewer-no-save to point at e2e |
-| `docs/design/99-cosmic-function-point-count.md`                                          | Update delivery-status footer line: FP30 delivered in #23 (2026-06-03)                                                                                                   |
+| `docs/economics/function-point-count.md`                                                 | Update delivery-status footer line: FP30 delivered in #23 (2026-06-03)                                                                                                   |
 | `docs/design/05-lwc-architecture.md`                                                     | Add `updateCapability` controller import + `canEdit` prop on `bcm_CapabilityDetail` + `saved` event flow in container                                                    |
 
 ---
@@ -315,7 +315,7 @@ If viewer storage state path is not yet wired, leave viewer-no-save coverage to 
 | Cancel discards unsaved changes | `> Tested by: capability-detail.spec.ts — "Cancel reverts unsaved name change"; bcm_CapabilityDetail.test.js — "Cancel reverts to read mode without firing saved"`                                                          |
 | Save error shows inline message | `> Deferred: requires seeded validation rule; covered by code review (errorMessage prop wired in container catch handler)`                                                                                                  |
 
-`docs/design/99-cosmic-function-point-count.md` — update footer line:
+`docs/economics/function-point-count.md` — update footer line:
 
 > **Delivery status:** FP29 delivered in GH issue #22 (2026-06-02). FP30 delivered in GH issue #23 (2026-06-03).
 
@@ -363,4 +363,4 @@ Walk acceptance checklist below + on issue #23.
 - [ ] Apex tests: controller (valid + null) + service (DML succeeds; whitelist; nulls)
 - [ ] Playwright e2e covers: editor save + diagram refresh, Cancel reverts; Jest covers viewer-no-edit
 - [ ] Spec coverage markers in `docs/specs/diagram.md` updated per project rules
-- [ ] FP30 row in `docs/design/99-cosmic-function-point-count.md` annotated **delivered in #23 (2026-06-03)**
+- [ ] FP30 row in `docs/economics/function-point-count.md` annotated **delivered in #23 (2026-06-03)**

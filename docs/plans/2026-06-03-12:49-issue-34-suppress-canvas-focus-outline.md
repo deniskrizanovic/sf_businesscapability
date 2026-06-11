@@ -119,7 +119,7 @@ git commit -m "docs(specs): add no-focus-outline scenario for canvas (GH #34)"
 
 **Files:**
 
-- Modify: `docs/design/99-cosmic-function-point-count.md`
+- Modify: `docs/economics/function-point-count.md`
 
 - [x] **Step 1: Add row to §6 Excluded Processes table** (2026-06-03)
 
@@ -132,7 +132,7 @@ Append after the existing "Map selection persistence (sessionStorage)" row in th
 - [ ] **Step 2: Commit**
 
 ```bash
-git add docs/design/99-cosmic-function-point-count.md
+git add docs/economics/function-point-count.md
 git commit -m "docs(cfp): exclude canvas focus-outline suppression from FP count (GH #34)"
 ```
 

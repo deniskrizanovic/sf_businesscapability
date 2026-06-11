@@ -57,7 +57,7 @@ Click flow:
 - **Modify** `force-app/main/default/lwc/bcm_CapabilityMap/__tests__/bcm_CapabilityMap.test.js` — new describe block with cross-cutting seeded data.
 - **Modify** `tests/e2e/diagram.spec.ts` — seed JSON gains an `isCrossCutting: true` L1; new test asserts band rendering and column exclusion.
 - **Modify** `docs/specs/diagram.md` — new "Cross-cutting band" feature section.
-- **Modify** `docs/design/99-cosmic-function-point-count.md` — exclusion row for the new render path (UI-only, no data movement).
+- **Modify** `docs/economics/function-point-count.md` — exclusion row for the new render path (UI-only, no data movement).
 
 > e2e seed JSON shape: `bcm_DataImportService` already accepts a `isCrossCutting` field if forwarded — verify before adding the field. If the import service does not yet know the field, add a small mapping line in `bcm_DataImportService` (single token addition; same shape as `hideFromDiagram`); otherwise the e2e test must mark the L1 cross-cutting via Apex post-import. Plan assumes the latter as the safer default.
 
@@ -427,7 +427,7 @@ Click flow:
 
 **Files:**
 
-- Modify: `docs/design/99-cosmic-function-point-count.md`
+- Modify: `docs/economics/function-point-count.md`
 
 - [x] **Step 1: Append a row to §6 Excluded Processes**
 
