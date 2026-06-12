@@ -40,7 +40,8 @@
 - **L3** — rendered as bullet-point text lines inside their parent L2 box
 - **Cross-cutting band** — full-width stacked chevrons below the main grid, toggled separately
 
-Screenshot
+##Screenshot
+This screenshot shows a generic capability map. The gold highlight bars indicate that the capability has "strategic support" commentary
 ![diagram-hero.png](../images/diagram-hero.png)
 
 ### Toolbar controls
