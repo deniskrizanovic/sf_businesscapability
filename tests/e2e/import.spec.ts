@@ -1,10 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { RUN_ID, clickFlowNext, flow, setupAutoDismiss } from './fixtures/helpers';
 
-// Sandbox can take >20s to mount the Flow iframe; helper waits up to 40s for
-// "Paste JSON" to appear, so the per-test budget must exceed that plus run-up.
-test.describe.configure({ timeout: 60_000 });
-
 const SAMPLE_JSON = JSON.stringify({
     mapName: `E2E Import Map ${RUN_ID}`,
     mapDescription: '<p>Imported via e2e test</p>',
