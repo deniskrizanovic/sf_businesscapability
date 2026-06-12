@@ -8,23 +8,13 @@
                     <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Name</fieldItem>
-                <identifier>RecordNamePrimaryField</identifier>
+                <identifier>RecordNameField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>Facet-PrimaryFields</name>
         <type>Facet</type>
     </flexiPageRegions>
     <flexiPageRegions>
-        <itemInstances>
-            <fieldInstance>
-                <fieldInstanceProperties>
-                    <name>uiBehavior</name>
-                    <value>none</value>
-                </fieldInstanceProperties>
-                <fieldItem>Record.bcm_Description__c</fieldItem>
-                <identifier>Recordbcm_Description__cSecondaryField0</identifier>
-            </fieldInstance>
-        </itemInstances>
         <name>Facet-SecondaryFields</name>
         <type>Facet</type>
     </flexiPageRegions>
