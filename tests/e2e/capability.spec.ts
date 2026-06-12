@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { APP_PATH, setupAutoDismiss } from './fixtures/helpers';
+import { APP_PATH, setupAutoDismiss, gotoLightning } from './fixtures/helpers';
 import { getSeedIds } from './fixtures/seeds';
 import { RELATED_MAP_NAME, RELATED_CAP_NAME, RTF_CAP_NAME } from './capability.seed';
 
@@ -8,7 +8,7 @@ import { RELATED_MAP_NAME, RELATED_CAP_NAME, RTF_CAP_NAME } from './capability.s
 test.describe('Capability form — editor project', () => {
     test('new Capability form shows all expected fields', async ({ page }) => {
         await setupAutoDismiss(page);
-        await page.goto('/lightning/o/bcm_Capability__c/new');
+        await gotoLightning(page, '/lightning/o/bcm_Capability__c/new');
         await expect(page.getByRole('combobox', { name: 'Map' })).toBeVisible();
         await expect(page.getByRole('combobox', { name: 'Parent Capability' })).toBeVisible();
         await expect(page.getByLabel('Level')).toBeVisible();
@@ -18,7 +18,7 @@ test.describe('Capability form — editor project', () => {
 
     test('Parent Capability lookup only returns Capabilities', async ({ page }) => {
         await setupAutoDismiss(page);
-        await page.goto('/lightning/o/bcm_Capability__c/new');
+        await gotoLightning(page, '/lightning/o/bcm_Capability__c/new');
         await expect(
             page.getByRole('combobox', { name: 'Parent Capability' })
         ).toHaveAttribute('placeholder', 'Search Capabilities...');
@@ -29,7 +29,7 @@ test.describe('Capability form — editor project', () => {
         if (!id) throw new Error(`capability-rtf seed not found: ${RTF_CAP_NAME}`);
 
         await setupAutoDismiss(page);
-        await page.goto(`/lightning/r/bcm_Capability__c/${id}/view`);
+        await gotoLightning(page, `/lightning/r/bcm_Capability__c/${id}/view`);
         await expect(page.getByRole('heading', { name: RTF_CAP_NAME })).toBeVisible();
 
         // Inline-edit pencil is rendered as a button labelled "Edit Definition" alongside the
@@ -61,13 +61,13 @@ test.describe('Map record page — editor project', () => {
 
     test('Map record page includes a Capabilities related list', async ({ page }) => {
         await setupAutoDismiss(page);
-        await page.goto(mapUrl);
+        await gotoLightning(page, mapUrl);
         await expect(page.getByRole('tab', { name: 'Capabilities' })).toBeVisible();
     });
 
     test('linked Capability appears in the Map related list', async ({ page }) => {
         await setupAutoDismiss(page);
-        await page.goto(mapUrl);
+        await gotoLightning(page, mapUrl);
         await expect(page.getByRole('link', { name: RELATED_CAP_NAME })).toBeVisible();
     });
 });
@@ -77,7 +77,7 @@ test.describe('Map record page — editor project', () => {
 test.describe('Capabilities tab — editor project', () => {
     test('Capabilities tab is visible to Editor', async ({ page }) => {
         await setupAutoDismiss(page);
-        await page.goto(APP_PATH);
+        await gotoLightning(page, APP_PATH);
         await expect(page.getByRole('link', { name: 'Capabilities' })).toBeVisible();
     });
 });
@@ -85,7 +85,7 @@ test.describe('Capabilities tab — editor project', () => {
 test.describe('Capabilities tab — viewer project', () => {
     test('Capabilities tab is visible to Viewer', async ({ page }) => {
         await setupAutoDismiss(page);
-        await page.goto(APP_PATH);
+        await gotoLightning(page, APP_PATH);
         await expect(page.getByRole('link', { name: 'Capabilities' })).toBeVisible();
     });
 });

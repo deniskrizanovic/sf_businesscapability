@@ -22,6 +22,7 @@ export default defineConfig({
         trace: 'on-first-retry',
         actionTimeout: 15_000,
         navigationTimeout: 30_000,
+        testIdAttribute: 'data-id',
     },
     projects: [
         { name: 'setup', testMatch: /auth\.setup\.ts/ },

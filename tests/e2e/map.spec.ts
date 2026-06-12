@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { APP_PATH, RUN_ID, setupAutoDismiss } from './fixtures/helpers';
+import { APP_PATH, RUN_ID, setupAutoDismiss, gotoLightning } from './fixtures/helpers';
 import { getSeedIds } from './fixtures/seeds';
 import { VIEWER_READ_MAP_NAME } from './map.seed';
 
@@ -8,7 +8,7 @@ async function createMap(
     name: string
 ): Promise<string> {
     await setupAutoDismiss(page);
-    await page.goto('/lightning/o/bcm_Map__c/new');
+    await gotoLightning(page, '/lightning/o/bcm_Map__c/new');
     await page.getByLabel('Map Name').fill(name);
     await page.getByRole('button', { name: 'Save', exact: true }).click();
     await page.waitForURL(/\/view$/);
@@ -56,19 +56,19 @@ test.describe('Map access — viewer project', () => {
 
     test('viewer can read a Map record', async ({ page }) => {
         await setupAutoDismiss(page);
-        await page.goto(mapUrl);
+        await gotoLightning(page, mapUrl);
         await expect(page.getByRole('heading', { name: VIEWER_READ_MAP_NAME })).toBeVisible();
     });
 
     test('viewer cannot create a Map record — no New button', async ({ page }) => {
         await setupAutoDismiss(page);
-        await page.goto('/lightning/o/bcm_Map__c/list');
+        await gotoLightning(page, '/lightning/o/bcm_Map__c/list');
         await expect(page.getByRole('button', { name: 'New' })).not.toBeVisible();
     });
 
     test('viewer cannot edit a Map record — no Edit button', async ({ page }) => {
         await setupAutoDismiss(page);
-        await page.goto(mapUrl);
+        await gotoLightning(page, mapUrl);
         await expect(page.getByRole('button', { name: 'Edit', exact: true })).not.toBeVisible();
     });
 });
@@ -78,7 +78,7 @@ test.describe('Map access — viewer project', () => {
 test.describe('BCM app — editor project', () => {
     test('BCM app appears in App Launcher', async ({ page }) => {
         await setupAutoDismiss(page);
-        await page.goto('/lightning/o/bcm_Map__c/home');
+        await gotoLightning(page, '/lightning/o/bcm_Map__c/home');
         await page.getByRole('button', { name: 'App Launcher' }).click();
         await expect(
             page.getByRole('heading', { name: 'Business Capability Map' }).or(
@@ -89,13 +89,13 @@ test.describe('BCM app — editor project', () => {
 
     test('Maps tab is visible to Editor', async ({ page }) => {
         await setupAutoDismiss(page);
-        await page.goto(APP_PATH);
+        await gotoLightning(page, APP_PATH);
         await expect(page.getByRole('link', { name: 'Maps' })).toBeVisible();
     });
 
     test('Maps tab navigates to the Maps list', async ({ page }) => {
         await setupAutoDismiss(page);
-        await page.goto(APP_PATH);
+        await gotoLightning(page, APP_PATH);
         await page.getByRole('link', { name: 'Maps' }).click();
         await expect(page).toHaveURL(/bcm_Map__c/);
     });
@@ -104,7 +104,7 @@ test.describe('BCM app — editor project', () => {
 test.describe('BCM app — viewer project', () => {
     test('Maps tab is visible to Viewer', async ({ page }) => {
         await setupAutoDismiss(page);
-        await page.goto(APP_PATH);
+        await gotoLightning(page, APP_PATH);
         await expect(page.getByRole('link', { name: 'Maps' })).toBeVisible();
     });
 });

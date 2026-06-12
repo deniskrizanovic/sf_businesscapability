@@ -42,9 +42,8 @@ test.describe('Visual language regression — editor project', () => {
 
     test('Cross-cutting band first chevron renders with new band ramp', async ({ page }) => {
         // Toggle cross-cutting on
-        const ccToggle = page.locator('[data-id="cross-cutting-toggle"]');
+        const ccToggle = page.getByTestId('cross-cutting-toggle');
         await ccToggle.click();
-        await page.waitForTimeout(300);
 
         const bandPolygon = page.locator('.bcm-band-node polygon').first();
         await expect(bandPolygon).toBeVisible();
@@ -55,9 +54,8 @@ test.describe('Visual language regression — editor project', () => {
 
     test('Strategic Support marked node renders strategy mark glyph with token fill', async ({ page }) => {
         // Toggle strategic support on
-        const ssToggle = page.locator('[data-id="strategic-support-toggle"]');
+        const ssToggle = page.getByTestId('strategic-support-toggle');
         await ssToggle.click();
-        await page.waitForTimeout(300);
 
         // Strategy mark glyph should be visible
         const strategyStripe = page.locator('.bcm-strategy-stripe').first();
@@ -77,15 +75,11 @@ test.describe('Visual language regression — editor project', () => {
 
         // Click to focus
         await l2Rect.click();
-        await page.waitForTimeout(200);
-
-        const strokeAfter = await l2Rect.getAttribute('stroke');
-        const fillAfter = await l2Rect.getAttribute('fill');
 
         // Focus ring applied to stroke
-        expect(strokeAfter).toBe(EXPECTED_FOCUS_RING);
+        await expect(l2Rect).toHaveAttribute('stroke', EXPECTED_FOCUS_RING);
 
         // Single-channel focus — fill unchanged
-        expect(fillAfter).toBe(fillBefore);
+        await expect(l2Rect).toHaveAttribute('fill', fillBefore);
     });
 });

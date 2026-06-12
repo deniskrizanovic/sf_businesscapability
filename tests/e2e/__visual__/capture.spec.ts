@@ -45,14 +45,14 @@ test.describe('Visual language reference capture — editor project', () => {
     });
 
     test('strategy on', async ({ page }) => {
-        const ssToggle = page.locator('[data-id="strategic-support-toggle"]');
+        const ssToggle = page.getByTestId('strategic-support-toggle');
         await ssToggle.click();
         await page.waitForTimeout(300);
         await page.locator('.bcm-canvas').screenshot({ path: 'tests/e2e/__visual__/strategy-on.png' });
     });
 
     test('cross-cutting on', async ({ page }) => {
-        const ccToggle = page.locator('[data-id="cross-cutting-toggle"]');
+        const ccToggle = page.getByTestId('cross-cutting-toggle');
         await ccToggle.click();
         await page.waitForTimeout(300);
         await page.locator('.bcm-canvas').screenshot({ path: 'tests/e2e/__visual__/cross-cutting-on.png' });
