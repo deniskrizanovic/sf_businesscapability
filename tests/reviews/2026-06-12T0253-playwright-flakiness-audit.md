@@ -13,10 +13,10 @@
 | 1 — Locators                | 4      | 1      | 0     |
 | 2 — Synchronization & waits | 2      | 3      | 0     |
 | 3 — Hybrid architecture     | 4      | 0      | 0     |
-| 4 — Auth & session reuse    | 3      | 3      | 0     |
+| 4 — Auth & session reuse    | 4      | 2      | 0     |
 | 5 — Config & CI             | 2      | 3      | 0     |
 | 6 — Process & culture       | 0      | 5      | 0     |
-| **Total**                   | **15** | **15** | **0** |
+| **Total**                   | **16** | **14** | **0** |
 
 ---
 
@@ -113,12 +113,13 @@ Seed verification uses `sf apex run` Apex queries. Tests use DOM assertions for 
 
 `playwright.config.ts:29,38` wires `storageState` per project; `auth.setup.ts` writes `.auth/editor.json` and `.auth/viewer.json` in the `setup` project, which both `editor` and `viewer` depend on.
 
-### ❌ Login uses username/password typed into the UI
+### ✅ Login uses username/password typed into the UI — correct pattern given automation user config
 
-`auth.setup.ts:13–18` navigates to `https://test.salesforce.com`, fills `Username`/`Password` fields, and clicks `Log In to Sandbox`. This is the UI login path.
+`auth.setup.ts:13–18` navigates to `https://test.salesforce.com`, fills `Username`/`Password` fields, and clicks `Log In to Sandbox`. This is stable and appropriate **if** the automation user has an MFA-exempt profile and trusted IP ranges scoped to CI egress IPs.
 
-**Risk:** trips MFA if enabled on the sandbox, rate-limited by Salesforce, and inherits every SF login-page flake. If the sandbox enforces identity verification or shows a CAPTCHA, the setup step hangs silently.  
-**Fix:** migrate to frontdoor.jsp via `sf org open --url-only --target-org <alias>` (captures the URL, navigates directly) or store a sfdxAuthUrl and use it to obtain a session token without UI interaction.
+**UI login + IP restriction is the Salesforce-recommended pattern.** The IP restriction acts as the network-level second factor — a leaked password is useless outside the allowed range. Do not migrate to frontdoor.jsp (undocumented, no IP binding on the OAuth token, history of silent breakage). If runner IPs are dynamic and cannot be pinned, escalate to JWT Bearer Flow instead.
+
+**Action required:** confirm the automation user's profile has `Multi-Factor Authentication for User Interface Logins = off` and that trusted IP ranges are configured. Without IP restriction, a leaked password grants full access from any network.
 
 ### ❌ No TOTP/MFA handling
 
@@ -192,7 +193,7 @@ All five items are process/culture practices that cannot be verified from code a
 | Priority | Item                                                                                | File(s)                                                                                            |
 | -------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | P1       | Raise global timeouts to SF-appropriate values                                      | `playwright.config.ts`                                                                             |
-| P1       | Replace UI login with frontdoor.jsp programmatic auth                               | `tests/e2e/fixtures/auth.setup.ts`                                                                 |
+| P1       | Confirm automation user has MFA-exempt profile + trusted IP ranges on CI egress IPs | Salesforce org config (Setup → Network Access / Profile Login IP Ranges)                           |
 | P2       | Add `drainSpinners` helper; call after `page.goto()` in all specs                   | new helper in `fixtures/helpers.ts`                                                                |
 | P2       | Re-resolve `nameInput` after save in capability-detail save test                    | `tests/e2e/capability-detail.spec.ts:161`                                                          |
 | P2       | Replace `waitForTimeout` in `visual-language.spec.ts` with DOM assertions           | `tests/e2e/visual-language.spec.ts:47,60,80`                                                       |

@@ -47,8 +47,8 @@ Format: each box is a check to perform. The sub-bullet (`Why:`) is the failure m
 
 - [ ] `storageState` is captured once in a `setup` project and reused across spec projects (already wired in `playwright.config.ts:23-41`).
     - Why: full UI login per test adds 5–15 s and depends on unstable login screen states.
-- [ ] Login uses programmatic auth (frontdoor.jsp via `sf org open --url-only`, JWT bearer, or stored sfdxAuthUrl) — not username/password typed into the UI.
-    - Why: UI login trips MFA, identity verification, and rate limits.
+- [ ] Login uses a dedicated automation user with MFA-exempt profile + trusted IP ranges scoped to CI egress IPs. Standard UI login (`page.goto` + fill username/password) is then stable and secure — the IP restriction acts as the network-level second factor.
+    - Why: this is the Salesforce-recommended pattern. If runner IPs are dynamic and cannot be pinned, escalate to JWT Bearer Flow. **Do not use frontdoor.jsp** — it is an undocumented internal endpoint with no stability guarantee, its OAuth refresh tokens carry no IP restriction, and it has been silently broken by SF security hardening in the past.
 - [ ] If MFA is on, TOTP is generated via `otplib` from a secret in env, not entered manually or scraped from email.
     - Why: human-in-the-loop and inbox scraping are non-deterministic and brittle.
 - [ ] If app uses IndexedDB for session data, `storageState({ ..., indexedDB: true })` is set (Playwright ≥ 1.51).
