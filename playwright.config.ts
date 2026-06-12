@@ -14,10 +14,15 @@ export default defineConfig({
     // fullyParallel is false. Revert to workers: 1 if cross-project flake returns.
     workers: 2,
     retries: 1,
+    timeout: 60_000,
+    expect: { timeout: 10_000 },
     reporter: [['line'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],
     use: {
         baseURL: process.env.SF_BASE_URL,
         trace: 'on-first-retry',
+        actionTimeout: 15_000,
+        navigationTimeout: 30_000,
+        testIdAttribute: 'data-id',
     },
     projects: [
         { name: 'setup', testMatch: /auth\.setup\.ts/ },

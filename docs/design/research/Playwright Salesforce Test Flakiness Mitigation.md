@@ -37,33 +37,31 @@ Playwright implements built-in actionability checks, verifying that a target ele
 
 Authentication sequences are highly vulnerable to test flakiness, particularly due to Single Sign-On (SSO) redirects, multi-factor authentication (MFA) requirements, identity verification prompts, and rate-limiting rules enforced in Salesforce environments.14 Executing a full UI-driven login flow for every single test case adds considerable execution latency (typically 5 to 15 seconds per run) and introduces an unstable dependency on authentication screen states.15
 
-### **Programmatic Bypass via frontdoor.jsp and SFDX CLI**
+### **Recommended: Dedicated Automation User with MFA-Exempt Profile and IP Restriction**
 
-To establish a highly reliable testing pipeline, engineering teams can use Salesforce’s native frontdoor.jsp endpoint combined with the Salesforce Command Line Interface (SFDX).16 The frontdoor.jsp page is a technical entryway managed by Salesforce that accepts an active OAuth access token or session ID and converts it into a valid, authenticated browser session cookie, bypassing credentials and identity checks entirely.16The automated workflow is structured as follows:
+The most reliable and secure pattern for Salesforce test automation is a dedicated automation user configured specifically for headless execution:
 
-1. **Initial Authentication:** Log in manually once using the CLI to capture the authorization details on the local development or runtime machine 16:
-   Bash
-   sf org login web \--alias targetSandboxOrg
-2. **Metadata Export:** Extract the secure sfdxAuthUrl containing the refresh and access tokens, saving this output to a protected local JSON configuration file 16:
-   Bash
-   sf org display \--target-org targetSandboxOrg \--verbose \--json \>./authFile.json
-3. **Execution Authentication:** During pipeline execution, the test framework reads the stored JSON file to authenticate the CLI runner programmatically 16:
-   Bash
-   sf org login sfdx-url \--sfdx-url-file./authFile.json \--alias targetSandboxOrg
-4. **Dynamic URL Generation:** Use the CLI to generate an authenticated frontdoor.jsp access link without opening a physical browser window 16:
-   Bash
-   sf org open \--target-org targetSandboxOrg \--url-only \--json
-5. **Browser Navigation:** The test framework parses the CLI output, extracts the raw URL, and commands Playwright to navigate directly to it 16:
+1. **Create a dedicated automation user** — never share credentials with a human user account.
+2. **Assign a profile or permission set** with `Multi-Factor Authentication for User Interface Logins` set to `off`. This is an explicit Salesforce-supported exemption for automation accounts, not a security bypass.
+3. **Configure Trusted IP Ranges** on the automation user’s profile (Setup → Network Access, or profile-level Login IP Ranges) scoped to the CI runner’s egress IPs. With IP restriction in place, leaked credentials are useless outside the allowed range — the network restriction is the second factor.
+4. **Use the standard UI login path** (`page.goto(‘https://test.salesforce.com’)`, fill username/password, click Log In) in `auth.setup.ts`. Playwright’s `storageState` captures the session once; all tests reuse it.
+5. **Grant minimum necessary permissions** — the automation user should only access the objects and fields the tests cover. Tight permissions contain the blast radius of any credential exposure.
 
-```TypeScript
-   import { execSync } from 'child_process';
+This approach: uses official Salesforce-supported configuration, has no dependency on undocumented endpoints, is auditable via Login History, and the IP restriction provides a network-level second factor that OAuth refresh tokens lack entirely.
 
-   export async function getProgrammaticUrl(): Promise<string> {
-   const cliOutput = execSync('sf org open --target-org targetSandboxOrg --url-only --json').toString();
-   const cleanJson = cliOutput.replace(/\\x1B\\\[\[0-9;\]\*m/g, ''); // Strip control characters
-   return JSON.parse(cleanJson).result.url;
-   }
-```
+### **Antipattern: frontdoor.jsp via SFDX CLI**
+
+> **Do not use this pattern for CI pipelines.**
+
+`frontdoor.jsp` is an internal Salesforce redirect mechanism, not a documented or stable API. It predates Lightning and has no SLA or forward-compatibility guarantee. Teams that have adopted it have been broken by silent Salesforce security hardening with no advance notice.
+
+Additional problems:
+
+- The OAuth refresh token stored on disk (via `sf org display --verbose`) is a long-lived secret with **no IP restriction** — unlike a password+IP setup, a leaked refresh token is valid from any network until manually revoked.
+- Salesforce actively rate-limits and throttles frontdoor.jsp requests, especially in sandboxes under CI load.
+- `sf org open --url-only` generates a one-time URL with a short TTL; if the Playwright navigation is delayed even slightly, the URL has already expired.
+
+If the automation user + IP restriction pattern is not viable (e.g., runner IPs are dynamic and cannot be pinned), the correct escalation path is the **JWT Bearer Flow** below — not frontdoor.jsp.
 
 ### **Enterprise OAuth 2.0 JWT Bearer Flow**
 
@@ -463,16 +461,9 @@ await page.goto('/lightning/r/SBQQ__Quote__c/a0H80000004yZ1EEAU/view');
 
 ### **SSL and Security Flag Management**
 
-When running tests against local development environments or scratch organizations that lack updated SSL configurations, security handshakes can block automated browser execution.33 This can be managed by setting explicit environment flags within the test runner 33:
+> **Never set `NODE_TLS_REJECT_UNAUTHORIZED=0` or `strict-ssl=false` in a CI pipeline.** Disabling TLS validation globally hides MITM attacks and broken certificate chains; it will silently pass tests that are talking to the wrong host.
 
-```Bash
-\# Temporarily bypass local SSL verification blockages during package installation
-npm config set strict-ssl false
-export NODE_TLS_REJECT_UNAUTHORIZED=0
-
-\# Execute Playwright tests with relaxed security validations
-npx playwright test
-```
+For local development against scratch orgs with self-signed certificates, these flags may be used temporarily and only on the developer's own machine. They must not appear in any shared pipeline configuration, Docker image, or committed `.env` file.
 
 ### **Standardizing the Execution Environment**
 

@@ -116,6 +116,23 @@ export async function selectMap(page: Page, mapName: string): Promise<void> {
 }
 
 /**
+ * Wait for Salesforce spinner overlays to detach after navigation.
+ *
+ * SF sandboxes under CI load occasionally leave a spinner overlapping the first
+ * interactive element, causing "element not visible / pointer-events: none" flakes.
+ * Resolves immediately if none of the selectors are in the DOM; swallows timeout
+ * (spinner stuck) so the test can fail with a more descriptive locator error.
+ */
+export async function drainSpinners(page: Page): Promise<void> {
+    const SELECTORS = ['.slds-spinner_container', '.loadingBox', '.forceIconSpinner'];
+    await Promise.all(
+        SELECTORS.map(sel =>
+            page.locator(sel).waitFor({ state: 'hidden', timeout: 15000 }).catch(() => {}),
+        ),
+    );
+}
+
+/**
  * Navigate to a Lightning URL and clear the "Sorry to interrupt — Check your
  * Internet connection" interrupt screen if it appears. Up to 3 attempts.
  *
@@ -123,6 +140,9 @@ export async function selectMap(page: Page, mapName: string): Promise<void> {
  * the requested record/app page on first paint. Without recovery the next
  * locator wait fails with a confusing "element not found" against the wrong
  * DOM. Use this any time `page.goto()` lands on a Lightning page.
+ *
+ * Drains SF spinner overlays before returning so callers can interact
+ * immediately after navigation without a separate `drainSpinners` call.
  */
 export async function gotoLightning(page: Page, url: string): Promise<void> {
     const interruptBtn = page.getByRole('button', { name: /Refresh|Try Again/ });
@@ -140,6 +160,7 @@ export async function gotoLightning(page: Page, url: string): Promise<void> {
             await interruptBtn.click().catch(() => {});
             continue;
         }
+        await drainSpinners(page);
         return;
     }
     throw lastErr ?? new Error(`gotoLightning: interrupt screen never cleared for ${url}`);

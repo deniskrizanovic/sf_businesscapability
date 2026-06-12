@@ -1,9 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { RUN_ID, clickFlowNext, flow, setupAutoDismiss } from './fixtures/helpers';
-
-// Sandbox can take >20s to mount the Flow iframe; helper waits up to 40s for
-// "Paste JSON" to appear, so the per-test budget must exceed that plus run-up.
-test.describe.configure({ timeout: 60_000 });
+import { RUN_ID, clickFlowNext, flow, setupAutoDismiss, gotoLightning } from './fixtures/helpers';
 
 const SAMPLE_JSON = JSON.stringify({
     mapName: `E2E Import Map ${RUN_ID}`,
@@ -46,7 +42,7 @@ const SAMPLE_JSON = JSON.stringify({
 
 async function openImportPanel(page: Page) {
     await setupAutoDismiss(page);
-    await page.goto('/lightning/o/bcm_Map__c/list?filterName=All');
+    await gotoLightning(page, '/lightning/o/bcm_Map__c/list?filterName=All');
     await page.getByRole('button', { name: 'JSON Import', exact: true }).click();
     // Sandbox can take >20s to render the flow screen inside the iframe
     await flow(page).getByLabel('Paste JSON').waitFor({ state: 'visible', timeout: 40000 });
