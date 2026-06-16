@@ -40,6 +40,12 @@ Per Rules 11 and 3.3.1 (Part 2), each persistent object maps to one data group:
 
 All four are Internal data groups (persistent storage is inside the software boundary). There are no External Interface Files — the application has no outbound interfaces to peer systems.
 
+### 1.4 Error/Confirmation Messages
+
+Per Part 2 guidance on Rules 16-19(a): one Exit is identified per functional process for all error/confirmation messages from all possible causes according to the FUR. Platform-generated CRUD errors (validation failures, DML exceptions surfaced to the user) are within the FUR scope — they are implied by the permission sets and object-tab definitions that form the FUR and are not excluded by §2.6.3 (which applies only to messages the FUR does not require the software to process, e.g. OS-level printer errors). Every functional process that performs a Write therefore carries one additional Exit for error/confirmation messages, separate from any data Exit.
+
+Exception: FP4 (Import) — `bcm_ImportResult` bundles success counts and failure data as a single object of interest; the existing Exit covers both the data and the error indication per §2.6.2.
+
 ---
 
 ## 2. Functional Processes
@@ -148,8 +154,9 @@ Subsequent Reads are needed for upsert (match-before-write), and Writes cover ea
 | 2   | Read Capabilities (fetch records to update) | R    | Capability | Fetch the sibling records to set SortOrder                                         |
 | 3   | Write updated SortOrder                     | W    | Capability | Writes `bcm_SortOrder__c` 1, 2, 3… to each sibling                                 |
 | 4   | Send confirmation / updated diagram data    | X    | Capability | Optimistic update on client; server Exit confirms success or triggers revert toast |
+| 5   | Send error/confirmation message to UI       | X    | —          | §2.6.1: one error/conf Exit per FP; platform CRUD errors are within FUR scope      |
 
-**FP5 size = 4 CFP**
+**FP5 size = 5 CFP**
 
 ---
 
@@ -168,10 +175,11 @@ Subsequent Reads are needed for upsert (match-before-write), and Writes cover ea
 | 6   | Write new sibling SortOrder                                                        | W    | Capability | Rewrite `bcm_SortOrder__c` for new parent's children list — FUR explicitly require reordering both old and new sibling groups |
 | 7   | Write old sibling SortOrder                                                        | W    | Capability | Rewrite `bcm_SortOrder__c` for old parent's remaining children                                                                |
 | 8   | Send confirmation / updated diagram data                                           | X    | Capability | Confirms success or triggers revert                                                                                           |
+| 9   | Send error/confirmation message to UI                                              | X    | —          | §2.6.1: one error/conf Exit per FP; platform CRUD errors are within FUR scope                                                 |
 
 > Rule 14 / Guidance on Rules 13–14 Part 2 case (c): FUR explicitly require data describing the same object of interest (Capability) to be written more than once in the same functional process, so each distinct write pass is counted separately.
 
-**FP6 size = 8 CFP**
+**FP6 size = 9 CFP**
 
 ---
 
@@ -220,13 +228,14 @@ No Object Tab exists for Map (not listed in `06-app-structure.md` tab table), bu
 
 **Trigger:** Editor clicks "Save" on the new Map form
 
-| #   | Movement                                 | Type | Data Group | Notes                         |
-| --- | ---------------------------------------- | ---- | ---------- | ----------------------------- |
-| 1   | Receive new Map data (Name, Description) | E    | Map        | Triggering entry              |
-| 2   | Write new Map record                     | W    | Map        | INSERT `bcm_Map__c`           |
-| 3   | Send confirmation / record Id to UI      | X    | Map        | Redirect to new record detail |
+| #   | Movement                                 | Type | Data Group | Notes                                                                         |
+| --- | ---------------------------------------- | ---- | ---------- | ----------------------------------------------------------------------------- |
+| 1   | Receive new Map data (Name, Description) | E    | Map        | Triggering entry                                                              |
+| 2   | Write new Map record                     | W    | Map        | INSERT `bcm_Map__c`                                                           |
+| 3   | Send confirmation / record Id to UI      | X    | Map        | Redirect to new record detail                                                 |
+| 4   | Send error/confirmation message to UI    | X    | —          | §2.6.1: one error/conf Exit per FP; platform CRUD errors are within FUR scope |
 
-**FP9 size = 3 CFP**
+**FP9 size = 4 CFP**
 
 ---
 
@@ -248,13 +257,14 @@ No Object Tab exists for Map (not listed in `06-app-structure.md` tab table), bu
 
 **Trigger:** Editor clicks "Save" on the edit form
 
-| #   | Movement                 | Type | Data Group | Notes                    |
-| --- | ------------------------ | ---- | ---------- | ------------------------ |
-| 1   | Receive updated Map data | E    | Map        | Triggering entry         |
-| 2   | Write updated Map record | W    | Map        | UPDATE `bcm_Map__c`      |
-| 3   | Send confirmation to UI  | X    | Map        | Updated record displayed |
+| #   | Movement                              | Type | Data Group | Notes                                                                         |
+| --- | ------------------------------------- | ---- | ---------- | ----------------------------------------------------------------------------- |
+| 1   | Receive updated Map data              | E    | Map        | Triggering entry                                                              |
+| 2   | Write updated Map record              | W    | Map        | UPDATE `bcm_Map__c`                                                           |
+| 3   | Send confirmation to UI               | X    | Map        | Updated record displayed                                                      |
+| 4   | Send error/confirmation message to UI | X    | —          | §2.6.1: one error/conf Exit per FP; platform CRUD errors are within FUR scope |
 
-**FP11 size = 3 CFP**
+**FP11 size = 4 CFP**
 
 ---
 
@@ -262,14 +272,15 @@ No Object Tab exists for Map (not listed in `06-app-structure.md` tab table), bu
 
 **Trigger:** Editor clicks "Delete" on a Map record
 
-| #   | Movement                    | Type | Data Group | Notes                                         |
-| --- | --------------------------- | ---- | ---------- | --------------------------------------------- |
-| 1   | Receive delete confirmation | E    | Map        | Triggering entry (confirmation dialog submit) |
-| 2   | Read Map record             | R    | Map        | Verify record exists before delete            |
-| 3   | Write (delete) Map record   | W    | Map        | DELETE `bcm_Map__c` — Rule 20: delete = Write |
-| 4   | Send confirmation to UI     | X    | Map        | Redirect to list / success toast              |
+| #   | Movement                              | Type | Data Group | Notes                                                                         |
+| --- | ------------------------------------- | ---- | ---------- | ----------------------------------------------------------------------------- |
+| 1   | Receive delete confirmation           | E    | Map        | Triggering entry (confirmation dialog submit)                                 |
+| 2   | Read Map record                       | R    | Map        | Verify record exists before delete                                            |
+| 3   | Write (delete) Map record             | W    | Map        | DELETE `bcm_Map__c` — Rule 20: delete = Write                                 |
+| 4   | Send confirmation to UI               | X    | Map        | Redirect to list / success toast                                              |
+| 5   | Send error/confirmation message to UI | X    | —          | §2.6.1: one error/conf Exit per FP; platform CRUD errors are within FUR scope |
 
-**FP12 size = 4 CFP**
+**FP12 size = 5 CFP**
 
 ---
 
@@ -329,13 +340,14 @@ Object Tab defined in `06-app-structure.md`. List view default columns: Name, Le
 
 **Trigger:** Editor clicks "Save" on the new Capability form
 
-| #   | Movement                    | Type | Data Group | Notes                         |
-| --- | --------------------------- | ---- | ---------- | ----------------------------- |
-| 1   | Receive new Capability data | E    | Capability | Triggering entry              |
-| 2   | Write new Capability record | W    | Capability | INSERT `bcm_Capability__c`    |
-| 3   | Send confirmation to UI     | X    | Capability | Redirect to new record detail |
+| #   | Movement                              | Type | Data Group | Notes                                                                         |
+| --- | ------------------------------------- | ---- | ---------- | ----------------------------------------------------------------------------- |
+| 1   | Receive new Capability data           | E    | Capability | Triggering entry                                                              |
+| 2   | Write new Capability record           | W    | Capability | INSERT `bcm_Capability__c`                                                    |
+| 3   | Send confirmation to UI               | X    | Capability | Redirect to new record detail                                                 |
+| 4   | Send error/confirmation message to UI | X    | —          | §2.6.1: one error/conf Exit per FP; platform CRUD errors are within FUR scope |
 
-**FP16 size = 3 CFP**
+**FP16 size = 4 CFP**
 
 ---
 
@@ -358,13 +370,14 @@ Object Tab defined in `06-app-structure.md`. List view default columns: Name, Le
 
 **Trigger:** Editor clicks "Save" on the edit form
 
-| #   | Movement                        | Type | Data Group | Notes                      |
-| --- | ------------------------------- | ---- | ---------- | -------------------------- |
-| 1   | Receive updated Capability data | E    | Capability | Triggering entry           |
-| 2   | Write updated Capability record | W    | Capability | UPDATE `bcm_Capability__c` |
-| 3   | Send confirmation to UI         | X    | Capability | Updated record displayed   |
+| #   | Movement                              | Type | Data Group | Notes                                                                         |
+| --- | ------------------------------------- | ---- | ---------- | ----------------------------------------------------------------------------- |
+| 1   | Receive updated Capability data       | E    | Capability | Triggering entry                                                              |
+| 2   | Write updated Capability record       | W    | Capability | UPDATE `bcm_Capability__c`                                                    |
+| 3   | Send confirmation to UI               | X    | Capability | Updated record displayed                                                      |
+| 4   | Send error/confirmation message to UI | X    | —          | §2.6.1: one error/conf Exit per FP; platform CRUD errors are within FUR scope |
 
-**FP18 size = 3 CFP**
+**FP18 size = 4 CFP**
 
 ---
 
@@ -372,16 +385,17 @@ Object Tab defined in `06-app-structure.md`. List view default columns: Name, Le
 
 **Trigger:** Editor clicks "Delete" on a Capability record
 
-| #   | Movement                         | Type | Data Group | Notes                                |
-| --- | -------------------------------- | ---- | ---------- | ------------------------------------ |
-| 1   | Receive delete confirmation      | E    | Capability | Triggering entry                     |
-| 2   | Read Capability record           | R    | Capability | Verify before delete                 |
-| 3   | Write (delete) Capability record | W    | Capability | DELETE `bcm_Capability__c` — Rule 20 |
-| 4   | Send confirmation to UI          | X    | Capability | Redirect / success toast             |
+| #   | Movement                              | Type | Data Group | Notes                                                                         |
+| --- | ------------------------------------- | ---- | ---------- | ----------------------------------------------------------------------------- |
+| 1   | Receive delete confirmation           | E    | Capability | Triggering entry                                                              |
+| 2   | Read Capability record                | R    | Capability | Verify before delete                                                          |
+| 3   | Write (delete) Capability record      | W    | Capability | DELETE `bcm_Capability__c` — Rule 20                                          |
+| 4   | Send confirmation to UI               | X    | Capability | Redirect / success toast                                                      |
+| 5   | Send error/confirmation message to UI | X    | —          | §2.6.1: one error/conf Exit per FP; platform CRUD errors are within FUR scope |
 
 > CapabilityTag cascade-delete is Salesforce platform behaviour (Master-Detail), not a measured Write — it is not driven by FUR.
 
-**FP19 size = 4 CFP**
+**FP19 size = 5 CFP**
 
 ---
 
@@ -389,15 +403,16 @@ Object Tab defined in `06-app-structure.md`. List view default columns: Name, Le
 
 **Trigger:** Editor adds a Tag via the Capability's Tags related list
 
-| #   | Movement                                 | Type | Data Group    | Notes                                |
-| --- | ---------------------------------------- | ---- | ------------- | ------------------------------------ |
-| 1   | Receive Capability Id + Tag selection    | E    | CapabilityTag | Triggering entry                     |
-| 2   | Read Capability (validate parent exists) | R    | Capability    | Confirm the parent Capability record |
-| 3   | Read Tags (for tag picker options)       | R    | Tag           | List of available Tags for selection |
-| 4   | Write new CapabilityTag junction         | W    | CapabilityTag | INSERT `bcm_CapabilityTag__c`        |
-| 5   | Send confirmation to UI                  | X    | CapabilityTag | Related list refreshed               |
+| #   | Movement                                 | Type | Data Group    | Notes                                                                         |
+| --- | ---------------------------------------- | ---- | ------------- | ----------------------------------------------------------------------------- |
+| 1   | Receive Capability Id + Tag selection    | E    | CapabilityTag | Triggering entry                                                              |
+| 2   | Read Capability (validate parent exists) | R    | Capability    | Confirm the parent Capability record                                          |
+| 3   | Read Tags (for tag picker options)       | R    | Tag           | List of available Tags for selection                                          |
+| 4   | Write new CapabilityTag junction         | W    | CapabilityTag | INSERT `bcm_CapabilityTag__c`                                                 |
+| 5   | Send confirmation to UI                  | X    | CapabilityTag | Related list refreshed                                                        |
+| 6   | Send error/confirmation message to UI    | X    | —             | §2.6.1: one error/conf Exit per FP; platform CRUD errors are within FUR scope |
 
-**FP20 size = 5 CFP**
+**FP20 size = 6 CFP**
 
 ---
 
@@ -405,14 +420,15 @@ Object Tab defined in `06-app-structure.md`. List view default columns: Name, Le
 
 **Trigger:** Editor deletes a CapabilityTag record from the related list
 
-| #   | Movement                     | Type | Data Group    | Notes                                   |
-| --- | ---------------------------- | ---- | ------------- | --------------------------------------- |
-| 1   | Receive CapabilityTag Id     | E    | CapabilityTag | Triggering entry                        |
-| 2   | Read CapabilityTag record    | R    | CapabilityTag | Verify before delete                    |
-| 3   | Write (delete) CapabilityTag | W    | CapabilityTag | DELETE `bcm_CapabilityTag__c` — Rule 20 |
-| 4   | Send confirmation to UI      | X    | CapabilityTag | Related list refreshed                  |
+| #   | Movement                              | Type | Data Group    | Notes                                                                         |
+| --- | ------------------------------------- | ---- | ------------- | ----------------------------------------------------------------------------- |
+| 1   | Receive CapabilityTag Id              | E    | CapabilityTag | Triggering entry                                                              |
+| 2   | Read CapabilityTag record             | R    | CapabilityTag | Verify before delete                                                          |
+| 3   | Write (delete) CapabilityTag          | W    | CapabilityTag | DELETE `bcm_CapabilityTag__c` — Rule 20                                       |
+| 4   | Send confirmation to UI               | X    | CapabilityTag | Related list refreshed                                                        |
+| 5   | Send error/confirmation message to UI | X    | —             | §2.6.1: one error/conf Exit per FP; platform CRUD errors are within FUR scope |
 
-**FP21 size = 4 CFP**
+**FP21 size = 5 CFP**
 
 ---
 
@@ -467,13 +483,14 @@ Object Tab defined in `06-app-structure.md`. List view default columns: Name, Co
 
 **Trigger:** Editor clicks "Save" on the new Tag form
 
-| #   | Movement                            | Type | Data Group | Notes                         |
-| --- | ----------------------------------- | ---- | ---------- | ----------------------------- |
-| 1   | Receive new Tag data (Name, Colour) | E    | Tag        | Triggering entry              |
-| 2   | Write new Tag record                | W    | Tag        | INSERT `bcm_Tag__c`           |
-| 3   | Send confirmation to UI             | X    | Tag        | Redirect to new record detail |
+| #   | Movement                              | Type | Data Group | Notes                                                                         |
+| --- | ------------------------------------- | ---- | ---------- | ----------------------------------------------------------------------------- |
+| 1   | Receive new Tag data (Name, Colour)   | E    | Tag        | Triggering entry                                                              |
+| 2   | Write new Tag record                  | W    | Tag        | INSERT `bcm_Tag__c`                                                           |
+| 3   | Send confirmation to UI               | X    | Tag        | Redirect to new record detail                                                 |
+| 4   | Send error/confirmation message to UI | X    | —          | §2.6.1: one error/conf Exit per FP; platform CRUD errors are within FUR scope |
 
-**FP25 size = 3 CFP**
+**FP25 size = 4 CFP**
 
 ---
 
@@ -495,13 +512,14 @@ Object Tab defined in `06-app-structure.md`. List view default columns: Name, Co
 
 **Trigger:** Editor clicks "Save" on the edit form
 
-| #   | Movement                 | Type | Data Group | Notes                    |
-| --- | ------------------------ | ---- | ---------- | ------------------------ |
-| 1   | Receive updated Tag data | E    | Tag        | Triggering entry         |
-| 2   | Write updated Tag record | W    | Tag        | UPDATE `bcm_Tag__c`      |
-| 3   | Send confirmation to UI  | X    | Tag        | Updated record displayed |
+| #   | Movement                              | Type | Data Group | Notes                                                                         |
+| --- | ------------------------------------- | ---- | ---------- | ----------------------------------------------------------------------------- |
+| 1   | Receive updated Tag data              | E    | Tag        | Triggering entry                                                              |
+| 2   | Write updated Tag record              | W    | Tag        | UPDATE `bcm_Tag__c`                                                           |
+| 3   | Send confirmation to UI               | X    | Tag        | Updated record displayed                                                      |
+| 4   | Send error/confirmation message to UI | X    | —          | §2.6.1: one error/conf Exit per FP; platform CRUD errors are within FUR scope |
 
-**FP27 size = 3 CFP**
+**FP27 size = 4 CFP**
 
 ---
 
@@ -509,16 +527,17 @@ Object Tab defined in `06-app-structure.md`. List view default columns: Name, Co
 
 **Trigger:** Editor clicks "Delete" on a Tag record
 
-| #   | Movement                    | Type | Data Group | Notes                         |
-| --- | --------------------------- | ---- | ---------- | ----------------------------- |
-| 1   | Receive delete confirmation | E    | Tag        | Triggering entry              |
-| 2   | Read Tag record             | R    | Tag        | Verify before delete          |
-| 3   | Write (delete) Tag record   | W    | Tag        | DELETE `bcm_Tag__c` — Rule 20 |
-| 4   | Send confirmation to UI     | X    | Tag        | Redirect / success toast      |
+| #   | Movement                              | Type | Data Group | Notes                                                                         |
+| --- | ------------------------------------- | ---- | ---------- | ----------------------------------------------------------------------------- |
+| 1   | Receive delete confirmation           | E    | Tag        | Triggering entry                                                              |
+| 2   | Read Tag record                       | R    | Tag        | Verify before delete                                                          |
+| 3   | Write (delete) Tag record             | W    | Tag        | DELETE `bcm_Tag__c` — Rule 20                                                 |
+| 4   | Send confirmation to UI               | X    | Tag        | Redirect / success toast                                                      |
+| 5   | Send error/confirmation message to UI | X    | —          | §2.6.1: one error/conf Exit per FP; platform CRUD errors are within FUR scope |
 
 > CapabilityTag cascade-delete is Salesforce platform behaviour (Master-Detail), not a measured Write.
 
-**FP28 size = 4 CFP**
+**FP28 size = 5 CFP**
 
 ---
 
@@ -546,13 +565,14 @@ Distinct from FP14 (standard Capability record page) — different triggering su
 **FUR source:** `docs/plans/2026-06-02-09:48-capability-detail-panel.md` — `updateCapability(capability)`  
 Distinct from FP18 (standard record edit form save) — different triggering surface (LWC panel Save button vs platform form Save button) and different functional user interaction context.
 
-| #   | Movement                        | Type | Data Group | Notes                                                                                                                   |
-| --- | ------------------------------- | ---- | ---------- | ----------------------------------------------------------------------------------------------------------------------- |
-| 1   | Receive updated Capability data | E    | Capability | Triggering entry — field values from human Editor cross boundary                                                        |
-| 2   | Write updated Capability record | W    | Capability | UPDATE via bcm_CapabilityService                                                                                        |
-| 3   | Send confirmation to UI         | X    | Capability | Panel shows saved values; diagram re-load triggered (FP2 re-trigger is a separate functional process, not counted here) |
+| #   | Movement                              | Type | Data Group | Notes                                                                                                                   |
+| --- | ------------------------------------- | ---- | ---------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 1   | Receive updated Capability data       | E    | Capability | Triggering entry — field values from human Editor cross boundary                                                        |
+| 2   | Write updated Capability record       | W    | Capability | UPDATE via bcm_CapabilityService                                                                                        |
+| 3   | Send confirmation to UI               | X    | Capability | Panel shows saved values; diagram re-load triggered (FP2 re-trigger is a separate functional process, not counted here) |
+| 4   | Send error/confirmation message to UI | X    | —          | §2.6.1: one error/conf Exit per FP; platform CRUD errors are within FUR scope                                           |
 
-**FP30 size = 3 CFP**
+**FP30 size = 4 CFP**
 
 ---
 
@@ -564,35 +584,35 @@ Distinct from FP18 (standard record edit form save) — different triggering sur
 | FP2       | Load Capabilities for Selected Map | 1      | 1      | 3      | 0      | 5       |
 | FP3       | Load Tag List (toolbar)            | 1      | 1      | 1      | 0      | 3       |
 | FP4       | Import Capability Map from JSON    | 1      | 1      | 3      | 6      | 11      |
-| FP5       | Reorder Capabilities (same parent) | 1      | 1      | 1      | 1      | 4       |
-| FP6       | Reparent Capability (cross-parent) | 1      | 1      | 2      | 4      | 8       |
+| FP5       | Reorder Capabilities (same parent) | 1      | 2      | 1      | 1      | 5       |
+| FP6       | Reparent Capability (cross-parent) | 1      | 2      | 2      | 4      | 9       |
 | FP7       | View Map Detail                    | 1      | 1      | 1      | 0      | 3       |
 | FP8       | Create Map — open form             | 1      | 1      | 0      | 0      | 2       |
-| FP9       | Create Map — save                  | 1      | 1      | 0      | 1      | 3       |
+| FP9       | Create Map — save                  | 1      | 2      | 0      | 1      | 4       |
 | FP10      | Edit Map — load form               | 1      | 1      | 1      | 0      | 3       |
-| FP11      | Edit Map — save                    | 1      | 1      | 0      | 1      | 3       |
-| FP12      | Delete Map                         | 1      | 1      | 1      | 1      | 4       |
+| FP11      | Edit Map — save                    | 1      | 2      | 0      | 1      | 4       |
+| FP12      | Delete Map                         | 1      | 2      | 1      | 1      | 5       |
 | FP13      | View Capability List               | 1      | 1      | 2      | 0      | 4       |
 | FP14      | View Capability Detail             | 1      | 1      | 4      | 0      | 6       |
 | FP15      | Create Capability — open form      | 1      | 1      | 1      | 0      | 3       |
-| FP16      | Create Capability — save           | 1      | 1      | 0      | 1      | 3       |
+| FP16      | Create Capability — save           | 1      | 2      | 0      | 1      | 4       |
 | FP17      | Edit Capability — load form        | 1      | 1      | 2      | 0      | 4       |
-| FP18      | Edit Capability — save             | 1      | 1      | 0      | 1      | 3       |
-| FP19      | Delete Capability                  | 1      | 1      | 1      | 1      | 4       |
-| FP20      | Add Tag to Capability              | 1      | 1      | 2      | 1      | 5       |
-| FP21      | Remove Tag from Capability         | 1      | 1      | 1      | 1      | 4       |
+| FP18      | Edit Capability — save             | 1      | 2      | 0      | 1      | 4       |
+| FP19      | Delete Capability                  | 1      | 2      | 1      | 1      | 5       |
+| FP20      | Add Tag to Capability              | 1      | 2      | 2      | 1      | 6       |
+| FP21      | Remove Tag from Capability         | 1      | 2      | 1      | 1      | 5       |
 | FP22      | View Tag List                      | 1      | 1      | 1      | 0      | 3       |
 | FP23      | View Tag Detail                    | 1      | 1      | 3      | 0      | 5       |
 | FP24      | Create Tag — open form             | 1      | 1      | 0      | 0      | 2       |
-| FP25      | Create Tag — save                  | 1      | 1      | 0      | 1      | 3       |
+| FP25      | Create Tag — save                  | 1      | 2      | 0      | 1      | 4       |
 | FP26      | Edit Tag — load form               | 1      | 1      | 1      | 0      | 3       |
-| FP27      | Edit Tag — save                    | 1      | 1      | 0      | 1      | 3       |
-| FP28      | Delete Tag                         | 1      | 1      | 1      | 1      | 4       |
+| FP27      | Edit Tag — save                    | 1      | 2      | 0      | 1      | 4       |
+| FP28      | Delete Tag                         | 1      | 2      | 1      | 1      | 5       |
 | FP29      | View Capability Detail via Panel   | 1      | 1      | 3      | 0      | 5       |
-| FP30      | Edit Capability via Panel — Save   | 1      | 1      | 0      | 1      | 3       |
-| **Total** |                                    | **30** | **30** | **36** | **23** | **119** |
+| FP30      | Edit Capability via Panel — Save   | 1      | 2      | 0      | 1      | 4       |
+| **Total** |                                    | **30** | **44** | **36** | **23** | **133** |
 
-**Total COSMIC Functional Size: 119 CFP**
+**Total COSMIC Functional Size: 133 CFP**
 
 > **Delivery status:** FP29 delivered in GH issue #22 (2026-06-02). FP30 delivered in GH issue #23 (2026-06-03). FP31 (Hide Capability via Context Menu) removed in GH issue #32 (2026-06-03) — Hide UX subsumed by FP30 via panel edit mode.
 
@@ -621,7 +641,7 @@ Distinct from FP18 (standard record edit form save) — different triggering sur
 | Fit-to-window / Reset view                                           | In-memory zoom + pan state mutation; same class as zoom/pan.                                                                                                                                                                                                                                                                 |
 | Visual-language refresh (GH #43, 2026-06-10)                         | Tokenised palette + type scale + focus-model swap + strategy-mark glyph swap. No data movement crosses the software boundary. Same exclusion class as canvas focus outline suppression.                                                                                                                                      |
 
-> **Step 7 closeout (2026-06-06):** All step-7 deltas accounted for. Total stays at 119 CFP — FP29 + FP30 already counted, FP31 already removed; the four rows above are exclusions (zero CFP). Step 7 row in implementation tracker: FP1 + FP2 + FP3 + FP29 + FP30 = 19 CFP.
+> **Step 7 closeout (2026-06-06):** All step-7 deltas accounted for. Total revised to 133 CFP (was 119) — error/confirmation message Exits added to all write-path FPs per §2.6.1 and Part 2 guidance Rules 16-19(a); FP29 + FP30 already counted, FP31 already removed; the four rows above are exclusions (zero CFP). Step 7 row in implementation tracker: FP1 + FP2 + FP3 + FP29 + FP30 = 19 CFP (read-only FPs, unaffected by error/conf Exit additions).
 
 ---
 
