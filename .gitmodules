@@ -1,0 +1,3 @@
+[submodule ".claude/dk-skills"]
+	path = .claude/dk-skills
+	url = https://github.com/deniskrizanovic/dk-skills.git
