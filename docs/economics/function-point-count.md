@@ -42,7 +42,7 @@ All four are Internal data groups (persistent storage is inside the software bou
 
 ### 1.4 Error/Confirmation Messages
 
-Per Part 2 guidance on Rules 16-19(a): one Exit is identified per functional process for all error/confirmation messages from all possible causes according to the FUR. Platform-generated CRUD errors (validation failures, DML exceptions surfaced to the user) are within the FUR scope — they are implied by the permission sets and object-tab definitions that form the FUR and are not excluded by §2.6.3 (which applies only to messages the FUR does not require the software to process, e.g. OS-level printer errors). Every functional process that performs a Write therefore carries one additional Exit for error/confirmation messages, separate from any data Exit.
+Per Part 2 guidance on Rules 16-19(a): one Exit is identified per functional process for all error/confirmation messages from all possible causes according to the FUR. Platform-generated CRUD errors (validation failures, DML exceptions surfaced to the user) are within the FUR scope — they are implied by the permission sets and object-tab definitions that form the FUR and are not excluded by §2.6.3 (which applies only to messages the FUR does not require the software to process, e.g. OS-level printer errors). Every functional process that performs a Write therefore carries one additional Exit for error/confirmation messages, separate from any data Exit. That includes FP1, FP2, and FP3
 
 Exception: FP4 (Import) — `bcm_ImportResult` bundles success counts and failure data as a single object of interest; the existing Exit covers both the data and the error indication per §2.6.2.
 
