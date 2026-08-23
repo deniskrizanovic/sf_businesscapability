@@ -16,16 +16,17 @@ Exception: security warnings, irreversible action confirmations — write clearl
 
 **Never write or edit `*-meta.xml` files directly.** Always invoke the matching skill first.
 
-| Metadata type              | Skill to invoke                 |
-| -------------------------- | ------------------------------- |
-| Custom Object              | `generating-custom-object`      |
-| Custom Field               | `generating-custom-field`       |
-| Validation Rule            | `generating-validation-rule`    |
-| FlexiPage / Lightning Page | `generating-flexipage`          |
-| Custom Tab                 | `generating-custom-tab`         |
-| Permission Set             | `generating-permission-set`     |
-| Lightning App              | `generating-custom-application` |
-| Custom Object (tab)        | `generating-custom-tab`         |
+| Metadata type                             | Skill to invoke                                    |
+| ----------------------------------------- | -------------------------------------------------- |
+| Custom Object                             | `generating-custom-object`                         |
+| Custom Field                              | `generating-custom-field`                          |
+| Validation Rule                           | `generating-validation-rule`                       |
+| FlexiPage / Lightning Page                | `generating-flexipage`                             |
+| Custom Tab                                | `generating-custom-tab`                            |
+| Permission Set                            | `generating-permission-set`                        |
+| Lightning App                             | `generating-custom-application`                    |
+| Custom Object (tab)                       | `generating-custom-tab`                            |
+| Connected App / External Client App (ECA) | `integration-connectivity-connected-app-configure` |
 
 If no skill exists for the metadata type, state that explicitly and ask before proceeding.
 
