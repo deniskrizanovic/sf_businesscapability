@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ExternalClientApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <contactEmail>dkrizanovic@dkrizanovic-240702-397.demo</contactEmail>
+    <description
+    >JWT-bearer server-to-server app for non-interactive, cold-start e2e auth (SF_AUTH_MODE=jwt). See docs/design/09-e2e-test-architecture.md §3.</description>
+    <distributionState>Local</distributionState>
+    <isProtected>false</isProtected>
+    <label>BCM E2E JWT</label>
+</ExternalClientApplication>
