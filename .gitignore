@@ -42,6 +42,11 @@ $RECYCLE.BIN/
 # Local environment variables
 .env
 
+# JWT External Client App private key — NEVER commit. Local dev + CI secret store only.
+secrets/
+*.key
+*.pem
+
 # Playwright auth sessions and run state
 tests/e2e/.auth/
 tests/e2e/.run_id
