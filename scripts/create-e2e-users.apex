@@ -39,11 +39,14 @@ System.setPassword(viewer.Id, '${SF_VIEWER_PASSWORD}');
 
 PermissionSet editorPs = [SELECT Id FROM PermissionSet WHERE Name = 'bcm_Editor' LIMIT 1];
 PermissionSet viewerPs = [SELECT Id FROM PermissionSet WHERE Name = 'bcm_Viewer' LIMIT 1];
+// API Enabled is required for the sf CLI OAuth connected app to mint/refresh tokens
+// (frontdoor browser auth in tests/e2e/fixtures/auth.setup.ts). The base profile lacks it.
+PermissionSet apiPs = [SELECT Id FROM PermissionSet WHERE Name = 'bcm_ApiEnabled' LIMIT 1];
 
 List<PermissionSetAssignment> existing = [
     SELECT Id, AssigneeId, PermissionSetId FROM PermissionSetAssignment
     WHERE AssigneeId IN (:editor.Id, :viewer.Id)
-    AND PermissionSetId IN (:editorPs.Id, :viewerPs.Id)
+    AND PermissionSetId IN (:editorPs.Id, :viewerPs.Id, :apiPs.Id)
 ];
 Set<String> existingKeys = new Set<String>();
 for (PermissionSetAssignment psa : existing) {
@@ -56,6 +59,12 @@ if (!existingKeys.contains(editor.Id + ':' + editorPs.Id)) {
 }
 if (!existingKeys.contains(viewer.Id + ':' + viewerPs.Id)) {
     toInsert.add(new PermissionSetAssignment(AssigneeId = viewer.Id, PermissionSetId = viewerPs.Id));
+}
+if (!existingKeys.contains(editor.Id + ':' + apiPs.Id)) {
+    toInsert.add(new PermissionSetAssignment(AssigneeId = editor.Id, PermissionSetId = apiPs.Id));
+}
+if (!existingKeys.contains(viewer.Id + ':' + apiPs.Id)) {
+    toInsert.add(new PermissionSetAssignment(AssigneeId = viewer.Id, PermissionSetId = apiPs.Id));
 }
 if (!toInsert.isEmpty()) {
     insert toInsert;

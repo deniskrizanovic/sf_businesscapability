@@ -54,15 +54,46 @@ tests/e2e/
 
 ---
 
-## 3. Authentication: setup project + storageState
+## 3. Authentication: OAuth frontdoor + storageState
 
-Logging in over the Salesforce login page costs roughly ten seconds and occasionally trips MFA prompts. Doing it per test would dominate the run time and introduce flake unrelated to the system under test.
+Salesforce now enforces MFA at the org/identity layer — above what the `BypassMFAForUiLogins` / `SkipIdentityConfirmation` profile permissions can switch off. Headless username/password form-fill therefore stalls on an MFA / identity-verification interstitial, and the whole suite used to fail at the `setup` project before any spec ran. The suite no longer fills the login form at all. See [ADR 0006 — OAuth frontdoor for e2e auth](../adr/0006-e2e-oauth-frontdoor-auth.md) for the decision and the rejected alternatives.
 
-`fixtures/auth.setup.ts` is a Playwright **setup project** that runs before any spec. It logs in once as editor and once as viewer, then writes the browser's cookies + localStorage to `tests/e2e/.auth/editor.json` and `tests/e2e/.auth/viewer.json`. The `editor` and `viewer` projects each declare the setup project as a dependency and load the appropriate `storageState`.
+`fixtures/auth.setup.ts` is a Playwright **setup project** that runs before any spec. For each user it derives a browser session from an **OAuth-authenticated `sf` CLI org**, then writes the browser's cookies + localStorage to `tests/e2e/.auth/editor.json` and `tests/e2e/.auth/viewer.json`. The `editor` and `viewer` projects each declare the setup project as a dependency and load the appropriate `storageState`.
 
-Two test users are created once and reused indefinitely (`scripts/create-e2e-users.sh`). They use a custom profile (`AutomatedTester - Minimum Access Clone`) with `BypassMFAForUiLogins` and `SkipIdentityConfirmation`. Without those, headless login would stall on the second-factor and identity-confirmation interstitials. The profile hides all `bcm_*` tabs at the profile level so the e2e tab-visibility tests are genuinely exercising permission sets, not profile defaults.
+### Frontdoor flow
 
-Test users live in `.env` (gitignored); `.env.example` documents the variables.
+For each user the setup project runs:
+
+```bash
+sf org open -o <alias> --url-only --path /lightning --json
+```
+
+The CLI emits a `secur/frontdoor.jsp?...` URL carrying the alias's OAuth access token (and refreshing it transparently if stale). `auth.setup.ts` navigates the page to that URL — Salesforce sets Lightning session cookies — waits for `/lightning/` to confirm the shell loaded, then `storageState()` persists the cookies as before. The frontdoor URL contains a live access token, so it is captured in-process and **never logged**.
+
+We use `sf org open` rather than hand-building `frontdoor.jsp?sid=<token>` from `sf org display` because the CLI already assembles the correct instance URL, token, and retURL.
+
+### One-time interactive login prerequisite
+
+Each test user's org alias must be authenticated **once**, interactively, satisfying MFA at that time:
+
+```bash
+sf org login web -a bcm-editor-e2e   # log in as the editor test user
+sf org login web -a bcm-viewer-e2e   # log in as the viewer test user
+```
+
+Subsequent suite runs reuse the CLI's stored refresh token — no browser login form, no MFA prompt, no human interaction per run. Re-auth recurs only when the refresh token is revoked or expires per the connected app's timeout policy (the org permits refresh-token persistence — verified against the live org). Alias names are configured via `SF_EDITOR_ALIAS` / `SF_VIEWER_ALIAS` in `.env`.
+
+### Fail-fast on an unauthenticated alias
+
+If `sf org open` errors (alias never logged in, or refresh token expired/revoked), or the frontdoor navigation redirects back to a login form (stale session), `openViaFrontdoor` throws a diagnostic naming the alias and the exact `sf org login web -a <alias>` remediation command — rather than silently writing an unauthenticated `storageState` that would surface later as confusing spec failures.
+
+### Test users and API access
+
+Two test users are created once and reused indefinitely (`scripts/create-e2e-users.sh`). They use a custom profile (`AutomatedTester - Minimum Access Clone`); the profile hides all `bcm_*` tabs at the profile level so the e2e tab-visibility tests are genuinely exercising permission sets, not profile defaults. The former reliance on `BypassMFAForUiLogins` / `SkipIdentityConfirmation` no longer matters — no UI login happens.
+
+The CLI OAuth connected app requires each user to have **API Enabled** to mint/refresh tokens. The profile does not grant it, so it is granted via the `bcm_ApiEnabled` permission set, assigned to both users by `create-e2e-users.sh`.
+
+The users' `.env` username/password are still consumed by `create-e2e-users.sh` to provision the records, but they no longer gate browser login. `.env` is gitignored; `.env.example` documents every variable.
 
 ---
 
@@ -274,7 +305,7 @@ npx playwright show-report
 
 `globalTeardown` runs even when only one spec is selected, so partial runs leave the org clean.
 
-Pre-flight: `.env` populated, `SF_ORG_ALIAS` matches `sf` CLI alias, both test users created (`./scripts/create-e2e-users.sh <alias>`).
+Pre-flight: `.env` populated, `SF_ORG_ALIAS` matches `sf` CLI alias, both test users created (`./scripts/create-e2e-users.sh <alias>`), and both browser aliases authenticated once (`sf org login web -a $SF_EDITOR_ALIAS`, `sf org login web -a $SF_VIEWER_ALIAS`) — see §3.
 
 ---
 
