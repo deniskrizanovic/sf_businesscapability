@@ -54,13 +54,24 @@ tests/e2e/
 
 ---
 
-## 3. Authentication: OAuth frontdoor + storageState
+## 3. Authentication: selectable strategy → OAuth frontdoor + storageState
 
-Salesforce now enforces MFA at the org/identity layer — above what the `BypassMFAForUiLogins` / `SkipIdentityConfirmation` profile permissions can switch off. Headless username/password form-fill therefore stalls on an MFA / identity-verification interstitial, and the whole suite used to fail at the `setup` project before any spec ran. The suite no longer fills the login form at all. See [ADR 0006 — OAuth frontdoor for e2e auth](../adr/0006-e2e-oauth-frontdoor-auth.md) for the decision and the rejected alternatives.
+Salesforce now enforces MFA at the org/identity layer — above what the `BypassMFAForUiLogins` / `SkipIdentityConfirmation` profile permissions can switch off. Headless username/password form-fill therefore stalls on an MFA / identity-verification interstitial, and the whole suite used to fail at the `setup` project before any spec ran. The suite no longer fills the login form at all. See [ADR 0006 — OAuth frontdoor for e2e auth](../adr/0006-e2e-oauth-frontdoor-auth.md) and [ADR 0007 — JWT-bearer External Client App auth](../adr/0007-e2e-jwt-external-client-app-auth.md) for the decisions and the rejected alternatives.
 
 `fixtures/auth.setup.ts` is a Playwright **setup project** that runs before any spec. For each user it derives a browser session from an **OAuth-authenticated `sf` CLI org**, then writes the browser's cookies + localStorage to `tests/e2e/.auth/editor.json` and `tests/e2e/.auth/viewer.json`. The `editor` and `viewer` projects each declare the setup project as a dependency and load the appropriate `storageState`.
 
-### Frontdoor flow
+### Two auth strategies, one seam: `SF_AUTH_MODE`
+
+_How_ each alias becomes CLI-authenticated is selectable via `SF_AUTH_MODE` in `.env`; _what happens after_ — the frontdoor exchange and `storageState` persistence — is identical either way. The switch acts only at a single `ensureAuthed(alias, username)` seam that runs immediately before the unchanged `openViaFrontdoor(alias)`:
+
+| Mode                    | `ensureAuthed` does                                                  | Cold-start / CI               |
+| ----------------------- | -------------------------------------------------------------------- | ----------------------------- |
+| `web` (default / unset) | nothing — alias assumed pre-authed once via `sf org login web`       | no (needs human first login)  |
+| `jwt`                   | `sf org login jwt …` — re-asserts the alias from the ECA private key | yes (no prior session needed) |
+
+Default `web` reproduces the prior behavior exactly, so the switch is non-breaking. One global var selects the strategy for both users — per-user mixing was rejected (no use case, doubles the diagnostic matrix).
+
+### Frontdoor flow (unchanged, both modes)
 
 For each user the setup project runs:
 
@@ -68,11 +79,11 @@ For each user the setup project runs:
 sf org open -o <alias> --url-only --path /lightning --json
 ```
 
-The CLI emits a `secur/frontdoor.jsp?...` URL carrying the alias's OAuth access token (and refreshing it transparently if stale). `auth.setup.ts` navigates the page to that URL — Salesforce sets Lightning session cookies — waits for `/lightning/` to confirm the shell loaded, then `storageState()` persists the cookies as before. The frontdoor URL contains a live access token, so it is captured in-process and **never logged**.
+The CLI emits a `secur/frontdoor.jsp?...` URL carrying the alias's OAuth access token (and refreshing it transparently if stale). `auth.setup.ts` navigates the page to that URL — Salesforce sets Lightning session cookies — waits for `/lightning/` to confirm the shell loaded, then `storageState()` persists the cookies. The frontdoor URL contains a live access token, so it is captured in-process and **never logged**.
 
 We use `sf org open` rather than hand-building `frontdoor.jsp?sid=<token>` from `sf org display` because the CLI already assembles the correct instance URL, token, and retURL.
 
-### One-time interactive login prerequisite
+### `web` mode: one-time interactive login prerequisite
 
 Each test user's org alias must be authenticated **once**, interactively, satisfying MFA at that time:
 
@@ -81,11 +92,33 @@ sf org login web -a bcm-editor-e2e   # log in as the editor test user
 sf org login web -a bcm-viewer-e2e   # log in as the viewer test user
 ```
 
-Subsequent suite runs reuse the CLI's stored refresh token — no browser login form, no MFA prompt, no human interaction per run. Re-auth recurs only when the refresh token is revoked or expires per the connected app's timeout policy (the org permits refresh-token persistence — verified against the live org). Alias names are configured via `SF_EDITOR_ALIAS` / `SF_VIEWER_ALIAS` in `.env`.
+Subsequent suite runs reuse the CLI's stored refresh token — no browser login form, no MFA prompt, no human interaction per run. Re-auth recurs only when the refresh token is revoked or expires per the timeout policy (the org permits refresh-token persistence — verified against the live org). Alias names are configured via `SF_EDITOR_ALIAS` / `SF_VIEWER_ALIAS` in `.env`.
 
-### Fail-fast on an unauthenticated alias
+### `jwt` mode: non-interactive, cold-start-capable login
 
-If `sf org open` errors (alias never logged in, or refresh token expired/revoked), or the frontdoor navigation redirects back to a login form (stale session), `openViaFrontdoor` throws a diagnostic naming the alias and the exact `sf org login web -a <alias>` remediation command — rather than silently writing an unauthenticated `storageState` that would surface later as confusing spec failures.
+When `SF_AUTH_MODE=jwt`, `ensureAuthed` re-authenticates each alias every run — no stored refresh token, no human, no MFA — via the JWT-bearer flow of a committed **External Client App** (ECA), "BCM E2E JWT":
+
+```bash
+sf org login jwt --username <SF_*_USERNAME> --jwt-key-file <SF_JWT_KEY_FILE> \
+                 --client-id <SF_JWT_CLIENT_ID> --instance-url <SF_JWT_INSTANCE_URL> -a <alias>
+```
+
+The CLI re-asserts against the private key when the access token expires, so the refresh-token-expiry failure class disappears entirely. This is the prerequisite for running the suite on a fresh machine or in CI. Configuration:
+
+- **`SF_JWT_KEY_FILE`** — path to the ECA's X.509 **private** key (PEM). Generated locally with `openssl`, kept under `secrets/` and gitignored (`secrets/`, `*.key`, `*.pem`) — **never committed**. When CI is introduced this file comes from a CI secret store, not the repo. The **public** cert is uploaded to the ECA.
+- **`SF_JWT_CLIENT_ID`** — the ECA consumer key. Salesforce **generates** it on ECA create, so it is read from the deployed app _after_ deploy, not set up front.
+- **`SF_JWT_INSTANCE_URL`** — the JWT audience. **Trap:** a sandbox org needs `https://test.salesforce.com`, _not_ the my-domain host; production uses `https://login.salesforce.com`.
+
+The ECA is committed as project metadata across three types under `force-app/main/default/`: `ExternalClientApplication` (`externalClientApps/`), `ExtlClntAppGlobalOauthSettings` (`extlClntAppGlobalOauthSets/`), and `ExtlClntAppOauthSettings` (`extlClntAppOauthSettings/`). JWT-bearer enablement uses the "Admin approved users are pre-authorized" policy. OAuth scopes are `Api, Web, RefreshToken`: `Web` is mandatory because the suite calls `sf org open` to mint a **frontdoor browser session** — with only `Api, RefreshToken` the JWT login succeeds but the frontdoor returns `ERROR_HTTP_403 Invalid_Scope`. Two things are configured against the org outside metadata (see ADR 0007): (1) the **signing certificate** — a one-time manual Setup upload that does _not_ round-trip as metadata; (2) **pre-authorization** — a Setup-side **profile** assignment (External Client App Manager → Policies → Manage Profiles → add `AutomatedTester - Minimum Access Clone`, the profile both e2e users share), so one assignment authorizes editor and viewer together. The ECA does not appear in the queryable `ConnectedApplication` object, so there is no scriptable `SetupEntityAccess` pre-auth path. The consumer-secret metadata org/user permissions are _not_ required for this app — cert-based JWT bearer has no consumer secret, so all ECA types deploy without them.
+
+### Fail-fast, mode-branched
+
+If the frontdoor step fails (alias has no valid session, or navigation redirects to a login form), `openViaFrontdoor` throws a diagnostic naming the alias — rather than silently writing an unauthenticated `storageState`. The **remediation is branched on mode**:
+
+- **`web`** — names the exact `sf org login web -a <alias>` command.
+- **`jwt`** — names the jwt-side causes (missing `SF_JWT_*` var, unreadable key file, user not pre-authorized on the ECA, wrong instance-url audience) and **never** emits the `sf org login web` remediation. `ensureAuthed` additionally fails fast _before_ the frontdoor on a missing env var or unreadable key file.
+
+An unrecognized `SF_AUTH_MODE` value fails immediately with a diagnostic listing the accepted values (`web`, `jwt`).
 
 ### Test users and API access
 
