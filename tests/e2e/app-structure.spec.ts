@@ -65,6 +65,8 @@ test.describe('Map list-view actions — editor project', () => {
         await page.goto('/lightning/o/bcm_Map__c/list?filterName=All');
         await page.getByRole('button', { name: 'JSON Import', exact: true }).click();
         await expect(page.locator('force-user-message-popup, .messageText')).toHaveCount(0);
-        await expect(page.frameLocator('iframe').getByLabel('Paste JSON')).toBeVisible({ timeout: 40000 });
+        await expect(page.frameLocator('iframe').getByLabel('Paste JSON')).toBeVisible({
+            timeout: 40000
+        });
     });
 });

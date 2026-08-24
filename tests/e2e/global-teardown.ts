@@ -37,7 +37,9 @@ if (!maps.isEmpty()) delete maps;
     fs.writeFileSync(apexFile, apex, 'utf-8');
 
     try {
-        execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], { stdio: 'inherit' });
+        execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], {
+            stdio: 'inherit'
+        });
     } finally {
         fs.unlinkSync(apexFile);
         fs.unlinkSync(runIdFile);

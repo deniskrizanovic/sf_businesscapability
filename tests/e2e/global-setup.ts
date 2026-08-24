@@ -28,6 +28,6 @@ export default function globalSetup() {
         capabilityTagSeed,
         capabilityRelatedListSeed,
         capabilityRtfSeed,
-        viewerReadMapSeed,
+        viewerReadMapSeed
     ]);
 }

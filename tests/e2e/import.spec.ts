@@ -31,13 +31,13 @@ const SAMPLE_JSON = JSON.stringify({
                             definition: '<p>L3</p>',
                             strategySupport: '',
                             architecturalNuance: '',
-                            children: [],
-                        },
-                    ],
-                },
-            ],
-        },
-    ],
+                            children: []
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
 });
 
 async function openImportPanel(page: Page) {
@@ -51,7 +51,9 @@ async function openImportPanel(page: Page) {
 // ── Import panel opens ────────────────────────────────────────────────────────
 
 test.describe('Import panel — editor project', () => {
-    test('JSON Import button opens panel showing Flow Screen 1 with JSON textarea', async ({ page }) => {
+    test('JSON Import button opens panel showing Flow Screen 1 with JSON textarea', async ({
+        page
+    }) => {
         await openImportPanel(page);
         await expect(flow(page).getByRole('button', { name: 'Import', exact: true })).toBeVisible();
     });
@@ -112,12 +114,16 @@ test.describe('Import error handling — editor project', () => {
 // ── Viewer access ─────────────────────────────────────────────────────────────
 
 test.describe('Import panel — viewer project', () => {
-    test('viewer clicking Import shows error screen (no crash, no unhandled exception)', async ({ page }) => {
+    test('viewer clicking Import shows error screen (no crash, no unhandled exception)', async ({
+        page
+    }) => {
         await openImportPanel(page);
         await flow(page).getByLabel('Paste JSON').fill(SAMPLE_JSON);
         await clickFlowNext(page, 'Import');
         // AuraHandledException.getMessage() returns 'Script-thrown exception' at runtime —
         // assert the error screen (Previous button) appears rather than matching the message text
-        await expect(flow(page).getByRole('button', { name: 'Previous', exact: true })).toBeVisible();
+        await expect(
+            flow(page).getByRole('button', { name: 'Previous', exact: true })
+        ).toBeVisible();
     });
 });

@@ -3,12 +3,12 @@ import { selectMap, openDiagram } from './fixtures/helpers';
 import { MAP_NAME, STRATEGY_CAP_NAME } from './diagram.seed';
 
 // Mirrored from c/bcm_VisualTokens (regression check, not imported)
-const EXPECTED_L1_FILL        = '#ebebeb';
-const EXPECTED_L1_STROKE      = '#e0e0e0';
-const EXPECTED_L2_STROKE      = '#e0e0e0';
-const EXPECTED_TAG_FALLBACK   = '#ffffff';
-const EXPECTED_FOCUS_RING     = '#0070D2';
-const EXPECTED_BAND_RAMP      = ['#f7f7f7', '#ececec', '#e0e0e0', '#d4d4d4'];
+const EXPECTED_L1_FILL = '#ebebeb';
+const EXPECTED_L1_STROKE = '#e0e0e0';
+const EXPECTED_L2_STROKE = '#e0e0e0';
+const EXPECTED_TAG_FALLBACK = '#ffffff';
+const EXPECTED_FOCUS_RING = '#0070D2';
+const EXPECTED_BAND_RAMP = ['#f7f7f7', '#ececec', '#e0e0e0', '#d4d4d4'];
 const EXPECTED_STRATEGY_FILL_RGB = 'rgb(194, 155, 61)'; // #c29b3d
 
 test.describe('Visual language regression — editor project', () => {
@@ -52,7 +52,9 @@ test.describe('Visual language regression — editor project', () => {
         expect(EXPECTED_BAND_RAMP).toContain(fill);
     });
 
-    test('Strategic Support marked node renders strategy mark glyph with token fill', async ({ page }) => {
+    test('Strategic Support marked node renders strategy mark glyph with token fill', async ({
+        page
+    }) => {
         // Toggle strategic support on
         const ssToggle = page.getByTestId('strategic-support-toggle');
         await ssToggle.click();
@@ -62,7 +64,7 @@ test.describe('Visual language regression — editor project', () => {
         await expect(strategyStripe).toBeVisible();
 
         // Check computed fill from CSS custom property
-        const computedFill = await strategyStripe.evaluate(el => getComputedStyle(el).fill);
+        const computedFill = await strategyStripe.evaluate((el) => getComputedStyle(el).fill);
         expect(computedFill).toBe(EXPECTED_STRATEGY_FILL_RGB);
     });
 

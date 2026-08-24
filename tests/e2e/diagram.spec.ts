@@ -6,7 +6,11 @@ import { MAP_NAME, DIAGRAM_TAG_NAME } from './diagram.seed';
 
 async function getViewportTransform(page: import('@playwright/test').Page): Promise<string | null> {
     // The L1 g (first child of svg) carries l1Transform which includes scale(zoom) — sufficient for zoom checks
-    return page.locator('svg.bcm-canvas > g').first().getAttribute('transform').catch(() => null);
+    return page
+        .locator('svg.bcm-canvas > g')
+        .first()
+        .getAttribute('transform')
+        .catch(() => null);
 }
 
 // ── Map selector — editor project ─────────────────────────────────────────────
@@ -30,13 +34,18 @@ test.describe('Map selector — editor project', () => {
         await page.reload();
         await page.locator('.bcm-canvas').waitFor({ state: 'visible', timeout: 20000 });
         // Polygon must render without re-selecting from dropdown
-        await page.locator('.bcm-canvas polygon').first().waitFor({ state: 'visible', timeout: 20000 });
+        await page
+            .locator('.bcm-canvas polygon')
+            .first()
+            .waitFor({ state: 'visible', timeout: 20000 });
         // Combobox displays the seeded map name
         const combobox = page.getByRole('combobox', { name: 'Map' }).first();
-        await expect(combobox).toHaveValue(MAP_NAME).catch(async () => {
-            // lightning-combobox surfaces selection via aria-activedescendant; fall back to text
-            await expect(combobox).toContainText(MAP_NAME);
-        });
+        await expect(combobox)
+            .toHaveValue(MAP_NAME)
+            .catch(async () => {
+                // lightning-combobox surfaces selection via aria-activedescendant; fall back to text
+                await expect(combobox).toContainText(MAP_NAME);
+            });
     });
 });
 
@@ -64,7 +73,9 @@ test.describe('Diagram structure — editor project', () => {
         await expect(bullets.first()).toBeVisible({ timeout: 10000 });
     });
 
-    test('Cross-cutting L1 renders as band chevron at bottom; non-cross-cutting still in column', async ({ page }) => {
+    test('Cross-cutting L1 renders as band chevron at bottom; non-cross-cutting still in column', async ({
+        page
+    }) => {
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
         await page.getByTestId('cross-cutting-toggle').click();
@@ -87,7 +98,9 @@ test.describe('Diagram structure — editor project', () => {
         await expect(ccColumn).toHaveCount(0);
     });
 
-    test('Cross-cutting band layered stack: lowest sortOrder paints last (DOM-last) and chevrons span full width', async ({ page }) => {
+    test('Cross-cutting band layered stack: lowest sortOrder paints last (DOM-last) and chevrons span full width', async ({
+        page
+    }) => {
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
         await page.getByTestId('cross-cutting-toggle').click();
@@ -112,10 +125,14 @@ test.describe('Diagram structure — editor project', () => {
 
         const ccName = `Cross-cutting Foo ${RUN_ID}`;
         await page.locator(`g.bcm-band-node[data-node-name="${ccName}"]`).click();
-        await expect(page.locator('.bcm-detail-panel[data-open="true"]')).toBeVisible({ timeout: 10000 });
+        await expect(page.locator('.bcm-detail-panel[data-open="true"]')).toBeVisible({
+            timeout: 10000
+        });
     });
 
-    test('Cross-cutting toggle: hidden by default, shows on click, hides on second click', async ({ page }) => {
+    test('Cross-cutting toggle: hidden by default, shows on click, hides on second click', async ({
+        page
+    }) => {
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
 
@@ -163,10 +180,16 @@ test.describe('Zoom & pan — editor project', () => {
 
     // Read the L2 layer transform (second <g> child of svg) — carries panX,panY,zoom
     async function getL2Transform(page: import('@playwright/test').Page): Promise<string | null> {
-        return page.locator('svg.bcm-canvas > g').nth(0).getAttribute('transform').catch(() => null);
+        return page
+            .locator('svg.bcm-canvas > g')
+            .nth(0)
+            .getAttribute('transform')
+            .catch(() => null);
     }
 
-    test('ArrowRight pan -> L2 transform translateX moves within horizontal bounds', async ({ page }) => {
+    test('ArrowRight pan -> L2 transform translateX moves within horizontal bounds', async ({
+        page
+    }) => {
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
         const svg = page.locator('svg.bcm-canvas');
@@ -188,7 +211,9 @@ test.describe('Zoom & pan — editor project', () => {
         expect(afterMore).toBe(settled);
     });
 
-    test('Cannot pan past left edge — panX clamped to PEEK after repeated ArrowRight from origin', async ({ page }) => {
+    test('Cannot pan past left edge — panX clamped to PEEK after repeated ArrowRight from origin', async ({
+        page
+    }) => {
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
         const svg = page.locator('svg.bcm-canvas');
@@ -209,7 +234,9 @@ test.describe('Zoom & pan — editor project', () => {
         expect(Math.abs(panX)).toBeGreaterThanOrEqual(60 - 1e-9);
     });
 
-    test('Cannot pan past right edge — panX clamped after repeated ArrowLeft beyond canvas width', async ({ page }) => {
+    test('Cannot pan past right edge — panX clamped after repeated ArrowLeft beyond canvas width', async ({
+        page
+    }) => {
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
         const svg = page.locator('svg.bcm-canvas');
@@ -242,7 +269,9 @@ test.describe('Zoom & pan — editor project', () => {
         expect(after).toMatch(/translate\(0,\s*0\)/);
     });
 
-    test('Cannot pan below bottom — panY clamped after ArrowDown beyond canvas height', async ({ page }) => {
+    test('Cannot pan below bottom — panY clamped after ArrowDown beyond canvas height', async ({
+        page
+    }) => {
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
         const svg = page.locator('svg.bcm-canvas');
@@ -263,7 +292,9 @@ test.describe('Zoom & pan — editor project', () => {
         expect(afterMore).toBe(after);
     });
 
-    test('Zoom in then ArrowRight -> L2 transform shows scale>1 AND translateX moved', async ({ page }) => {
+    test('Zoom in then ArrowRight -> L2 transform shows scale>1 AND translateX moved', async ({
+        page
+    }) => {
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
         await page.getByTitle('Zoom In').click();
@@ -282,7 +313,9 @@ test.describe('Zoom & pan — editor project', () => {
         expect(after).toMatch(/translate\(-50,\s*0\)/);
     });
 
-    test('L1 chevron band stays at translateY=0 even when L2 panY is non-zero', async ({ page }) => {
+    test('L1 chevron band stays at translateY=0 even when L2 panY is non-zero', async ({
+        page
+    }) => {
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
         const svg = page.locator('svg.bcm-canvas');
@@ -292,7 +325,10 @@ test.describe('Zoom & pan — editor project', () => {
         for (let i = 0; i < 3; i++) await svg.press('ArrowDown');
 
         // L1 layer is the SECOND <g> child (drawn last so always on top)
-        const l1Transform = await page.locator('svg.bcm-canvas > g').nth(1).getAttribute('transform');
+        const l1Transform = await page
+            .locator('svg.bcm-canvas > g')
+            .nth(1)
+            .getAttribute('transform');
         // L1 must keep Y=0 regardless of panY — chevron band is X-only pinned
         expect(l1Transform).toMatch(/translate\(0,\s*0\)/);
     });
@@ -316,7 +352,9 @@ test.describe('Tag highlight — editor project', () => {
         await expect(page.locator('.bcm-canvas')).toBeVisible();
     });
 
-    test('Colour-by-Tag selection persists across page reload within same session', async ({ page }) => {
+    test('Colour-by-Tag selection persists across page reload within same session', async ({
+        page
+    }) => {
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
 
@@ -328,13 +366,17 @@ test.describe('Tag highlight — editor project', () => {
         }).toPass({ timeout: 20000, intervals: [500, 1000, 1500] });
 
         // L3 tag rect should appear with non-default fill (pre-reload sanity)
-        await expect(page.locator('.bcm-canvas rect.bcm-l3-tag-rect').first())
-            .toBeVisible({ timeout: 10000 });
+        await expect(page.locator('.bcm-canvas rect.bcm-l3-tag-rect').first()).toBeVisible({
+            timeout: 10000
+        });
 
         // Reload reuses tab — sessionStorage retained for both Map + Tag
         await page.reload();
         await page.locator('.bcm-canvas').waitFor({ state: 'visible', timeout: 20000 });
-        await page.locator('.bcm-canvas polygon').first().waitFor({ state: 'visible', timeout: 20000 });
+        await page
+            .locator('.bcm-canvas polygon')
+            .first()
+            .waitFor({ state: 'visible', timeout: 20000 });
 
         // lightning-combobox renders the selected option's label as text;
         // its `value` is the Tag Id, so assert on visible text.
@@ -342,15 +384,18 @@ test.describe('Tag highlight — editor project', () => {
         await expect(restored).toContainText(DIAGRAM_TAG_NAME);
 
         // Canvas re-applies tag colouring on the tagged L3 capability
-        await expect(page.locator('.bcm-canvas rect.bcm-l3-tag-rect').first())
-            .toBeVisible({ timeout: 20000 });
+        await expect(page.locator('.bcm-canvas rect.bcm-l3-tag-rect').first()).toBeVisible({
+            timeout: 20000
+        });
     });
 });
 
 // ── Strategic Support — editor project ───────────────────────────────────────
 
 test.describe('Strategic Support — editor project', () => {
-    test('Strategic Support toggle reveals stripes and persists across reload', async ({ page }) => {
+    test('Strategic Support toggle reveals stripes and persists across reload', async ({
+        page
+    }) => {
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
 
@@ -363,15 +408,20 @@ test.describe('Strategic Support — editor project', () => {
         await btn.click();
 
         // Stripes visible
-        await expect(page.locator('rect.bcm-strategy-stripe').first())
-            .toBeVisible({ timeout: 5000 });
+        await expect(page.locator('rect.bcm-strategy-stripe').first()).toBeVisible({
+            timeout: 5000
+        });
 
         // Reload — stripe state restored from sessionStorage
         await page.reload();
         await page.locator('.bcm-canvas').waitFor({ state: 'visible', timeout: 20000 });
-        await page.locator('.bcm-canvas polygon').first().waitFor({ state: 'visible', timeout: 20000 });
-        await expect(page.locator('rect.bcm-strategy-stripe').first())
-            .toBeVisible({ timeout: 20000 });
+        await page
+            .locator('.bcm-canvas polygon')
+            .first()
+            .waitFor({ state: 'visible', timeout: 20000 });
+        await expect(page.locator('rect.bcm-strategy-stripe').first()).toBeVisible({
+            timeout: 20000
+        });
     });
 });
 
@@ -411,7 +461,6 @@ test.describe('Show Hidden toggle — editor project', () => {
         const count = await page.locator('.bcm-canvas polygon').count();
         expect(count).toBeGreaterThan(0);
     });
-
 });
 
 // ── Keyboard navigation — editor project ─────────────────────────────────────
@@ -459,12 +508,8 @@ test.describe('Keyboard navigation — editor project', () => {
         const svg = page.locator('svg.bcm-canvas');
         await svg.click();
         await expect(svg).toBeFocused();
-        const outlineStyle = await svg.evaluate(
-            (el) => window.getComputedStyle(el).outlineStyle
-        );
-        const outlineWidth = await svg.evaluate(
-            (el) => window.getComputedStyle(el).outlineWidth
-        );
+        const outlineStyle = await svg.evaluate((el) => window.getComputedStyle(el).outlineStyle);
+        const outlineWidth = await svg.evaluate((el) => window.getComputedStyle(el).outlineWidth);
         expect(outlineStyle === 'none' || outlineWidth === '0px').toBe(true);
     });
 });
@@ -486,7 +531,9 @@ test.describe('Toolbar dropdown clipping — editor project', () => {
         }).toPass({ timeout: 20000, intervals: [500, 1000, 1500] });
     });
 
-    test('Colour by Tag combobox option panel is not clipped when no map selected', async ({ page }) => {
+    test('Colour by Tag combobox option panel is not clipped when no map selected', async ({
+        page
+    }) => {
         await openDiagram(page);
         const combo = page.getByRole('combobox', { name: 'Colour by Tag' }).first();
         await expect(combo).not.toBeDisabled({ timeout: 10000 });
@@ -505,5 +552,4 @@ test.describe('Permission — viewer project', () => {
         const handles = await page.locator('.bcm-drag-handle').count();
         expect(handles).toBe(0);
     });
-
 });

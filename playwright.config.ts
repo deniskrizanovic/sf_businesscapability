@@ -22,7 +22,7 @@ export default defineConfig({
         trace: 'on-first-retry',
         actionTimeout: 15_000,
         navigationTimeout: 30_000,
-        testIdAttribute: 'data-id',
+        testIdAttribute: 'data-id'
     },
     projects: [
         { name: 'setup', testMatch: /auth\.setup\.ts/ },
@@ -31,18 +31,18 @@ export default defineConfig({
             grep: /editor project/,
             use: {
                 ...devices['Desktop Chrome'],
-                storageState: 'tests/e2e/.auth/editor.json',
+                storageState: 'tests/e2e/.auth/editor.json'
             },
-            dependencies: ['setup'],
+            dependencies: ['setup']
         },
         {
             name: 'viewer',
             grep: /viewer project/,
             use: {
                 ...devices['Desktop Chrome'],
-                storageState: 'tests/e2e/.auth/viewer.json',
+                storageState: 'tests/e2e/.auth/viewer.json'
             },
-            dependencies: ['setup'],
-        },
-    ],
+            dependencies: ['setup']
+        }
+    ]
 });

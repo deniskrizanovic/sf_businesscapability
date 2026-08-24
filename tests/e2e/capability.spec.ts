@@ -19,12 +19,15 @@ test.describe('Capability form — editor project', () => {
     test('Parent Capability lookup only returns Capabilities', async ({ page }) => {
         await setupAutoDismiss(page);
         await gotoLightning(page, '/lightning/o/bcm_Capability__c/new');
-        await expect(
-            page.getByRole('combobox', { name: 'Parent Capability' })
-        ).toHaveAttribute('placeholder', 'Search Capabilities...');
+        await expect(page.getByRole('combobox', { name: 'Parent Capability' })).toHaveAttribute(
+            'placeholder',
+            'Search Capabilities...'
+        );
     });
 
-    test('Definition field is editable via inline-edit pencil — RTF editor mounts with Bold toolbar', async ({ page }) => {
+    test('Definition field is editable via inline-edit pencil — RTF editor mounts with Bold toolbar', async ({
+        page
+    }) => {
         const id = getSeedIds().capabilities[RTF_CAP_NAME];
         if (!id) throw new Error(`capability-rtf seed not found: ${RTF_CAP_NAME}`);
 
@@ -41,10 +44,12 @@ test.describe('Capability form — editor project', () => {
         // Scope the RTF assertion to the Definition field's ARIA group so other RTF fields on
         // the record page (Strategy Support, Architectural Nuance) cannot satisfy it.
         const definitionGroup = page.getByRole('group', { name: 'Definition' });
-        await expect(definitionGroup.getByRole('textbox', { name: 'Definition' }))
-            .toBeVisible({ timeout: 10000 });
-        await expect(definitionGroup.getByRole('button', { name: 'Bold' }))
-            .toBeVisible({ timeout: 5000 });
+        await expect(definitionGroup.getByRole('textbox', { name: 'Definition' })).toBeVisible({
+            timeout: 10000
+        });
+        await expect(definitionGroup.getByRole('button', { name: 'Bold' })).toBeVisible({
+            timeout: 5000
+        });
     });
 });
 

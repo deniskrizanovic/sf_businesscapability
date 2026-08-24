@@ -3,8 +3,8 @@ import type { SeedSpec } from './fixtures/seeds';
 
 export const MAP_NAME = `E2E Diagram Map ${RUN_ID}`;
 export const DIAGRAM_TAG_NAME = `Diagram Tag ${RUN_ID}`;
-const DIAGRAM_TAG_COLOUR     = '#C8D9CE';
-const DIAGRAM_TAG_CAP_NAME   = `Capability Alpha One One ${RUN_ID}`;
+const DIAGRAM_TAG_COLOUR = '#C8D9CE';
+const DIAGRAM_TAG_CAP_NAME = `Capability Alpha One One ${RUN_ID}`;
 export const STRATEGY_CAP_NAME = `Capability Alpha One One ${RUN_ID}`;
 
 const PAYLOAD = {
@@ -37,11 +37,11 @@ const PAYLOAD = {
                             definition: '',
                             strategySupport: '',
                             architecturalNuance: '',
-                            children: [],
-                        },
-                    ],
-                },
-            ],
+                            children: []
+                        }
+                    ]
+                }
+            ]
         },
         {
             externalId: `diag-l1b-${RUN_ID}`,
@@ -60,9 +60,9 @@ const PAYLOAD = {
                     definition: '',
                     strategySupport: '',
                     architecturalNuance: '',
-                    children: [],
-                },
-            ],
+                    children: []
+                }
+            ]
         },
         {
             externalId: `diag-l1cc-${RUN_ID}`,
@@ -72,7 +72,7 @@ const PAYLOAD = {
             definition: '',
             strategySupport: '',
             architecturalNuance: '',
-            children: [],
+            children: []
         },
         {
             externalId: `diag-l1cc2-${RUN_ID}`,
@@ -82,9 +82,9 @@ const PAYLOAD = {
             definition: '',
             strategySupport: '',
             architecturalNuance: '',
-            children: [],
-        },
-    ],
+            children: []
+        }
+    ]
 };
 
 // After the import, flip the cross-cutting flag on Foo/Bar.
@@ -122,5 +122,7 @@ function buildPostSeedApex(): string {
 export const diagramSeed: SeedSpec = {
     label: 'diagram',
     payload: PAYLOAD,
-    get postSeedApex() { return buildPostSeedApex(); },
+    get postSeedApex() {
+        return buildPostSeedApex();
+    }
 };

@@ -35,7 +35,9 @@ test.describe('Capability-Tag junction — editor project', () => {
         capabilityUrl = capabilityViewPath();
     });
 
-    test('Editor can link a Tag to a Capability and it appears in the sidebar', async ({ page }) => {
+    test('Editor can link a Tag to a Capability and it appears in the sidebar', async ({
+        page
+    }) => {
         await setupAutoDismiss(page);
         await gotoLightning(page, capabilityUrl);
 

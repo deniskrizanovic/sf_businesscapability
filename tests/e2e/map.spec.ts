@@ -3,10 +3,7 @@ import { APP_PATH, RUN_ID, setupAutoDismiss, gotoLightning } from './fixtures/he
 import { getSeedIds } from './fixtures/seeds';
 import { VIEWER_READ_MAP_NAME } from './map.seed';
 
-async function createMap(
-    page: import('@playwright/test').Page,
-    name: string
-): Promise<string> {
+async function createMap(page: import('@playwright/test').Page, name: string): Promise<string> {
     await setupAutoDismiss(page);
     await gotoLightning(page, '/lightning/o/bcm_Map__c/new');
     await page.getByLabel('Map Name').fill(name);
@@ -39,7 +36,9 @@ test.describe('Map CRUD — editor project', () => {
         await page.locator('.slds-page-header').getByRole('button', { name: 'Delete' }).click();
         await page.getByRole('button', { name: 'Delete', exact: true }).click();
         await page.waitForSelector('.slds-page-header', { state: 'visible' });
-        await expect(page.getByRole('link', { name: `E2E Map Delete ${RUN_ID}` })).not.toBeVisible();
+        await expect(
+            page.getByRole('link', { name: `E2E Map Delete ${RUN_ID}` })
+        ).not.toBeVisible();
     });
 });
 
@@ -81,9 +80,14 @@ test.describe('BCM app — editor project', () => {
         await gotoLightning(page, '/lightning/o/bcm_Map__c/home');
         await page.getByRole('button', { name: 'App Launcher' }).click();
         await expect(
-            page.getByRole('heading', { name: 'Business Capability Map' }).or(
-                page.locator('p.slds-text-heading_small, .appTileTitle').getByText('Business Capability Map')
-            ).first()
+            page
+                .getByRole('heading', { name: 'Business Capability Map' })
+                .or(
+                    page
+                        .locator('p.slds-text-heading_small, .appTileTitle')
+                        .getByText('Business Capability Map')
+                )
+                .first()
         ).toBeVisible({ timeout: 15000 });
     });
 

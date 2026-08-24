@@ -17,14 +17,14 @@ const RELATED_PAYLOAD = {
             definition: '',
             strategySupport: '',
             architecturalNuance: '',
-            children: [],
-        },
-    ],
+            children: []
+        }
+    ]
 };
 
 export const capabilityRelatedListSeed: SeedSpec = {
     label: 'capability-related-list',
-    payload: RELATED_PAYLOAD,
+    payload: RELATED_PAYLOAD
 };
 
 // Map + Capability used by the "RTF inline edit" test in capability.spec.ts.
@@ -44,12 +44,12 @@ const RTF_PAYLOAD = {
             definition: '',
             strategySupport: '',
             architecturalNuance: '',
-            children: [],
-        },
-    ],
+            children: []
+        }
+    ]
 };
 
 export const capabilityRtfSeed: SeedSpec = {
     label: 'capability-rtf',
-    payload: RTF_PAYLOAD,
+    payload: RTF_PAYLOAD
 };

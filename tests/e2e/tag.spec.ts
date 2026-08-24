@@ -8,7 +8,7 @@ test.describe('Tag record page — editor project', () => {
 
     test.beforeAll(async ({ browser }) => {
         const ctx = await browser.newContext({
-            storageState: 'tests/e2e/.auth/editor.json',
+            storageState: 'tests/e2e/.auth/editor.json'
         });
         const page = await ctx.newPage();
         await setupAutoDismiss(page);
@@ -26,7 +26,10 @@ test.describe('Tag record page — editor project', () => {
         await setupAutoDismiss(page);
         await page.goto(tagUrl);
         // The swatch card has title "Colour"; inner label text may be hex or human label depending on load state.
-        const swatchCard = page.locator('article').filter({ has: page.locator('h2', { hasText: 'Colour' }) }).first();
+        const swatchCard = page
+            .locator('article')
+            .filter({ has: page.locator('h2', { hasText: 'Colour' }) })
+            .first();
         await expect(swatchCard).toBeVisible({ timeout: 15000 });
     });
 });

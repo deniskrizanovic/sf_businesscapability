@@ -2,9 +2,9 @@ import { RUN_ID } from './fixtures/helpers';
 import type { SeedSpec } from './fixtures/seeds';
 
 export const MAP_NAME = `E2E Detail Panel Map ${RUN_ID}`;
-export const L1_NAME  = `Detail Domain ${RUN_ID}`;
-export const L2_NAME  = `Detail Group ${RUN_ID}`;
-export const L3_NAME  = `Detail Capability ${RUN_ID}`;
+export const L1_NAME = `Detail Domain ${RUN_ID}`;
+export const L2_NAME = `Detail Group ${RUN_ID}`;
+export const L3_NAME = `Detail Capability ${RUN_ID}`;
 
 const PAYLOAD = {
     mapName: MAP_NAME,
@@ -36,16 +36,16 @@ const PAYLOAD = {
                             definition: '<p>L3 def</p>',
                             strategySupport: '<p>L3 strategy</p>',
                             architecturalNuance: '<p>L3 nuance</p>',
-                            children: [],
-                        },
-                    ],
-                },
-            ],
-        },
-    ],
+                            children: []
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
 };
 
 export const capabilityDetailSeed: SeedSpec = {
     label: 'capability-detail',
-    payload: PAYLOAD,
+    payload: PAYLOAD
 };

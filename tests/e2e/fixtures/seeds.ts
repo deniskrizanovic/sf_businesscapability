@@ -43,23 +43,27 @@ export function runAllSeeds(seeds: SeedSpec[]): void {
     // Delete any prior seed-ids file up-front so a mid-run abort cannot leave stale Ids
     // for the next run to consume. The new file is only written after seeding succeeds.
     const seedIdsPath = path.resolve(SEED_IDS_FILE);
-    try { fs.unlinkSync(seedIdsPath); } catch { /* nothing to remove */ }
+    try {
+        fs.unlinkSync(seedIdsPath);
+    } catch {
+        /* nothing to remove */
+    }
 
     const runId = getRunId();
     const blocks: string[] = [];
     for (const s of seeds) {
         // Apex string literal: escape backslashes first, then single-quotes.
-        const json = JSON.stringify(s.payload).replace(/\\/g, '\\\\').replace(/'/g, '\\\'');
+        const json = JSON.stringify(s.payload).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         const varSuffix = s.label.replace(/[^a-zA-Z0-9_]/g, '_');
         blocks.push(`/* === ${s.label} === */`);
         blocks.push(
             `bcm_ImportController.bcm_ImportResult res_${varSuffix} = ` +
-            `bcm_ImportController.importCapabilities('${json}');`,
+                `bcm_ImportController.importCapabilities('${json}');`
         );
         blocks.push(
             `if (!res_${varSuffix}.success) ` +
-            `throw new System.AssertException('Seed ${s.label} failed: ' + ` +
-            `res_${varSuffix}.errorMessage);`,
+                `throw new System.AssertException('Seed ${s.label} failed: ' + ` +
+                `res_${varSuffix}.errorMessage);`
         );
         if (s.postSeedApex) blocks.push(s.postSeedApex);
     }
@@ -70,17 +74,13 @@ export function runAllSeeds(seeds: SeedSpec[]): void {
     fs.writeFileSync(apexFile, apex, 'utf-8');
     let stdout: string;
     try {
-        stdout = execFileSync(
-            'sf',
-            ['apex', 'run', '--file', apexFile, '--target-org', orgAlias],
-            {
-                encoding: 'utf-8',
-                env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' },
-                // stderr remains live so apex failures stream to the console; stdout is captured
-                // for the BCM_SEED_IDS marker. stdin inherited.
-                stdio: ['inherit', 'pipe', 'inherit'],
-            },
-        );
+        stdout = execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], {
+            encoding: 'utf-8',
+            env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' },
+            // stderr remains live so apex failures stream to the console; stdout is captured
+            // for the BCM_SEED_IDS marker. stdin inherited.
+            stdio: ['inherit', 'pipe', 'inherit']
+        });
     } catch (err) {
         // sf prints the actual Apex compile / runtime error on stdout, not stderr.
         // execFileSync attaches captured streams to the thrown error — re-emit so the
@@ -150,7 +150,7 @@ export function getSeedIds(): SeedIds {
     if (parsed.runId !== currentRunId) {
         throw new Error(
             `seed-ids file runId=${parsed.runId} does not match current runId=${currentRunId}. ` +
-            `Re-run globalSetup (delete tests/e2e/.seed-ids.json and tests/e2e/.run_id).`,
+                `Re-run globalSetup (delete tests/e2e/.seed-ids.json and tests/e2e/.run_id).`
         );
     }
     cachedSeedIds = parsed;

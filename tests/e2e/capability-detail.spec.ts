@@ -5,7 +5,9 @@ import { MAP_NAME, L1_NAME, L2_NAME, L3_NAME } from './capability-detail.seed';
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 async function openDetailPanelOnL1(page: Page) {
-    const node = page.locator(`svg.bcm-canvas g.bcm-node[data-node-level="1"][data-node-name="${L1_NAME}"]`);
+    const node = page.locator(
+        `svg.bcm-canvas g.bcm-node[data-node-level="1"][data-node-name="${L1_NAME}"]`
+    );
     await node.click();
     await node.click();
     const panel = page.locator('.bcm-detail-panel[data-open="true"]');
@@ -15,7 +17,11 @@ async function openDetailPanelOnL1(page: Page) {
 
 async function openDetailPanelOnL2(page: Page) {
     // Click the L2 label text (header) to avoid hitting L3 bullet text overlapping the same rect
-    const label = page.locator(`svg.bcm-canvas g.bcm-node[data-node-level="2"][data-node-name="${L2_NAME}"] > text`).first();
+    const label = page
+        .locator(
+            `svg.bcm-canvas g.bcm-node[data-node-level="2"][data-node-name="${L2_NAME}"] > text`
+        )
+        .first();
     await label.click();
     await label.click();
     const panel = page.locator('.bcm-detail-panel[data-open="true"]');
@@ -25,7 +31,9 @@ async function openDetailPanelOnL2(page: Page) {
 
 async function openDetailPanelOnL3(page: Page) {
     // L3 wrapped names render as multiple <text> lines sharing data-node-name; click first line
-    const text = page.locator(`svg.bcm-canvas text[data-node-level="3"][data-node-name="${L3_NAME}"]`).first();
+    const text = page
+        .locator(`svg.bcm-canvas text[data-node-level="3"][data-node-name="${L3_NAME}"]`)
+        .first();
     await text.click();
     await text.click();
     const panel = page.locator('.bcm-detail-panel[data-open="true"]');
@@ -48,7 +56,9 @@ test.describe('Detail panel — open and close — editor project', () => {
         await selectMap(page, MAP_NAME);
         await openDetailPanelOnL2(page);
         await page.locator('.bcm-detail-close button').click();
-        await expect(page.locator('.bcm-detail-panel[data-open="true"]')).toHaveCount(0, { timeout: 5000 });
+        await expect(page.locator('.bcm-detail-panel[data-open="true"]')).toHaveCount(0, {
+            timeout: 5000
+        });
     });
 
     test('Escape key closes the detail panel', async ({ page }) => {
@@ -56,7 +66,9 @@ test.describe('Detail panel — open and close — editor project', () => {
         await selectMap(page, MAP_NAME);
         await openDetailPanelOnL2(page);
         await page.keyboard.press('Escape');
-        await expect(page.locator('.bcm-detail-panel[data-open="true"]')).toHaveCount(0, { timeout: 5000 });
+        await expect(page.locator('.bcm-detail-panel[data-open="true"]')).toHaveCount(0, {
+            timeout: 5000
+        });
     });
 
     test('Switching nodes updates panel content without closing', async ({ page }) => {
@@ -64,7 +76,9 @@ test.describe('Detail panel — open and close — editor project', () => {
         await selectMap(page, MAP_NAME);
         await openDetailPanelOnL2(page);
         // Panel open -> single click on another node refreshes panel directly (no menu).
-        const l1 = page.locator(`svg.bcm-canvas g.bcm-node[data-node-level="1"][data-node-name="${L1_NAME}"]`);
+        const l1 = page.locator(
+            `svg.bcm-canvas g.bcm-node[data-node-level="1"][data-node-name="${L1_NAME}"]`
+        );
         await l1.click();
         const panel = page.locator('.bcm-detail-panel[data-open="true"]');
         await expect(panel).toBeVisible();
@@ -120,7 +134,12 @@ test.describe('Detail panel — fields — editor project', () => {
         await expect(labels).toHaveCount(4);
         const labelTexts = await labels.allTextContents();
         expect(labelTexts).toEqual(
-            expect.arrayContaining(['Definition', 'Strategy Support', 'Architectural Nuance', 'Hide From Diagram'])
+            expect.arrayContaining([
+                'Definition',
+                'Strategy Support',
+                'Architectural Nuance',
+                'Hide From Diagram'
+            ])
         );
     });
 });
@@ -153,7 +172,9 @@ test.describe('Detail panel — edit + save — editor project', () => {
         await expect(panel.locator('.bcm-detail-name')).toHaveText(newName, { timeout: 10000 });
         // Diagram L2 box reflects new label
         await expect(
-            page.locator(`svg.bcm-canvas g.bcm-node[data-node-level="2"][data-node-name="${newName}"]`)
+            page.locator(
+                `svg.bcm-canvas g.bcm-node[data-node-level="2"][data-node-name="${newName}"]`
+            )
         ).toBeVisible({ timeout: 10000 });
 
         // Reset name back so this test is idempotent for re-runs
@@ -181,7 +202,9 @@ test.describe('Detail panel — edit + save — editor project', () => {
 // ── GH #41 layout — editor project ────────────────────────────────────────────
 
 test.describe('Detail panel — layout — editor project', () => {
-    test('Panel stays inside LWC bounds and Save/Cancel are visible in edit mode', async ({ page }) => {
+    test('Panel stays inside LWC bounds and Save/Cancel are visible in edit mode', async ({
+        page
+    }) => {
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
         const panel = await openDetailPanelOnL2(page);
@@ -189,20 +212,25 @@ test.describe('Detail panel — layout — editor project', () => {
         const root = page.locator('c-bcm_-capability-map').first();
         // Wait for slide-in CSS transition (250ms) to settle: parse translateX from the matrix
         // (whitespace-/format-agnostic — getComputedStyle never returns "none" for transform: translateX(0))
-        await expect.poll(async () =>
-            panel.evaluate((p: HTMLElement) => {
-                const m = new DOMMatrixReadOnly(getComputedStyle(p).transform);
-                return Math.round(m.m41);
-            }),
-            { timeout: 2000 }
-        ).toBe(0);
+        await expect
+            .poll(
+                async () =>
+                    panel.evaluate((p: HTMLElement) => {
+                        const m = new DOMMatrixReadOnly(getComputedStyle(p).transform);
+                        return Math.round(m.m41);
+                    }),
+                { timeout: 2000 }
+            )
+            .toBe(0);
 
-        const rootBox  = await root.boundingBox();
+        const rootBox = await root.boundingBox();
         const panelBox = await panel.boundingBox();
         expect(rootBox).not.toBeNull();
         expect(panelBox).not.toBeNull();
         expect(panelBox!.x + panelBox!.width).toBeLessThanOrEqual(rootBox!.x + rootBox!.width + 1);
-        expect(panelBox!.y + panelBox!.height).toBeLessThanOrEqual(rootBox!.y + rootBox!.height + 1);
+        expect(panelBox!.y + panelBox!.height).toBeLessThanOrEqual(
+            rootBox!.y + rootBox!.height + 1
+        );
 
         await panel.locator('.bcm-detail-edit button').click();
         const saveBtn = panel.locator('.bcm-detail-save');
@@ -216,8 +244,12 @@ test.describe('Detail panel — layout — editor project', () => {
         const cancelBox = await cancelBtn.boundingBox();
         expect(saveBox).not.toBeNull();
         expect(cancelBox).not.toBeNull();
-        expect(saveBox!.y + saveBox!.height).toBeLessThanOrEqual(rootBoxAfter!.y + rootBoxAfter!.height + 1);
-        expect(cancelBox!.y + cancelBox!.height).toBeLessThanOrEqual(rootBoxAfter!.y + rootBoxAfter!.height + 1);
+        expect(saveBox!.y + saveBox!.height).toBeLessThanOrEqual(
+            rootBoxAfter!.y + rootBoxAfter!.height + 1
+        );
+        expect(cancelBox!.y + cancelBox!.height).toBeLessThanOrEqual(
+            rootBoxAfter!.y + rootBoxAfter!.height + 1
+        );
     });
 });
 
@@ -234,10 +266,7 @@ test.describe('Detail panel — record page link — editor project', () => {
         await expect(link).toHaveAttribute('target', '_blank');
         await expect(link).toHaveAttribute('rel', /\bnoopener\b/);
 
-        const [newPage] = await Promise.all([
-            context.waitForEvent('page'),
-            link.click(),
-        ]);
+        const [newPage] = await Promise.all([context.waitForEvent('page'), link.click()]);
         expect(newPage.url()).toContain('/lightning/r/bcm_Capability__c/');
         await expect(page.locator('.bcm-detail-panel[data-open="true"]')).toBeVisible();
         await newPage.close();

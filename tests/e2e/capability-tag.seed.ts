@@ -27,11 +27,11 @@ const PAYLOAD = {
                     definition: '',
                     strategySupport: '',
                     architecturalNuance: '',
-                    children: [],
-                },
-            ],
-        },
-    ],
+                    children: []
+                }
+            ]
+        }
+    ]
 };
 
 // Importer does not create Tags — provision the Tag via post-seed Apex.
@@ -39,7 +39,8 @@ const PAYLOAD = {
 // Tag is owned by the editor user so junction-create from the editor session
 // passes the cross-reference access check on master-detail save.
 const EDITOR_USERNAME = process.env.SF_EDITOR_USERNAME;
-if (!EDITOR_USERNAME) throw new Error('SF_EDITOR_USERNAME not set — required for capability-tag seed');
+if (!EDITOR_USERNAME)
+    throw new Error('SF_EDITOR_USERNAME not set — required for capability-tag seed');
 
 // Escape backslash then single-quote for safe interpolation into an Apex/SOQL string literal.
 const apexEscape = (s: string): string => s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -55,5 +56,5 @@ update t;
 export const capabilityTagSeed: SeedSpec = {
     label: 'capability-tag',
     payload: PAYLOAD,
-    postSeedApex: POST_SEED_APEX,
+    postSeedApex: POST_SEED_APEX
 };

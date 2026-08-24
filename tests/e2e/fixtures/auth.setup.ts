@@ -23,9 +23,7 @@ function resolveAuthMode(): AuthMode {
     const raw = (process.env.SF_AUTH_MODE ?? 'web').trim();
     if (raw === '' || raw === 'web') return 'web';
     if (raw === 'jwt') return 'jwt';
-    throw new Error(
-        `Invalid SF_AUTH_MODE "${raw}". Accepted values: "web" (default) or "jwt".`
-    );
+    throw new Error(`Invalid SF_AUTH_MODE "${raw}". Accepted values: "web" (default) or "jwt".`);
 }
 
 const AUTH_MODE = resolveAuthMode();
@@ -67,7 +65,7 @@ async function ensureAuthed(alias: string, username: string | undefined) {
         SF_JWT_CLIENT_ID: clientId,
         SF_JWT_KEY_FILE: keyFile,
         SF_JWT_INSTANCE_URL: instanceUrl,
-        [`a username for alias "${alias}"`]: username,
+        [`a username for alias "${alias}"`]: username
     })
         .filter(([, v]) => !v || !String(v).trim())
         .map(([k]) => k);
@@ -106,7 +104,7 @@ async function ensureAuthed(alias: string, username: string | undefined) {
                 instanceUrl!,
                 '-a',
                 alias,
-                '--json',
+                '--json'
             ],
             { env: { ...process.env, FORCE_COLOR: '0' } }
         );

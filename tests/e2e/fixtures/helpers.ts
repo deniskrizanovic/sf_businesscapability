@@ -12,7 +12,12 @@ export async function setupAutoDismiss(page: Page) {
     // combobox dropdown — flaking selectMap() across the suite. MutationObserver removes any
     // matching host element on insertion so the focus trap never activates.
     await page.addInitScript(() => {
-        const PREFIXES = ['RUNTIME_THP_LEARNING-', 'SALES_YUKON-', 'RUNTIME_IAG_CORE-', 'SALES_PATHWAYS-'];
+        const PREFIXES = [
+            'RUNTIME_THP_LEARNING-',
+            'SALES_YUKON-',
+            'RUNTIME_IAG_CORE-',
+            'SALES_PATHWAYS-'
+        ];
         const matches = (tag: string) => PREFIXES.some((p) => tag.startsWith(p));
         const strip = (root: ParentNode) => {
             for (const el of Array.from(root.querySelectorAll('*'))) {
@@ -46,7 +51,10 @@ export async function setupAutoDismiss(page: Page) {
     await page.addInitScript(() => {
         const NEEDLES = ['Live Preview is on', 'Salesforce enforces new security requirements'];
         const findBanner = (text: string): Element | null => {
-            const walker = document.createTreeWalker(document.body || document.documentElement, NodeFilter.SHOW_TEXT);
+            const walker = document.createTreeWalker(
+                document.body || document.documentElement,
+                NodeFilter.SHOW_TEXT
+            );
             let node: Node | null;
             while ((node = walker.nextNode())) {
                 if (node.nodeValue && node.nodeValue.includes(text)) {
@@ -64,13 +72,18 @@ export async function setupAutoDismiss(page: Page) {
             }
             // Also strip SLDS notify/alert banners by class — these don't always contain
             // predictable text but steal focus from open comboboxes via position:fixed overlay.
-            for (const el of Array.from(document.querySelectorAll('.slds-notify_alert.system-message'))) {
+            for (const el of Array.from(
+                document.querySelectorAll('.slds-notify_alert.system-message')
+            )) {
                 el.remove();
             }
         };
         const start = () => {
             stripBanners();
-            new MutationObserver(stripBanners).observe(document.documentElement, { childList: true, subtree: true });
+            new MutationObserver(stripBanners).observe(document.documentElement, {
+                childList: true,
+                subtree: true
+            });
         };
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', start, { once: true });
@@ -106,7 +119,7 @@ export async function selectMap(page: Page, mapName: string): Promise<void> {
         if (count > 1) {
             throw new Error(
                 `selectMap: ${count} Map options match "${mapName}" — duplicate seed. ` +
-                `Check globalSetup ran exactly once and externalIds in seeds.ts are unique.`,
+                    `Check globalSetup ran exactly once and externalIds in seeds.ts are unique.`
             );
         }
         await option.click({ timeout: 1500 });
@@ -126,9 +139,12 @@ export async function selectMap(page: Page, mapName: string): Promise<void> {
 export async function drainSpinners(page: Page): Promise<void> {
     const SELECTORS = ['.slds-spinner_container', '.loadingBox', '.forceIconSpinner'];
     await Promise.all(
-        SELECTORS.map(sel =>
-            page.locator(sel).waitFor({ state: 'hidden', timeout: 15000 }).catch(() => {}),
-        ),
+        SELECTORS.map((sel) =>
+            page
+                .locator(sel)
+                .waitFor({ state: 'hidden', timeout: 15000 })
+                .catch(() => {})
+        )
     );
 }
 
@@ -181,7 +197,10 @@ export async function openDiagram(page: Page): Promise<void> {
     let lastErr: unknown;
     for (let attempt = 0; attempt < 3; attempt++) {
         try {
-            await page.goto('/lightning/n/bcm_Visualisation', { waitUntil: 'commit', timeout: 10000 });
+            await page.goto('/lightning/n/bcm_Visualisation', {
+                waitUntil: 'commit',
+                timeout: 10000
+            });
         } catch (err) {
             lastErr = err;
             continue;
@@ -227,10 +246,7 @@ const FLOW_SCREEN_BODY = 'flowruntime-lwc-body';
  * buttons that dismiss the panel (Close), call the click directly and assert the
  * panel is gone.
  */
-export async function clickFlowNext(
-    page: Page,
-    name: 'Import' | 'Previous',
-): Promise<void> {
+export async function clickFlowNext(page: Page, name: 'Import' | 'Previous'): Promise<void> {
     const body = flow(page).locator(FLOW_SCREEN_BODY).first();
     await body.waitFor({ state: 'attached', timeout: 30000 });
     const handle = await body.elementHandle({ timeout: 5000 });
@@ -289,8 +305,9 @@ export async function expectNotClippedByAncestor(locator: Locator): Promise<void
             let node: Element | null = candidate;
             while (node) {
                 if (node === el) return true;
-                node = node.parentElement
-                    ?? (node.getRootNode() instanceof ShadowRoot
+                node =
+                    node.parentElement ??
+                    (node.getRootNode() instanceof ShadowRoot
                         ? (node.getRootNode() as ShadowRoot).host
                         : null);
             }
@@ -301,7 +318,10 @@ export async function expectNotClippedByAncestor(locator: Locator): Promise<void
         // Returning a sentinel causes the caller to retry via toPass rather than misfiring
         // sample points at (0,0) which hit whatever happens to be at the origin.
         if (rect.width === 0 && rect.height === 0) {
-            return { reason: 'element has zero rect — likely closed before evaluate', elRect: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right } };
+            return {
+                reason: 'element has zero rect — likely closed before evaluate',
+                elRect: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right }
+            };
         }
 
         // Sample 9 points: 3 rows × 3 cols, inset 2px from edges.
@@ -316,7 +336,12 @@ export async function expectNotClippedByAncestor(locator: Locator): Promise<void
                         reason: 'sample point outside viewport',
                         point: { x, y },
                         viewport: { w: vw, h: vh },
-                        elRect: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right },
+                        elRect: {
+                            top: rect.top,
+                            bottom: rect.bottom,
+                            left: rect.left,
+                            right: rect.right
+                        }
                     };
                 }
                 const hit = deepElementFromPoint(x, y);
@@ -325,9 +350,17 @@ export async function expectNotClippedByAncestor(locator: Locator): Promise<void
                         reason: 'sample point hit-tests to unrelated element',
                         point: { x, y },
                         hit: hit
-                            ? { tag: hit.tagName.toLowerCase(), className: (hit as HTMLElement).className || '' }
+                            ? {
+                                  tag: hit.tagName.toLowerCase(),
+                                  className: (hit as HTMLElement).className || ''
+                              }
                             : null,
-                        elRect: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right },
+                        elRect: {
+                            top: rect.top,
+                            bottom: rect.bottom,
+                            left: rect.left,
+                            right: rect.right
+                        }
                     };
                 }
             }

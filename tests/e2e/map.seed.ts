@@ -8,10 +8,10 @@ export const VIEWER_READ_MAP_NAME = `E2E Viewer Read Map ${RUN_ID}`;
 const PAYLOAD = {
     mapName: VIEWER_READ_MAP_NAME,
     mapDescription: '<p>Seeded for viewer read-access e2e</p>',
-    capabilities: [],
+    capabilities: []
 };
 
 export const viewerReadMapSeed: SeedSpec = {
     label: 'viewer-read-map',
-    payload: PAYLOAD,
+    payload: PAYLOAD
 };

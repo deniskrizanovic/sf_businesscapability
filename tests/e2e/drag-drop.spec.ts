@@ -4,7 +4,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { RUN_ID, selectMap, openDiagram } from './fixtures/helpers';
 import {
-    MAP_NAME, L1A_NAME, L1B_NAME, L2A1_NAME, L2A2_NAME, L3A1A_NAME, L3A1B_NAME,
+    MAP_NAME,
+    L1A_NAME,
+    L1B_NAME,
+    L2A1_NAME,
+    L2A2_NAME,
+    L3A1A_NAME,
+    L3A1B_NAME
 } from './drag-drop.seed';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -12,12 +18,16 @@ import {
 async function waitForDragDropSettled(page: import('@playwright/test').Page) {
     // Wait for the save to *begin* (short timeout — no-op gestures never set true; swallow).
     try {
-        await page.locator('.bcm-canvas-container[data-bcm-saving="true"]').waitFor({ state: 'attached', timeout: 2000 });
+        await page
+            .locator('.bcm-canvas-container[data-bcm-saving="true"]')
+            .waitFor({ state: 'attached', timeout: 2000 });
     } catch (_) {
         // No-op gesture — saving never flipped to true. Proceed.
     }
     // Then wait for the save to complete.
-    await page.locator('.bcm-canvas-container[data-bcm-saving="false"]').waitFor({ state: 'attached', timeout: 15000 });
+    await page
+        .locator('.bcm-canvas-container[data-bcm-saving="false"]')
+        .waitFor({ state: 'attached', timeout: 15000 });
 }
 
 function parseDragDropOrder(orgAlias: string, mapName: string, parentName: string): string {
@@ -37,7 +47,11 @@ System.debug('DRAG_DROP_RESULT:' + result);
     const apexFile = path.resolve(`tests/e2e/.dd_order_${RUN_ID}_${Date.now()}.apex`);
     fs.writeFileSync(apexFile, apex, 'utf-8');
     try {
-        const out = execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], { encoding: 'utf-8' });
+        const out = execFileSync(
+            'sf',
+            ['apex', 'run', '--file', apexFile, '--target-org', orgAlias],
+            { encoding: 'utf-8' }
+        );
         // sf echoes the Apex source first, which also contains 'DRAG_DROP_RESULT:' — anchor on
         // the USER_DEBUG log marker to skip the echoed System.debug call line.
         const match = out.match(/USER_DEBUG\|[^|]*\|DEBUG\|DRAG_DROP_RESULT:([^\n]*)/);
@@ -53,7 +67,9 @@ function runApex(orgAlias: string, body: string) {
     const apexFile = path.resolve(`tests/e2e/.dd_${RUN_ID}_${Date.now()}.apex`);
     fs.writeFileSync(apexFile, body, 'utf-8');
     try {
-        execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], { stdio: 'inherit' });
+        execFileSync('sf', ['apex', 'run', '--file', apexFile, '--target-org', orgAlias], {
+            stdio: 'inherit'
+        });
     } finally {
         fs.unlinkSync(apexFile);
     }
@@ -128,13 +144,16 @@ test.describe('Drag-drop seed — editor project', () => {
 
     test('L2 reparent across columns (outcome)', async ({ page }) => {
         const orgAlias = getOrgAlias();
-        runApex(orgAlias, `
+        runApex(
+            orgAlias,
+            `
 bcm_Capability__c l2 = [SELECT Id FROM bcm_Capability__c WHERE Name = '${L2A2_NAME}' LIMIT 1];
 bcm_Capability__c newParent = [SELECT Id FROM bcm_Capability__c WHERE Name = '${L1B_NAME}' LIMIT 1];
 l2.bcm_Parent__c = newParent.Id;
 l2.bcm_SortOrder__c = 2;
 update l2;
-`.trim());
+`.trim()
+        );
 
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
@@ -146,13 +165,16 @@ update l2;
 
     test('L1 reorder (outcome)', async ({ page }) => {
         const orgAlias = getOrgAlias();
-        runApex(orgAlias, `
+        runApex(
+            orgAlias,
+            `
 bcm_Capability__c a = [SELECT Id FROM bcm_Capability__c WHERE Name = '${L1A_NAME}' LIMIT 1];
 bcm_Capability__c b = [SELECT Id FROM bcm_Capability__c WHERE Name = '${L1B_NAME}' LIMIT 1];
 a.bcm_SortOrder__c = 2;
 b.bcm_SortOrder__c = 1;
 update new List<bcm_Capability__c>{ a, b };
-`.trim());
+`.trim()
+        );
 
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
@@ -165,13 +187,16 @@ update new List<bcm_Capability__c>{ a, b };
 
     test('L3 reorder within L2 (outcome)', async ({ page }) => {
         const orgAlias = getOrgAlias();
-        runApex(orgAlias, `
+        runApex(
+            orgAlias,
+            `
 bcm_Capability__c a = [SELECT Id FROM bcm_Capability__c WHERE Name = '${L3A1A_NAME}' LIMIT 1];
 bcm_Capability__c b = [SELECT Id FROM bcm_Capability__c WHERE Name = '${L3A1B_NAME}' LIMIT 1];
 a.bcm_SortOrder__c = 2;
 b.bcm_SortOrder__c = 1;
 update new List<bcm_Capability__c>{ a, b };
-`.trim());
+`.trim()
+        );
 
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
@@ -183,13 +208,16 @@ update new List<bcm_Capability__c>{ a, b };
 
     test('L3 reparent across L2s (outcome)', async ({ page }) => {
         const orgAlias = getOrgAlias();
-        runApex(orgAlias, `
+        runApex(
+            orgAlias,
+            `
 bcm_Capability__c l3 = [SELECT Id FROM bcm_Capability__c WHERE Name = '${L3A1B_NAME}' LIMIT 1];
 bcm_Capability__c newParent = [SELECT Id FROM bcm_Capability__c WHERE Name = '${L2A2_NAME}' LIMIT 1];
 l3.bcm_Parent__c = newParent.Id;
 l3.bcm_SortOrder__c = 1;
 update l3;
-`.trim());
+`.trim()
+        );
 
         await openDiagram(page);
         await selectMap(page, MAP_NAME);
