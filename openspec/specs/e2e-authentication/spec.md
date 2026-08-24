@@ -8,16 +8,16 @@ Define how the Playwright e2e suite establishes authenticated Salesforce browser
 
 ### Requirement: Browser session established via OAuth frontdoor
 
-The e2e suite SHALL establish an authenticated Lightning browser session for each test user without filling the Salesforce username/password login form. The session SHALL be derived from an OAuth-authenticated `sf` CLI org, using a frontdoor URL to exchange the CLI's access token for browser session cookies.
+The e2e suite SHALL establish an authenticated Lightning browser session for each test user without filling the Salesforce username/password login form. The session SHALL be derived from an OAuth access token — in `web` mode from the `sf` CLI org's stored session, in `jwt` mode from the in-process JWT-bearer token exchange — using a frontdoor URL to exchange that access token for browser session cookies.
 
-#### Scenario: Editor session minted from CLI-authed org
+#### Scenario: Editor session minted from available access token
 
-- **WHEN** the `setup` project runs and the org aliased by `SF_EDITOR_ALIAS` has a valid CLI OAuth session
-- **THEN** the suite obtains a frontdoor URL for that org, navigates the browser to it, waits for the Lightning shell to load, and writes the resulting `storageState` to `tests/e2e/.auth/editor.json`
+- **WHEN** the `setup` project runs and a valid OAuth access token for the editor user is available (per `SF_AUTH_MODE`)
+- **THEN** the suite obtains a frontdoor URL for that token, navigates the browser to it, waits for the Lightning shell to load, and writes the resulting `storageState` to `tests/e2e/.auth/editor.json`
 
-#### Scenario: Viewer session minted from CLI-authed org
+#### Scenario: Viewer session minted from available access token
 
-- **WHEN** the `setup` project runs and the org aliased by `SF_VIEWER_ALIAS` has a valid CLI OAuth session
+- **WHEN** the `setup` project runs and a valid OAuth access token for the viewer user is available (per `SF_AUTH_MODE`)
 - **THEN** the suite writes the resulting authenticated `storageState` to `tests/e2e/.auth/viewer.json`
 
 #### Scenario: No username/password form login occurs
@@ -36,17 +36,17 @@ The suite SHALL produce two independent browser sessions — one per test user �
 
 ### Requirement: Auth strategy selectable via environment
 
-The e2e suite SHALL choose its browser-auth token source from an `SF_AUTH_MODE` environment variable with values `web` or `jwt`. When unset or `web`, the suite SHALL behave exactly as the OAuth-frontdoor-from-CLI-web-login path. The selected mode SHALL affect only how each user's org alias becomes authenticated; the frontdoor exchange and `storageState` persistence SHALL be identical across modes.
+The e2e suite SHALL choose its browser-auth token source from an `SF_AUTH_MODE` environment variable with values `web` or `jwt`. When unset or `web`, the suite SHALL behave exactly as the OAuth-frontdoor-from-CLI-web-login path. The selected mode SHALL affect only how each user's browser-auth access token is obtained; the frontdoor exchange and `storageState` persistence SHALL be identical across modes.
 
 #### Scenario: Default mode preserves existing behavior
 
 - **WHEN** the `setup` project runs with `SF_AUTH_MODE` unset or set to `web`
-- **THEN** no JWT login occurs, each alias is assumed pre-authed via `sf org login web`, and the suite mints sessions via the frontdoor flow exactly as before
+- **THEN** no JWT exchange occurs, each alias is assumed pre-authed via `sf org login web`, and the suite mints sessions via the `sf org open` frontdoor flow exactly as before
 
 #### Scenario: JWT mode selected
 
 - **WHEN** the `setup` project runs with `SF_AUTH_MODE=jwt`
-- **THEN** each user's alias is authenticated non-interactively via `sf org login jwt` before the frontdoor exchange, and the resulting `storageState` files are written to the same `editor.json` / `viewer.json` paths
+- **THEN** each user's access token is obtained by an in-process JWT-bearer exchange (no `sf` CLI invocation), and the resulting `storageState` files are written to the same `editor.json` / `viewer.json` paths
 
 #### Scenario: Unrecognized mode fails clearly
 
@@ -55,12 +55,27 @@ The e2e suite SHALL choose its browser-auth token source from an `SF_AUTH_MODE` 
 
 ### Requirement: JWT-bearer non-interactive login via committed External Client App
 
-When `SF_AUTH_MODE=jwt`, the suite SHALL authenticate each test user's org alias using the JWT-bearer flow of an External Client App (ECA) whose definition is committed as project metadata. The flow SHALL require no interactive login and no per-run MFA prompt, and SHALL succeed on a machine with no prior CLI session (cold start). The ECA's private key SHALL NOT be committed to the repository or embedded in metadata.
+When `SF_AUTH_MODE=jwt`, the suite SHALL authenticate each test user using the JWT-bearer flow of an External Client App (ECA) whose definition is committed as project metadata, performed **in-process without invoking the `sf` CLI**. The suite SHALL build and RS256-sign the JWT assertion locally, exchange it for an access token over HTTPS, and build the frontdoor URL from the token response. The flow SHALL require no interactive login and no per-run MFA prompt, SHALL succeed on a machine with no prior CLI session (cold start), and SHALL require no `sf` CLI installation. The ECA's private key SHALL NOT be committed to the repository or embedded in metadata, and the minted access token SHALL NOT be persisted to disk.
 
-#### Scenario: Cold-start authentication with no prior CLI session
+#### Scenario: Cold-start in-process authentication with no CLI
 
-- **WHEN** `SF_AUTH_MODE=jwt` and the machine has no stored CLI session for the user's alias
-- **THEN** the suite runs `sf org login jwt` with the user's username, the private key at `SF_JWT_KEY_FILE`, the ECA's `SF_JWT_CLIENT_ID`, and `SF_JWT_INSTANCE_URL`, obtains a session with no human interaction, and proceeds to the frontdoor exchange
+- **WHEN** `SF_AUTH_MODE=jwt` and the machine has no `sf` CLI session (or no `sf` CLI at all)
+- **THEN** the suite builds a JWT assertion (`iss=SF_JWT_CLIENT_ID`, `sub=SF_*_USERNAME`, `aud=SF_JWT_INSTANCE_URL`, short expiry) signed RS256 with the key at `SF_JWT_KEY_FILE`, POSTs it to `<SF_JWT_INSTANCE_URL>/services/oauth2/token` as a JWT-bearer grant, receives `{ access_token, instance_url }`, and proceeds to the frontdoor exchange — with no human interaction and no `sf` invocation
+
+#### Scenario: Frontdoor URL built from the token response instance_url
+
+- **WHEN** the JWT-bearer exchange returns `access_token` and `instance_url`
+- **THEN** the frontdoor URL is `<instance_url>/secur/frontdoor.jsp?sid=<access_token>&retURL=/lightning`, using the `instance_url` from the token response (the org my-domain host), not the `SF_JWT_INSTANCE_URL` audience host
+
+#### Scenario: Alias variables not required in jwt mode
+
+- **WHEN** `SF_AUTH_MODE=jwt` and `SF_EDITOR_ALIAS` / `SF_VIEWER_ALIAS` are unset
+- **THEN** authentication still succeeds, because the in-process flow keys off username + key + client id + instance-url and never uses a CLI alias
+
+#### Scenario: Access token never persisted to disk
+
+- **WHEN** the JWT-bearer exchange succeeds
+- **THEN** the access token is held only in-process and used to build the frontdoor URL, is never written to an `sf` CLI auth store or any file, and is never logged
 
 #### Scenario: External Client App deploys as project metadata
 
@@ -69,8 +84,8 @@ When `SF_AUTH_MODE=jwt`, the suite SHALL authenticate each test user's org alias
 
 #### Scenario: JWT-mode failure names the JWT cause
 
-- **WHEN** `SF_AUTH_MODE=jwt` and login fails (missing `SF_JWT_*` variable, unreadable key file, user not pre-authorized on the External Client App, or wrong instance-url audience)
-- **THEN** the setup fails with a diagnostic identifying the specific missing input or JWT-side cause, and never emits the `sf org login web` remediation
+- **WHEN** `SF_AUTH_MODE=jwt` and authentication fails (missing `SF_JWT_*` variable, unreadable key file, or an OAuth error from the token endpoint — `invalid_grant` for a user not pre-authorized on the External Client App, or a wrong instance-url audience)
+- **THEN** the setup fails with a diagnostic identifying the specific missing input or the OAuth error cause, and never emits the `sf org login web` remediation
 
 ### Requirement: One-time interactive OAuth login prerequisite
 

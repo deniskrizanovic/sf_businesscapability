@@ -38,3 +38,7 @@ Making the suite CI-_capable_ requires a fully non-interactive, cold-start login
 - **Metadata-API gate resolved:** the consumer-secret org/user perms in the note above proved **not required** — cert-based JWT bearer has no consumer secret, so all ECA types deployed without them.
 - **This ADR supersedes ADR 0006's JWT deferral.** ADR 0006 remains accurate for the `web` path it describes; the "CI and JWT-bearer auth are deferred" consequence there is now resolved by this ADR.
 - **Scope:** this makes the suite CI-_capable_, not CI-_integrated_. Wiring an actual CI pipeline is out of scope.
+
+## Follow-up (2026-08): jwt path no longer uses the `sf` CLI
+
+The `jwt`-mode implementation described above minted the token and frontdoor URL via `sf org login jwt` + `sf org open`. That CLI dependency has since been removed: `jwt` mode now performs the RFC 7523 JWT-bearer exchange **in-process** — RS256-signing the assertion with `node:crypto` and POSTing it to `/services/oauth2/token` with global `fetch` (Node 22, zero new dependencies) — and builds the frontdoor URL directly from the token response `instance_url`. There is no longer an `sf org login jwt` call, no `~/.sf` auth-store write, and no `SF_EDITOR_ALIAS`/`SF_VIEWER_ALIAS` in the `jwt` path (alias is now web-only). The ECA metadata, scopes (`Web` still mandatory), cert upload, and pre-authorization are unchanged. See `remove-cli-from-jwt-auth` and [E2E Test Architecture §3](../design/09-e2e-test-architecture.md). `web` mode still uses the `sf` CLI.
