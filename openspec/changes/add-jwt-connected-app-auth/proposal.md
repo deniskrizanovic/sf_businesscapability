@@ -11,7 +11,7 @@ The app is an **External Client App (ECA)**, not a Connected App: Salesforce blo
 - Commit an **External Client App** definition as project metadata so the JWT app deploys with the repo. ECA is expressed across the metadata types `ExternalClientApplication`, `ExtlClntAppGlobalOauthSettings`, and `ExtlClntAppOauthSettings` (JWT-bearer enabled, OAuth scopes, admin-approved pre-authorization). The X.509 **public** certificate is uploaded to the ECA; the **private** key is never committed. The metadata is authored via the `integration-connectivity-connected-app-configure` skill (installed from `forcedotcom/sf-skills`, which ships ECA templates) — no hand-authored XML.
 - Extend the `.env` contract: add `SF_AUTH_MODE`, and the jwt-only vars `SF_JWT_CLIENT_ID`, `SF_JWT_KEY_FILE`, `SF_JWT_INSTANCE_URL`, `SF_EDITOR_USERNAME`, `SF_VIEWER_USERNAME`. Update `.env.example`. Add the private-key path to `.gitignore`.
 - Branch the fail-fast diagnostic on mode: `web` keeps the `sf org login web` remediation; `jwt` surfaces missing env / key file / ECA pre-authorization / wrong audience instead.
-- Docs: update `docs/design/09-e2e-test-architecture.md` §3 and add an ADR recording the reversal of the earlier JWT non-goal, the CI motivation, and the ECA-over-Connected-App choice.
+- Docs: update `docs/design/09-e2e-test-architecture.md` §3, add an ADR recording the reversal of the earlier JWT non-goal / the CI motivation / the ECA-over-Connected-App choice, and add a tool-agnostic runbook (`docs/runbooks/jwt-eca-setup-and-run.md`) that distills the verified ECA provisioning + run steps for any automation tool.
 
 ## Capabilities
 
@@ -30,6 +30,6 @@ The app is an **External Client App (ECA)**, not a Connected App: Salesforce blo
 - **Metadata**: new ECA (`ExternalClientApplication` + `ExtlClntAppGlobalOauthSettings` + `ExtlClntAppOauthSettings`; JWT config + uploaded public cert). Per-user pre-authorization mapping the app to editor/viewer users is admin-approved via profile/permission set. May extend the existing `bcm_ApiEnabled` permission set.
 - **Org prerequisite**: deploying ECA OAuth settings via Metadata API requires the org permission "Allow Access to OAuth Consumer Secrets via Metadata API" and the user permission "View External Client Apps Consumer Secrets in Metadata".
 - **Secrets**: private key stored locally (gitignored) and as a CI secret; frontdoor URL token handling unchanged (in-process, never logged).
-- **Docs**: `docs/design/09-e2e-test-architecture.md` §3; new ADR under `docs/adr/`.
+- **Docs**: `docs/design/09-e2e-test-architecture.md` §3; new ADR under `docs/adr/`; runbook `docs/runbooks/jwt-eca-setup-and-run.md` (generic ECA setup + run playbook).
 - **Ordering constraint**: ECA consumer key is generated on create — deploy app → read generated key → fill `SF_JWT_CLIENT_ID`.
 - **Out of scope**: full CI pipeline wiring (this change makes the suite CI-_capable_, not CI-_integrated_); retiring the `web` path; changing seeding/isolation/teardown.
