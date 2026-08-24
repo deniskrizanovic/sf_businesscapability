@@ -15,14 +15,16 @@ Placeholders used throughout — substitute your own:
 - `<APP_LABEL>` — the ECA label (e.g. `My JWT App`).
 - `<KEY>` / `<CERT>` — local private key / public cert paths.
 - `<PROFILE>` — the profile (or permission set) shared by the test users.
-- `<EDITOR_USER>` / `<VIEWER_USER>` — the usernames each alias authenticates as.
-- `<EDITOR_ALIAS>` / `<VIEWER_ALIAS>` — the CLI aliases the suite consumes.
+- `<EDITOR_USER>` / `<VIEWER_USER>` — the usernames each token authenticates as
+  (the JWT `sub`).
 
 ---
 
 ## 0. Preconditions
 
-- Salesforce CLI (`sf`) installed and on `PATH`.
+- Salesforce CLI (`sf`) installed and on `PATH` — for the **setup** steps only
+  (deploy the ECA, read the consumer key). Running the jwt-mode suite needs no
+  `sf` CLI: auth is fully in-process (`node:crypto` + `fetch`).
 - `openssl` installed.
 - Admin access to the target org's Setup (the cert-upload and pre-auth steps are
   Setup-UI-only — see below).
@@ -152,10 +154,10 @@ SF_JWT_CLIENT_ID=<consumer key from step 3>
 SF_JWT_KEY_FILE=<KEY>
 SF_JWT_INSTANCE_URL=https://test.salesforce.com   # SANDBOX audience — NOT the my-domain URL
 
-SF_EDITOR_USERNAME=<EDITOR_USER>   # the identity each alias authenticates AS
+SF_EDITOR_USERNAME=<EDITOR_USER>   # the `sub` each in-process exchange authenticates AS
 SF_VIEWER_USERNAME=<VIEWER_USER>
-SF_EDITOR_ALIAS=<EDITOR_ALIAS>
-SF_VIEWER_ALIAS=<VIEWER_ALIAS>
+# SF_EDITOR_ALIAS / SF_VIEWER_ALIAS are NOT needed in jwt mode (web-only) — the
+# in-process flow keys off username + key + client id + instance-url.
 ```
 
 > **Audience trap (verified):** sandbox → `https://test.salesforce.com`. Using the
@@ -169,50 +171,48 @@ other value fails fast with a diagnostic.
 
 ## 7. Run
 
-`ensureAuthed` runs per alias before the unchanged frontdoor exchange. In jwt mode
-it runs, idempotently, per run:
+In jwt mode `auth.setup.ts` performs the JWT-bearer exchange **in-process** (no
+`sf` CLI): it RS256-signs the assertion with `node:crypto`, POSTs it to
+`<SF_JWT_INSTANCE_URL>/services/oauth2/token` via `fetch`, and builds the frontdoor
+URL from the token response `instance_url`. There is nothing to run by hand —
+just run the suite as normal.
 
-```sh
-sf org login jwt \
-  --username     <SF_*_USERNAME> \
-  --jwt-key-file <SF_JWT_KEY_FILE> \
-  --client-id    <SF_JWT_CLIENT_ID> \
-  --instance-url <SF_JWT_INSTANCE_URL> \
-  -a             <alias>
-```
-
-There is **no refresh token** in jwt mode — the CLI re-asserts via the private key
-when the access token expires, so refresh-token-expiry failures disappear.
-
-Run the suite as normal.
+There is **no refresh token** in jwt mode — a fresh assertion is signed each run
+(180s expiry), so refresh-token-expiry failures disappear.
 
 ### Prove cold-start (CI-equivalent)
 
-Clear any existing CLI session for the aliases first, then run — no interaction
-should be required:
+Because jwt mode uses no CLI session or `~/.sf` state, cold-start needs no
+logout dance — a machine with **no `sf` CLI installed at all** must still pass:
 
 ```sh
-sf org logout -o <EDITOR_ALIAS> --no-prompt
-sf org logout -o <VIEWER_ALIAS> --no-prompt
-# then run the suite; jwt re-auth + frontdoor must succeed from zero session
+# with SF_AUTH_MODE=jwt set and the .env jwt block filled, just run the suite;
+# the in-process exchange + frontdoor must succeed from zero session
 ```
 
 ---
 
 ## 8. jwt-mode failure diagnosis
 
-When auth fails in jwt mode, check in order:
+The setup fails fast with a distinct message per class; the token-endpoint
+`{error, error_description}` is mapped to a cause. Check in order:
 
-1. **Missing env** — any `SF_JWT_*` unset, or `SF_*_USERNAME` unset.
-2. **Unreadable key** — `SF_JWT_KEY_FILE` path wrong / not a valid PEM private key.
-3. **`Invalid_Scope` / `ERROR_HTTP_403`** — ECA missing the `Web` scope (step 2).
-4. **Token/audience error** — wrong `SF_JWT_INSTANCE_URL` (sandbox needs
+1. **Missing env** — any `SF_JWT_*` unset, or `SF_*_USERNAME` unset (pre-flight,
+   before any HTTP call).
+2. **Unreadable / invalid key** — `SF_JWT_KEY_FILE` path wrong (pre-flight), or the
+   file is not a valid PEM private key (assertion signing fails) — distinct messages.
+3. **`Invalid_Scope` / `ERROR_HTTP_403`** — ECA missing the `Web` scope (step 2);
+   surfaces at the frontdoor navigation, not the token exchange.
+4. **`invalid_grant` + audience** — wrong `SF_JWT_INSTANCE_URL` (sandbox needs
    `https://test.salesforce.com`), or the cert upload (step 4) was skipped / lost on
    an org rebuild.
-5. **`user hasn't approved this consumer` / no token** — user not pre-authorized
-   (step 5), or a standard scope (`Api`) missing.
+5. **`invalid_grant` + `user hasn't approved this consumer`** — user not
+   pre-authorized (step 5).
+6. **`invalid_client` / signature** — wrong `SF_JWT_CLIENT_ID`, or the private key
+   doesn't match the uploaded cert.
 
-Never emit the `web`-mode remediation (`sf org login web`) in jwt mode.
+The diagnostic surfaces the OAuth cause but never the assertion, token, or
+frontdoor URL, and never emits the `web`-mode remediation (`sf org login web`).
 
 ---
 
@@ -220,8 +220,8 @@ Never emit the `web`-mode remediation (`sf org login web`) in jwt mode.
 
 - Private key: local + gitignored only; a CI secret store when CI is introduced.
   Never in metadata or git.
-- Frontdoor URL token: in-process, never logged. `ensureAuthed` must not log the
-  stdout of `sf org login jwt`.
+- JWT assertion + access token + frontdoor URL: in-process only, never logged and
+  never written to disk (no `~/.sf` auth store).
 - Verify clean: log scan for `BEGIN * PRIVATE KEY`, `frontdoor.jsp`, `sid=` → none.
 
 ## Manual-step summary (cannot be automated via CLI/metadata)

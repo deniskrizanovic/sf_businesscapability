@@ -1,10 +1,4 @@
-# e2e-authentication Specification
-
-## Purpose
-
-Define how the Playwright e2e suite establishes authenticated Salesforce browser sessions for its test users. Sessions are minted from OAuth-authenticated `sf` CLI orgs via a frontdoor URL exchange — never by filling the Salesforce username/password login form — so runs are not blocked by live MFA or identity-verification interstitials.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Browser session established via OAuth frontdoor
 
@@ -24,15 +18,6 @@ The e2e suite SHALL establish an authenticated Lightning browser session for eac
 
 - **WHEN** any test user authenticates for the suite
 - **THEN** no navigation to the `test.salesforce.com` / `login.salesforce.com` login form and no password field fill occurs, so no live MFA or identity-verification interstitial can block the run
-
-### Requirement: Two isolated user sessions preserved
-
-The suite SHALL produce two independent browser sessions — one per test user — so the `editor` and `viewer` Playwright projects each load a distinct `storageState`. The Salesforce permission model under test SHALL be exercised by two genuinely different authenticated users, not one shared session.
-
-#### Scenario: Editor and viewer resolve to different users
-
-- **WHEN** both auth setups have run
-- **THEN** `editor.json` and `viewer.json` hold sessions for different Salesforce users, and the `editor`/`viewer` projects consume their respective files as configured in `playwright.config.ts`
 
 ### Requirement: Auth strategy selectable via environment
 
@@ -86,31 +71,3 @@ When `SF_AUTH_MODE=jwt`, the suite SHALL authenticate each test user using the J
 
 - **WHEN** `SF_AUTH_MODE=jwt` and authentication fails (missing `SF_JWT_*` variable, unreadable key file, or an OAuth error from the token endpoint — `invalid_grant` for a user not pre-authorized on the External Client App, or a wrong instance-url audience)
 - **THEN** the setup fails with a diagnostic identifying the specific missing input or the OAuth error cause, and never emits the `sf org login web` remediation
-
-### Requirement: One-time interactive OAuth login prerequisite
-
-In `web` mode, each test user's org SHALL be authenticated once, interactively, via `sf org login web`, satisfying MFA at that time. Subsequent suite runs SHALL reuse the CLI's stored refresh token and require no interactive login or MFA prompt. This requirement SHALL apply only when `SF_AUTH_MODE` is unset or `web`; in `jwt` mode no interactive login is required at any point.
-
-#### Scenario: Cold start with unauthenticated alias fails clearly
-
-- **WHEN** the suite runs in `web` mode and the org alias for a user has no valid CLI session (never logged in, or refresh token expired/revoked)
-- **THEN** the auth setup fails with a diagnostic naming the alias and the `sf org login web -a <alias>` command needed to restore it, rather than silently producing an unauthenticated `storageState`
-
-#### Scenario: Warm run needs no interaction
-
-- **WHEN** the suite runs in `web` mode and the org alias has a valid stored CLI session
-- **THEN** the auth setup completes with no browser login form, no MFA prompt, and no human interaction
-
-#### Scenario: JWT mode requires no interactive login prerequisite
-
-- **WHEN** the suite runs in `jwt` mode
-- **THEN** no prior `sf org login web` is required, and authentication proceeds non-interactively from the committed External Client App and private key
-
-### Requirement: Test users have API access
-
-Each test user SHALL have the API Enabled permission required for the CLI OAuth connected app to mint and refresh access tokens. Where the base profile does not grant it, it SHALL be granted via a permission set rather than by editing profile metadata.
-
-#### Scenario: User lacking API access is remediated by permission set
-
-- **WHEN** a test user's profile does not grant API Enabled
-- **THEN** API Enabled is granted to that user through a permission set assignment, and the frontdoor auth flow succeeds

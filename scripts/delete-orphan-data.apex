@@ -1,7 +1,6 @@
 // Deletes orphan BCM records left over from failed e2e runs.
 // Keeps records belonging to the two canonical maps:
 //   - "Generic Enterprise Capability Map"
-//   - "Homes NSW Business Capability Model"
 // Deletion order: CapabilityTag -> Capability -> Map -> unreferenced Tag.
 
 Set<String> keepMapNames = new Set<String>{
