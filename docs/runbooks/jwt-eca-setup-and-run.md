@@ -1,15 +1,22 @@
-# Runbook — JWT External Client App: set up + run e2e (`SF_AUTH_MODE=jwt`)
+# Runbook — JWT External Client App: set up + run automation tests (`SF_AUTH_MODE=jwt`)
 
 Generic, tool-agnostic procedure for **any** automation tool (agent, CI job, shell
-script, human) to provision the JWT-bearer External Client App (ECA) that backs
-non-interactive e2e auth, then run the suite against it.
-
-Source of truth for the design: `docs/adr/0007-e2e-jwt-external-client-app-auth.md`
-and `docs/design/09-e2e-test-architecture.md` §3. This runbook is the executable
-distillation — the values below are **verified against the live org**, not theory.
+script, human) to provision a JWT-bearer External Client App (ECA) that backs
+non-interactive automation-test auth, then run a suite against it. The values below
+are distilled from a live-org run — treat them as verified defaults, not theory.
 
 > Why ECA not Connected App: Salesforce blocks new Connected App creation after
 > 2026-02-21 (passed). ECA is the only forward path for a new JWT-bearer app.
+
+Placeholders used throughout — substitute your own:
+
+- `<ORG_ALIAS>` — an admin-authed CLI alias for deploy/read.
+- `<APP>` — the ECA API name (e.g. `My_Jwt_App`).
+- `<APP_LABEL>` — the ECA label (e.g. `My JWT App`).
+- `<KEY>` / `<CERT>` — local private key / public cert paths.
+- `<PROFILE>` — the profile (or permission set) shared by the test users.
+- `<EDITOR_USER>` / `<VIEWER_USER>` — the usernames each alias authenticates as.
+- `<EDITOR_ALIAS>` / `<VIEWER_ALIAS>` — the CLI aliases the suite consumes.
 
 ---
 
@@ -17,15 +24,14 @@ distillation — the values below are **verified against the live org**, not the
 
 - Salesforce CLI (`sf`) installed and on `PATH`.
 - `openssl` installed.
-- Admin access to the target org's Setup (steps 4 and 6 are Setup-UI-only — see below).
-- Target is a **sandbox** in this project → JWT audience is `https://test.salesforce.com`.
+- Admin access to the target org's Setup (the cert-upload and pre-auth steps are
+  Setup-UI-only — see below).
+- Know the target org type: **sandbox** → JWT audience `https://test.salesforce.com`;
+  **production** → `https://login.salesforce.com`.
 - **NOT required (verified):** the org perm "Allow Access to OAuth Consumer Secrets
   via Metadata API" and user perm "View External Client Apps Consumer Secrets in
   Metadata". JWT-bearer is cert-based and has no consumer secret, so that metadata
   gate never engages. Do not waste time enabling it.
-
-Placeholders used below: `<ORG_ALIAS>` (an admin-authed alias for deploy/read),
-`<APP>` = `Bcm_E2e_Jwt`, `<APP_LABEL>` = `BCM E2E JWT`.
 
 ---
 
@@ -36,47 +42,47 @@ Private key stays local + gitignored; only the **public cert** ever leaves the m
 ```sh
 mkdir -p secrets
 openssl req -x509 -nodes -newkey rsa:2048 \
-  -keyout secrets/bcm-e2e-jwt.key \
-  -out    secrets/bcm-e2e-jwt.crt \
+  -keyout <KEY> \
+  -out    <CERT> \
   -days   3650 \
-  -subj   "/C=AU/O=BusinessCapabilityMap/CN=BCM E2E JWT"
+  -subj   "/C=<COUNTRY>/O=<ORG>/CN=<COMMON_NAME>"
 ```
 
-- `secrets/bcm-e2e-jwt.key` = **private** key (PEM). Feeds `SF_JWT_KEY_FILE`. **Never commit.**
-- `secrets/bcm-e2e-jwt.crt` = **public** X.509 cert. Uploaded to the ECA in step 4.
-- Confirm `.gitignore` covers `secrets/`, `*.key`, `*.pem`. Verify nothing is tracked:
-  `git ls-files | grep -E '\.(key|pem)$|^secrets/'` → must be empty.
+- `<KEY>` = **private** key (PEM). Feeds `SF_JWT_KEY_FILE`. **Never commit.**
+- `<CERT>` = **public** X.509 cert. Uploaded to the ECA in step 4.
+- Confirm `.gitignore` covers the key location (e.g. `secrets/`, `*.key`, `*.pem`).
+  Verify nothing is tracked: `git ls-files | grep -E '\.(key|pem)$|^secrets/'` → must be empty.
 
 ---
 
 ## 2. Author + deploy the ECA metadata
 
 The ECA is expressed across five metadata types under `force-app/main/default/`.
-They already exist in this repo — deploy as **one unit**. If recreating from
-scratch, author via the `integration-connectivity-connected-app-configure` skill
-(ships ECA templates); do **not** hand-write the XSD-ordered XML.
+Deploy them as **one unit**. Author via the
+`integration-connectivity-connected-app-configure` skill (ships ECA templates); do
+**not** hand-write the XSD-ordered XML.
 
-Verified config (from the committed files):
+Verified config:
 
 | Type (folder)                                                            | Key settings                                                                                         |
 | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| `ExternalClientApplication` (`externalClientApps/`)                      | label `BCM E2E JWT`, `distributionState=Local`, `isProtected=false`                                  |
+| `ExternalClientApplication` (`externalClientApps/`)                      | label `<APP_LABEL>`, `distributionState=Local`, `isProtected=false`                                  |
 | `ExtlClntAppGlobalOauthSettings` (`extlClntAppGlobalOauthSets/`)         | `callbackUrl=https://login.salesforce.com/services/oauth2/callback`, `isConsumerSecretOptional=true` |
 | `ExtlClntAppOauthSettings` (`extlClntAppOauthSettings/`)                 | **scopes = `Api, Web, RefreshToken`**                                                                |
 | `ExtlClntAppOauthConfigurablePolicies` (`extlClntAppOauthPolicies/`)     | `permittedUsersPolicyType=AdminApprovedPreAuthorized`, `ipRelaxationPolicyType=Enforce`              |
 | `ExtlClntAppOauthSecuritySettings` (`extlClntAppOauthSecuritySettings/`) | retrieve from org as source of truth                                                                 |
 
 > **Scope trap (verified):** `Web` is mandatory even though this is a server flow.
-> The suite consumes the alias via the frontdoor (`sf org open`), which needs a
+> A suite that consumes the alias via the frontdoor (`sf org open`) needs a
 > browser-session scope. `Api, RefreshToken` alone → `ERROR_HTTP_403 Invalid_Scope`.
 > An admin-pre-authorized app also needs at least one standard scope (`Api`) or it
 > issues no token.
 
 If the security-settings type schema drifts, retrieve it as the source of truth
-before editing:
+before editing (the retrieved name may carry a suffix, e.g. `<APP>_oauthSecurity`):
 
 ```sh
-sf project retrieve start --metadata ExtlClntAppOauthSecuritySettings:Bcm_E2e_Jwt_oauthSecurity -o <ORG_ALIAS>
+sf project retrieve start --metadata ExtlClntAppOauthSecuritySettings:<APP>_oauthSecurity -o <ORG_ALIAS>
 ```
 
 Deploy all types together:
@@ -98,8 +104,8 @@ sf project deploy start \
 Salesforce **generates** the consumer key on ECA create — it cannot be known before
 deploy. After step 2, read it and write it into `.env` as `SF_JWT_CLIENT_ID`.
 
-- Setup → App Manager / **External Client App Manager** → `BCM E2E JWT` → OAuth
-  Settings → **Consumer Key**. Copy the value.
+- Setup → **External Client App Manager** → `<APP_LABEL>` → OAuth Settings →
+  **Consumer Key**. Copy the value.
 
 > This ordering is a hard constraint: deploy → read key → fill env. Any automation
 > must treat "read consumer key" as a post-deploy step, not a precondition.
@@ -112,9 +118,8 @@ deploy. After step 2, read it and write it into `.env` as `SF_JWT_CLIENT_ID`.
 element appears in any retrieved ECA type. This is a one-time manual upload, and
 must be **re-done whenever the org is rebuilt**.
 
-- Setup → External Client App Manager → `BCM E2E JWT` → Edit → OAuth Settings →
-  enable **JWT Bearer Flow** → **upload `secrets/bcm-e2e-jwt.crt`** (the public cert
-  from step 1). Save.
+- Setup → External Client App Manager → `<APP_LABEL>` → Edit → OAuth Settings →
+  enable **JWT Bearer Flow** → **upload `<CERT>`** (the public cert from step 1). Save.
 
 Any automation tool that cannot drive the Setup UI must surface this as a required
 manual handoff, not silently skip it.
@@ -128,45 +133,44 @@ assignment on the ECA**, not a metadata edit. The ECA does not appear in the
 `ConnectedApplication` object, so the CLI `SetupEntityAccess` insert path is
 unavailable.
 
-- Setup → External Client App Manager → `BCM E2E JWT` → **Policies** → Manage
-  Profiles (or Manage Permission Sets) → add the profile that the e2e users share:
-  **`AutomatedTester - Minimum Access Clone`**.
+- Setup → External Client App Manager → `<APP_LABEL>` → **Policies** → Manage
+  Profiles (or Manage Permission Sets) → add `<PROFILE>`.
 
-> Both editor + viewer users share that profile → one profile assignment authorizes
-> both. If your users don't share a profile, add each one (or a common permission set).
+> If the test users share one profile, a single assignment authorizes both. If they
+> don't, add each user's profile (or assign a common permission set).
 
 ---
 
 ## 6. Fill the `.env` contract
 
-Copy `.env.example` → `.env` and set the jwt block. Verified values:
+Copy `.env.example` → `.env` and set the jwt block:
 
 ```sh
 SF_AUTH_MODE=jwt
 
 SF_JWT_CLIENT_ID=<consumer key from step 3>
-SF_JWT_KEY_FILE=secrets/bcm-e2e-jwt.key
+SF_JWT_KEY_FILE=<KEY>
 SF_JWT_INSTANCE_URL=https://test.salesforce.com   # SANDBOX audience — NOT the my-domain URL
 
-SF_EDITOR_USERNAME=<editor user>   # the identity each alias authenticates AS
-SF_VIEWER_USERNAME=<viewer user>
-SF_EDITOR_ALIAS=bcm-editor-e2e
-SF_VIEWER_ALIAS=bcm-viewer-e2e
+SF_EDITOR_USERNAME=<EDITOR_USER>   # the identity each alias authenticates AS
+SF_VIEWER_USERNAME=<VIEWER_USER>
+SF_EDITOR_ALIAS=<EDITOR_ALIAS>
+SF_VIEWER_ALIAS=<VIEWER_ALIAS>
 ```
 
 > **Audience trap (verified):** sandbox → `https://test.salesforce.com`. Using the
 > my-domain host fails the token exchange with an opaque audience error. Production
 > orgs use `https://login.salesforce.com`.
 
-`SF_AUTH_MODE` unset or `web` = today's interactive path (no jwt vars needed). Any
+`SF_AUTH_MODE` unset or `web` = the interactive path (no jwt vars needed). Any
 other value fails fast with a diagnostic.
 
 ---
 
 ## 7. Run
 
-`ensureAuthed` (in `tests/e2e/fixtures/auth.setup.ts`) runs per alias before the
-unchanged frontdoor exchange. In jwt mode it runs, idempotently, per run:
+`ensureAuthed` runs per alias before the unchanged frontdoor exchange. In jwt mode
+it runs, idempotently, per run:
 
 ```sh
 sf org login jwt \
@@ -180,7 +184,7 @@ sf org login jwt \
 There is **no refresh token** in jwt mode — the CLI re-asserts via the private key
 when the access token expires, so refresh-token-expiry failures disappear.
 
-Run the suite as normal (e.g. `npm run test:e2e`).
+Run the suite as normal.
 
 ### Prove cold-start (CI-equivalent)
 
@@ -188,12 +192,10 @@ Clear any existing CLI session for the aliases first, then run — no interactio
 should be required:
 
 ```sh
-sf org logout -o bcm-editor-e2e --no-prompt
-sf org logout -o bcm-viewer-e2e --no-prompt
+sf org logout -o <EDITOR_ALIAS> --no-prompt
+sf org logout -o <VIEWER_ALIAS> --no-prompt
 # then run the suite; jwt re-auth + frontdoor must succeed from zero session
 ```
-
-Verified result: 104 passed / 8 skipped, rc=0 from a zero-session start.
 
 ---
 
@@ -218,14 +220,14 @@ Never emit the `web`-mode remediation (`sf org login web`) in jwt mode.
 
 - Private key: local + gitignored only; a CI secret store when CI is introduced.
   Never in metadata or git.
-- Frontdoor URL token: in-process, never logged. `ensureAuthed` never logs the
+- Frontdoor URL token: in-process, never logged. `ensureAuthed` must not log the
   stdout of `sf org login jwt`.
-- Verified clean: log scan for `BEGIN * PRIVATE KEY`, `frontdoor.jsp`, `sid=` → none.
+- Verify clean: log scan for `BEGIN * PRIVATE KEY`, `frontdoor.jsp`, `sid=` → none.
 
 ## Manual-step summary (cannot be automated via CLI/metadata)
 
 | Step                    | Why manual                                                                         |
 | ----------------------- | ---------------------------------------------------------------------------------- |
+| 3 — read consumer key   | Generated on create; copy from Setup after deploy                                  |
 | 4 — upload public cert  | Does not round-trip as metadata; Setup UI only; redo on org rebuild                |
 | 5 — pre-authorize users | Setup-side ECA profile/perm-set assignment; ECA absent from `ConnectedApplication` |
-| 3 — read consumer key   | Generated on create; copy from Setup after deploy                                  |
