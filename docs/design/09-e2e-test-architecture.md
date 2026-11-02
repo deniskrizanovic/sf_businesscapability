@@ -33,6 +33,7 @@ The suite is intentionally a thin layer on top of the real org. We do not abstra
 tests/e2e/
 ├── fixtures/
 │   ├── auth.setup.ts        Logs in as editor + viewer, saves storage state
+│   ├── cleanup.ts           cleanupRuns(runIds) FK-safe delete; findOrphanRunIds() sweep
 │   ├── helpers.ts           setupAutoDismiss, selectMap, openDiagram, gotoLightning,
 │   │                        flow, clickFlowNext, recordIdFromUrl, RUN_ID
 │   ├── run-id.ts            Reads .run_id from disk
@@ -40,14 +41,14 @@ tests/e2e/
 │                            writes Name->Id map to .seed-ids.json, exposes getSeedIds()
 ├── *.seed.ts                Per-feature payloads + exported MAP_NAME / cap names
 ├── *.spec.ts                Per-feature scenarios
-├── global-setup.ts          Writes .run_id, then calls runAllSeeds([…])
-├── global-teardown.ts       Deletes everything matching %RUN_ID% in FK-safe order
+├── global-setup.ts          Cleans stale/orphaned runs, writes .run_id, then runAllSeeds([…])
+├── global-teardown.ts       cleanupRuns([RUN_ID]), then removes .run_id
 └── .run_id, .seed-ids.json, .auth/*.json    Generated, gitignored
 ```
 
 `playwright.config.ts` ties it together:
 
-- **`globalSetup`** runs once per `playwright test` invocation. Writes the RUN_ID, then seeds all maps via a single `sf apex run`.
+- **`globalSetup`** runs once per `playwright test` invocation. Cleans up runs whose teardown never ran (§8), writes the RUN_ID, then seeds all maps via a single `sf apex run`.
 - **`globalTeardown`** runs once at end. Single Apex script wipes everything by RUN_ID.
 - **Three projects**: `setup` (auth), `editor`, `viewer`. Editor/viewer each consume their respective `storageState`.
 - **`fullyParallel: false`** plus **`workers: 2`** — see §7.
@@ -134,7 +135,7 @@ The users' `.env` username/password are still consumed by `create-e2e-users.sh` 
 Every run needs a unique stamp so that:
 
 1. Two developers running the suite simultaneously against the same org do not collide.
-2. A run that crashes mid-test leaves behind data that the next run does not collide with — eventual cleanup is enough.
+2. A run that crashes mid-test leaves behind data that the next run does not collide with — eventual cleanup is enough (the next `globalSetup` does it, §8).
 3. Teardown can find exactly its own records and not delete a colleague's seed.
 
 `global-setup.ts` writes `Date.now().toString()` to `tests/e2e/.run_id`. `fixtures/run-id.ts` reads it. `helpers.ts` re-exports the value as `RUN_ID`. Every record name embeds it: `E2E DragDrop Map 1716900000000`, `Domain Alpha 1716900000000`, etc.
@@ -271,7 +272,7 @@ Within each project, `workers: 2 + fullyParallel: false` still runs spec files i
 
 ## 8. Teardown: single source
 
-There is **one** teardown: `global-teardown.ts`. It generates an Apex script that deletes everything matching `%RUN_ID%` in FK-safe order:
+All deletes go through `cleanupRuns(runIds)` in `fixtures/cleanup.ts`. It generates an Apex script that deletes everything matching `%RUN_ID%` in FK-safe order:
 
 1. `bcm_CapabilityTag__c` (junction)
 2. `bcm_Tag__c`
@@ -280,6 +281,20 @@ There is **one** teardown: `global-teardown.ts`. It generates an Apex script tha
 
 Tags are deleted before Capabilities because `bcm_CapabilityTag__c` is master-detail to _both_ Capability and Tag; deleting Capabilities cascades junction records, and a same-transaction Tag delete afterwards conflicts with the in-flight cascade.
 
+It has two callers:
+
+- **`global-teardown.ts`** cleans the current run, then deletes `.run_id`.
+- **`global-setup.ts`** cleans runs whose teardown never ran, _before_ writing the new `.run_id`.
+
+### Orphaned runs
+
+`globalTeardown` does not run when the Playwright process is killed (SIGKILL, closed terminal, a tool timeout). Before this sweep existed, the next `globalSetup` overwrote `.run_id` and the killed run's records stayed in the org forever. `globalSetup` now cleans two sets first:
+
+1. **Stale `.run_id`** — the file only survives a run that died before teardown. Cleaned regardless of age.
+2. **Orphan sweep** — `findOrphanRunIds()` queries Map/Capability/Tag Names ending in ` <13 digits>` and keeps run ids older than 2 h (`ORPHAN_MIN_AGE_MS`; age comes from the run id itself, which is epoch ms). Covers a lost `.run_id`: another checkout, or an overlapping run that overwrote it. The age floor keeps it away from a colleague's in-flight run against the same org.
+
+The sweep relies on the §4 rule that every e2e record Name ends with ` ${RUN_ID}`. A new seed or spec that breaks that rule leaks records — only the Map-name cascade (`bcm_Map__r.Name`) would still catch its Capabilities.
+
 ### Pitfall: per-spec `afterAll` teardowns are dangerous
 
 Earlier versions of `diagram.spec.ts` and `capability-detail.spec.ts` each had their own `afterAll` block running an Apex DELETE. Two failure modes:
@@ -287,7 +302,7 @@ Earlier versions of `diagram.spec.ts` and `capability-detail.spec.ts` each had t
 - **`diagram.spec.ts`** deleted capabilities by `bcm_Map__r.Name LIKE '%${RUN_ID}%'` — _no Map-name filter on the cap-delete_. Because every seed uses the same RUN_ID, that one query nuked drag-drop and capability-detail capabilities too. Under `workers: 1` (alphabetical order), `diagram.spec.ts` runs before `drag-drop.spec.ts`, so drag-drop's seed was wiped before its tests ran. Symptom: `selectMap` finds the Map but waits 20 s for `.bcm-canvas polygon` that never paints (no caps to render).
 - **`capability-detail.spec.ts`** correctly scoped its delete to its own MAP_NAME but ran in editor's `afterAll`. If viewer's tests on the same spec ran after editor's, they saw a deleted Map.
 
-**Both per-spec teardowns have been removed.** The rule is now: **only `global-teardown.ts` deletes data.** A spec that needs to mutate seed data should make changes that don't affect other specs; if isolation is genuinely needed, define a fresh seed in a new `*.seed.ts` file.
+**Both per-spec teardowns have been removed.** The rule is now: **only `cleanupRuns` (called from global setup/teardown) deletes data.** A spec that needs to mutate seed data should make changes that don't affect other specs; if isolation is genuinely needed, define a fresh seed in a new `*.seed.ts` file.
 
 ---
 
