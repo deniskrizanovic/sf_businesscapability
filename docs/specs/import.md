@@ -72,6 +72,35 @@ And the tag associations reflect the current JSON (old links replaced, not appen
 
 ---
 
+## Feature: Cross-cutting capabilities are imported
+
+**Scenario: isCrossCutting true sets the flag on a Level 1 capability**
+
+Given the JSON payload contains a Level 1 capability with `"isCrossCutting": true`  
+When the import completes  
+Then that Capability has IsCrossCutting set and renders in the cross-cutting band  
+And Level 1 capabilities without the key are imported with IsCrossCutting unset
+
+> Tested by: bcm_ImportControllerTest.crossCutting_flagTrueOnL1_setsIsCrossCutting
+
+**Scenario: Omitting isCrossCutting preserves an existing flag**
+
+Given a Capability was imported and then marked cross-cutting by hand  
+When JSON without an `isCrossCutting` key for that capability is re-imported  
+Then the Capability keeps IsCrossCutting set
+
+> Tested by: bcm_ImportControllerTest.crossCutting_keyOmittedOnReimport_preservesExistingFlag
+
+**Scenario: Re-import promotes a Level 2 capability to a cross-cutting Level 1**
+
+Given a Capability was imported as Level 2 under a parent  
+When JSON is re-imported with the same externalId at Level 1 and `"isCrossCutting": true`  
+Then the Capability becomes Level 1 with no parent and IsCrossCutting set
+
+> Tested by: bcm_ImportControllerTest.crossCutting_reimportPromotesL2ToL1_clearsParentAndSetsFlag
+
+---
+
 ## Feature: Tags without an existing colour default to grey
 
 **Scenario: New tags created during import get the default colour**
@@ -94,6 +123,15 @@ Then an error message is displayed describing the problem
 And no records are created or modified
 
 > Tested by: bcm_ImportControllerTest.error_malformedJson_returnsError
+
+**Scenario: A capability that fails validation rolls back the whole import**
+
+Given the JSON is valid but one capability breaks a validation rule (e.g. `isCrossCutting` on a Level 2)  
+When the user clicks "Import"  
+Then an error message is displayed naming the failing externalId and the reason  
+And no records are created or modified, including the Map and the capabilities that were valid
+
+> Tested by: bcm_ImportControllerTest.error_capabilityFailsValidation_rollsBackAndReturnsError
 
 **Scenario: Empty text area is rejected before submission**
 

@@ -193,6 +193,116 @@ private class bcm_ImportControllerTest {
         Assert.areEqual(3, capCount, 'Re-import must not create duplicate Capability records');
     }
 
+    // ─── Cross-cutting flag ───────────────────────────────────────────────────
+
+    // @spec import.md · "Cross-cutting capabilities are imported" · "isCrossCutting true sets the flag on a Level 1 capability"
+    @IsTest
+    static void crossCutting_flagTrueOnL1_setsIsCrossCutting() {
+        // Given
+        String ccJson =
+            '{' +
+            '"mapName":"Cross-cutting Map",' +
+            '"capabilities":[' +
+            '{"externalId":"cc-l1","name":"Band","level":1,"sortOrder":1,"isCrossCutting":true,"children":[]},' +
+            '{"externalId":"reg-l1","name":"Column","level":1,"sortOrder":2,"children":[]}' +
+            ']' +
+            '}';
+
+        // When
+        Test.startTest();
+        bcm_ImportController.bcm_ImportResult result = bcm_ImportController.importCapabilities(
+            ccJson
+        );
+        Test.stopTest();
+
+        // Then
+        Assert.isTrue(result.success, 'Import should succeed for cross-cutting JSON');
+        bcm_Capability__c band = [
+            SELECT bcm_IsCrossCutting__c
+            FROM bcm_Capability__c
+            WHERE bcm_ExternalId__c = 'cc-l1'
+        ];
+        bcm_Capability__c column = [
+            SELECT bcm_IsCrossCutting__c
+            FROM bcm_Capability__c
+            WHERE bcm_ExternalId__c = 'reg-l1'
+        ];
+        Assert.isTrue(band.bcm_IsCrossCutting__c, 'isCrossCutting:true should set the flag');
+        Assert.isFalse(
+            column.bcm_IsCrossCutting__c,
+            'Omitted isCrossCutting should default to false'
+        );
+    }
+
+    // @spec import.md · "Cross-cutting capabilities are imported" · "Omitting isCrossCutting preserves an existing flag"
+    @IsTest
+    static void crossCutting_keyOmittedOnReimport_preservesExistingFlag() {
+        // Given — L1 imported, then flagged by hand
+        bcm_ImportController.importCapabilities(SAMPLE_JSON);
+        bcm_Capability__c l1 = [
+            SELECT Id
+            FROM bcm_Capability__c
+            WHERE bcm_ExternalId__c = 'cap-l1'
+        ];
+        l1.bcm_IsCrossCutting__c = true;
+        update l1;
+
+        // When — re-import JSON that has no isCrossCutting key
+        Test.startTest();
+        bcm_ImportController.bcm_ImportResult result = bcm_ImportController.importCapabilities(
+            SAMPLE_JSON
+        );
+        Test.stopTest();
+
+        // Then
+        Assert.isTrue(result.success, 'Re-import should succeed');
+        bcm_Capability__c saved = [
+            SELECT bcm_IsCrossCutting__c
+            FROM bcm_Capability__c
+            WHERE Id = :l1.Id
+        ];
+        Assert.isTrue(
+            saved.bcm_IsCrossCutting__c,
+            'Re-import without isCrossCutting must not clear a hand-set flag'
+        );
+    }
+
+    // @spec import.md · "Cross-cutting capabilities are imported" · "Re-import promotes a Level 2 capability to a cross-cutting Level 1"
+    @IsTest
+    static void crossCutting_reimportPromotesL2ToL1_clearsParentAndSetsFlag() {
+        // Given — cap-l2 imported as a Level 2 child of cap-l1
+        bcm_ImportController.importCapabilities(SAMPLE_JSON);
+        String promotedJson =
+            '{' +
+            '"mapName":"Test Import Map",' +
+            '"capabilities":[' +
+            '{"externalId":"cap-l1","name":"Domain 1","level":1,"sortOrder":1,"children":[]},' +
+            '{"externalId":"cap-l2","name":"Group 1","level":1,"sortOrder":2,"isCrossCutting":true,"children":[]}' +
+            ']' +
+            '}';
+
+        // When
+        Test.startTest();
+        bcm_ImportController.bcm_ImportResult result = bcm_ImportController.importCapabilities(
+            promotedJson
+        );
+        Test.stopTest();
+
+        // Then
+        Assert.isTrue(result.success, 'Re-import should succeed');
+        bcm_Capability__c promoted = [
+            SELECT bcm_Level__c, bcm_Parent__c, bcm_IsCrossCutting__c
+            FROM bcm_Capability__c
+            WHERE bcm_ExternalId__c = 'cap-l2'
+        ];
+        Assert.areEqual(1, promoted.bcm_Level__c, 'Promoted capability should be Level 1');
+        Assert.isNull(promoted.bcm_Parent__c, 'Promoted Level 1 capability should have no parent');
+        Assert.isTrue(
+            promoted.bcm_IsCrossCutting__c,
+            'Promoted capability should be cross-cutting'
+        );
+    }
+
     // ─── Error handling ───────────────────────────────────────────────────────
 
     // @spec import.md · "Import errors are handled gracefully" · "Malformed JSON displays an error message"
@@ -217,6 +327,46 @@ private class bcm_ImportControllerTest {
 
         Integer mapCount = [SELECT COUNT() FROM bcm_Map__c];
         Assert.areEqual(0, mapCount, 'No Map records should be created for malformed JSON');
+    }
+
+    // @spec import.md · "Import errors are handled gracefully" · "A capability that fails validation rolls back the whole import"
+    @IsTest
+    static void error_capabilityFailsValidation_rollsBackAndReturnsError() {
+        // Given — isCrossCutting on a Level 2 capability is rejected by validation
+        String invalidJson =
+            '{' +
+            '"mapName":"Rollback Map",' +
+            '"capabilities":[' +
+            '{"externalId":"rb-l1","name":"Domain","level":1,"sortOrder":1,"children":[' +
+            '{"externalId":"rb-l2","name":"Group","level":2,"sortOrder":1,"isCrossCutting":true,"children":[]}' +
+            ']}' +
+            ']' +
+            '}';
+
+        // When
+        Test.startTest();
+        bcm_ImportController.bcm_ImportResult result = bcm_ImportController.importCapabilities(
+            invalidJson
+        );
+        Test.stopTest();
+
+        // Then — failure is reported with the offending externalId
+        Assert.isFalse(result.success, 'Import should fail when a capability fails validation');
+        Assert.isNotNull(result.errorMessage, 'errorMessage should be populated');
+        Assert.isTrue(
+            result.errorMessage.contains('rb-l2'),
+            'errorMessage should name the failing externalId: ' + result.errorMessage
+        );
+        Assert.areEqual(0, result.capabilitiesInserted, 'No inserts should be reported');
+        Assert.areEqual(0, result.capabilitiesUpdated, 'No updates should be reported');
+
+        // Then — nothing persisted, including the Map and the valid L1
+        Assert.areEqual(0, [SELECT COUNT() FROM bcm_Map__c], 'Map insert should be rolled back');
+        Assert.areEqual(
+            0,
+            [SELECT COUNT() FROM bcm_Capability__c],
+            'Capability inserts should be rolled back'
+        );
     }
 
     // @spec import.md · "Import errors are handled gracefully" · "Empty text area is rejected before submission"

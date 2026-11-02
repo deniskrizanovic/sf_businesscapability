@@ -16,6 +16,7 @@ public with sharing class bcm_ImportController {
     private static final String ERROR_PAYLOAD_REQUIRED = 'JSON payload is required';
     private static final String ERROR_MAP_NAME_REQUIRED = 'mapName is required in the JSON payload';
     private static final String ERROR_ACCESS_DENIED = 'Access denied';
+    private static final Integer MAX_REPORTED_FAILURES = 5;
 
     // ─── Public entry point ──────────────────────────────────────────────────
 
@@ -26,7 +27,8 @@ public with sharing class bcm_ImportController {
      * @param jsonPayload  JSON string matching the {@link bcm_ImportPayload} structure.
      * @return             {@link bcm_ImportResult} with {@code success=true} and inserted /
      *                     updated counts on success; {@code success=false} with an
-     *                     {@code errorMessage} on validation or parse failure.
+     *                     {@code errorMessage} on validation or parse failure. Any
+     *                     failed capability rolls back the whole import.
      * @example
      * bcm_ImportController.bcm_ImportResult result =
      *     bcm_ImportController.importCapabilities(
@@ -40,6 +42,7 @@ public with sharing class bcm_ImportController {
         if (!FeatureManagement.checkPermission('bcm_CanEdit')) {
             throw new AuraHandledException(ERROR_ACCESS_DENIED);
         }
+        Savepoint sp = Database.setSavepoint();
         try {
             Map<String, Object> raw = (Map<String, Object>) JSON.deserializeUntyped(jsonPayload);
             bcm_ImportPayload payload = parsePayload(raw);
@@ -49,6 +52,7 @@ public with sharing class bcm_ImportController {
         } catch (AuraHandledException ahe) {
             throw ahe;
         } catch (Exception ex) {
+            Database.rollback(sp);
             return errorResult(ex.getMessage());
         }
     }
@@ -85,6 +89,7 @@ public with sharing class bcm_ImportController {
         n.definition = (String) raw.get('definition');
         n.strategySupport = (String) raw.get('strategySupport');
         n.architecturalNuance = (String) raw.get('architecturalNuance');
+        n.isCrossCutting = (Boolean) raw.get('isCrossCutting');
         n.children = new List<bcm_CapabilityNode>();
         Object kids = raw.get('children');
         if (kids instanceof List<Object>) {
@@ -177,18 +182,22 @@ public with sharing class bcm_ImportController {
             return flatList;
         }
         for (bcm_CapabilityNode node : nodes) {
-            flatList.add(
-                new bcm_Capability__c(
-                    Name = node.name,
-                    bcm_Map__c = mapId,
-                    bcm_Level__c = node.level,
-                    bcm_SortOrder__c = node.sortOrder,
-                    bcm_ExternalId__c = node.externalId,
-                    bcm_Definition__c = node.definition,
-                    bcm_StrategySupport__c = node.strategySupport,
-                    bcm_ArchitecturalNuance__c = node.architecturalNuance
-                )
+            bcm_Capability__c cap = new bcm_Capability__c(
+                Name = node.name,
+                bcm_Map__c = mapId,
+                bcm_Level__c = node.level,
+                bcm_SortOrder__c = node.sortOrder,
+                bcm_ExternalId__c = node.externalId,
+                bcm_Definition__c = node.definition,
+                bcm_StrategySupport__c = node.strategySupport,
+                bcm_ArchitecturalNuance__c = node.architecturalNuance
             );
+            // Only touch the flag when the JSON supplies it, so re-imports of older
+            // payloads do not clear flags set by hand.
+            if (node.isCrossCutting != null) {
+                cap.bcm_IsCrossCutting__c = node.isCrossCutting;
+            }
+            flatList.add(cap);
             if (parentExternalId != null) {
                 parentByChild.put(node.externalId, parentExternalId);
             }
@@ -212,6 +221,8 @@ public with sharing class bcm_ImportController {
      * @param mapId         The bcm_Map__c Id used to scope post-upsert queries.
      * @param parentByChild Child externalId → parent externalId.
      * @param result        Accumulator for inserted/updated counts.
+     * @throws bcm_ImportException when any capability in a level fails to save; the
+     *         caller rolls back so a partial map is never left behind.
      */
     private static void upsertByLevel(
         List<bcm_Capability__c> flatList,
@@ -232,8 +243,13 @@ public with sharing class bcm_ImportController {
                 continue;
             }
 
-            // Set bcm_Parent__c before upserting L2 / L3
-            if (level > 1) {
+            // Clear bcm_Parent__c on L1 so a capability promoted from L2/L3 passes
+            // validation; set it before upserting L2 / L3
+            if (level == 1) {
+                for (bcm_Capability__c cap : levelList) {
+                    cap.bcm_Parent__c = null;
+                }
+            } else {
                 for (bcm_Capability__c cap : levelList) {
                     String parentExtId = parentByChild.get(cap.bcm_ExternalId__c);
                     if (parentExtId != null) {
@@ -247,14 +263,21 @@ public with sharing class bcm_ImportController {
                 bcm_Capability__c.bcm_ExternalId__c,
                 false
             );
-            for (Database.UpsertResult ur : upsertResults) {
-                if (ur.isSuccess()) {
-                    if (ur.isCreated()) {
-                        result.capabilitiesInserted++;
-                    } else {
-                        result.capabilitiesUpdated++;
-                    }
+            List<String> failures = new List<String>();
+            for (Integer i = 0; i < upsertResults.size(); i++) {
+                Database.UpsertResult ur = upsertResults[i];
+                if (!ur.isSuccess()) {
+                    failures.add(
+                        levelList[i].bcm_ExternalId__c + ': ' + ur.getErrors()[0].getMessage()
+                    );
+                } else if (ur.isCreated()) {
+                    result.capabilitiesInserted++;
+                } else {
+                    result.capabilitiesUpdated++;
                 }
+            }
+            if (!failures.isEmpty()) {
+                throw new bcm_ImportException(failureMessage(failures));
             }
 
             // Re-query to get authoritative Ids for the next level's parent lookup
@@ -271,6 +294,24 @@ public with sharing class bcm_ImportController {
         }
     }
 
+    // ─── failureMessage ─────────────────────────────────────────────────────
+
+    private static String failureMessage(List<String> failures) {
+        List<String> reported = new List<String>();
+        for (Integer i = 0; i < Math.min(failures.size(), MAX_REPORTED_FAILURES); i++) {
+            reported.add(failures[i]);
+        }
+        String message =
+            'Import rolled back: ' +
+            failures.size() +
+            ' capabilities failed to save. ' +
+            String.join(reported, '; ');
+        if (failures.size() > MAX_REPORTED_FAILURES) {
+            message += '; and ' + (failures.size() - MAX_REPORTED_FAILURES) + ' more';
+        }
+        return message;
+    }
+
     // ─── errorResult ────────────────────────────────────────────────────────
 
     private static bcm_ImportResult errorResult(String message) {
@@ -281,6 +322,10 @@ public with sharing class bcm_ImportController {
     }
 
     // ─── Inner wrapper classes ───────────────────────────────────────────────
+
+    /** Raised when one or more capabilities fail to save; triggers a rollback. */
+    private class bcm_ImportException extends Exception {
+    }
 
     /**
      * Top-level JSON payload structure for a capability map import.
@@ -316,6 +361,8 @@ public with sharing class bcm_ImportController {
         public String strategySupport;
         /** HTML-formatted architectural nuance notes. */
         public String architecturalNuance;
+        /** Level 1 only: renders as a full-width band. Null leaves the existing value. */
+        public Boolean isCrossCutting;
         /** Child capability nodes (may be empty or omitted). */
         public List<bcm_CapabilityNode> children;
     }
