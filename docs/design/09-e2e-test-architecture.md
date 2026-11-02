@@ -323,16 +323,16 @@ This means **test descriptions are part of the contract** — renaming a test fo
 
 ```bash
 # Whole suite
-npx playwright test
+pnpm exec playwright test
 
 # One spec
-npx playwright test tests/e2e/drag-drop.spec.ts
+pnpm exec playwright test tests/e2e/drag-drop.spec.ts
 
 # One project
-npx playwright test --project=editor
+pnpm exec playwright test --project=editor
 
 # HTML report (opens last run's results)
-npx playwright show-report
+pnpm exec playwright show-report
 ```
 
 `globalTeardown` runs even when only one spec is selected, so partial runs leave the org clean.

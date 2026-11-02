@@ -13,7 +13,7 @@ project. It covers four concerns:
 This is a single-developer project. There is no CI pipeline or peer review. All
 quality gates are enforced locally via pre-commit hooks and developer discipline.
 If the project becomes multi-developer, a CI pipeline should be added as the first
-step — running `npm run lint`, `npm run scan`, and `npm run test:unit` on every
+step — running `pnpm lint`, `pnpm scan`, and `pnpm test:unit` on every
 push to `main`.
 
 ---
@@ -116,10 +116,10 @@ and Flow analysis are disabled for this project.
 Running tools manually:
 
 ```bash
-npm run lint          # ESLint only
-npm run scan          # sf code-analyzer across all of force-app at severity ≥ 2
-npm run prettier      # auto-format everything
-npm run prettier:verify  # check formatting without writing
+pnpm lint          # ESLint only
+pnpm scan          # sf code-analyzer across all of force-app at severity ≥ 2
+pnpm prettier      # auto-format everything
+pnpm prettier:verify  # check formatting without writing
 ```
 
 ### What the tools do not catch
@@ -246,7 +246,7 @@ session to `tests/e2e/.auth/editor.json` and `tests/e2e/.auth/viewer.json`
 (gitignored). Subsequent test projects consume the saved session via `storageState`,
 avoiding repeated logins.
 
-Sessions are refreshed on every `npx playwright test` invocation and are not
+Sessions are refreshed on every `pnpm exec playwright test` invocation and are not
 persisted between runs.
 
 ---
@@ -407,8 +407,8 @@ Before marking any implementation step complete:
 - All traceability checks pass (Checks 1–5 in `/check-traceability`)
 - All Apex test methods pass with ≥ 90% coverage per class
 - All Playwright tests pass with zero failures
-- `npm run lint` passes with no errors
-- `npm run scan` passes with no severity ≥ 2 violations
+- `pnpm lint` passes with no errors
+- `pnpm scan` passes with no severity ≥ 2 violations
 
 **Then verify the remaining items manually:**
 
@@ -427,18 +427,18 @@ sf apex run test --test-level RunLocalTests --target-org <alias>
 sf apex run test --test-level RunLocalTests --target-org <alias> --code-coverage
 
 # E2E tests (requires .env configured with org URL and test user credentials)
-npx playwright test
-npx playwright test tests/e2e/map.spec.ts   # single spec
-npx playwright test --project=editor        # editor project only
-npx playwright show-report                  # open HTML report
+pnpm exec playwright test
+pnpm exec playwright test tests/e2e/map.spec.ts   # single spec
+pnpm exec playwright test --project=editor        # editor project only
+pnpm exec playwright show-report                  # open HTML report
 
 # LWC unit tests
-npm run test:unit
-npm run test:unit:coverage
+pnpm test:unit
+pnpm test:unit:coverage
 
 # Linting and scanning
-npm run lint
-npm run scan
+pnpm lint
+pnpm scan
 ```
 
 Prerequisites for E2E:
