@@ -1,0 +1,14 @@
+{
+    "mcpServers": {
+        "salesforce-metadata": {
+            "type": "stdio",
+            "command": "${HOME}/Library/pnpm/bin/salesforce-metadata-mcp",
+            "args": [],
+            "env": {
+                "PATH": "${HOME}/.local/share/sfmcp-bin:${HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin",
+                "SF_INSTANCE_URL": "https://orgfarm-feae5d6e4a-dev-ed.develop.my.salesforce.com",
+                "SF_ALIAS": "mydevorg"
+            }
+        }
+    }
+}
