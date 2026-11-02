@@ -33,50 +33,43 @@ def p(text):
 
 
 CAPABILITIES = [
+    # Cross-cutting L1s render as full-width bands below the map, not as columns.
+    # externalIds keep their original d0-c<N> keys so re-imports upsert in place.
     {
-        "externalId": "d0",
-        "name": "Cross Cutting",
+        "externalId": "d0-c1",
+        "name": "Cross System Workflow",
         "level": 1,
-        "sortOrder": 0,
-        "definition": p("Capabilities that apply across all domains."),
+        "sortOrder": 1,
+        "isCrossCutting": True,
+        "definition": "",
         "strategySupport": "",
         "architecturalNuance": "",
         "tags": [],
-        "children": [
-            {
-                "externalId": "d0-c1",
-                "name": "Cross System Workflow",
-                "level": 2,
-                "sortOrder": 1,
-                "definition": "",
-                "strategySupport": "",
-                "architecturalNuance": "",
-                "tags": [],
-                "children": []
-            },
-            {
-                "externalId": "d0-c2",
-                "name": "Unified Reporting",
-                "level": 2,
-                "sortOrder": 2,
-                "definition": "",
-                "strategySupport": "",
-                "architecturalNuance": "",
-                "tags": [],
-                "children": []
-            },
-            {
-                "externalId": "d0-c3",
-                "name": "Access Control & Security",
-                "level": 2,
-                "sortOrder": 3,
-                "definition": "",
-                "strategySupport": "",
-                "architecturalNuance": "",
-                "tags": [],
-                "children": []
-            },
-        ]
+        "children": []
+    },
+    {
+        "externalId": "d0-c2",
+        "name": "Unified Reporting",
+        "level": 1,
+        "sortOrder": 2,
+        "isCrossCutting": True,
+        "definition": "",
+        "strategySupport": "",
+        "architecturalNuance": "",
+        "tags": [],
+        "children": []
+    },
+    {
+        "externalId": "d0-c3",
+        "name": "Access Control & Security",
+        "level": 1,
+        "sortOrder": 3,
+        "isCrossCutting": True,
+        "definition": "",
+        "strategySupport": "",
+        "architecturalNuance": "",
+        "tags": [],
+        "children": []
     },
     {
         "externalId": "d1",
