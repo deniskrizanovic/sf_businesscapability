@@ -27,7 +27,7 @@ drag-drop state machine, tag colorisation) that gap becomes unacceptable.
 - A `tests/e2e/` directory is added to the repo alongside `force-app/`
 - Playwright authenticates via a stored session or environment-variable credentials
   against a named org (initially `home-denispoc`)
-- Tests are run manually by developers (`npx playwright test`); CI integration is
+- Tests are run manually by developers (`pnpm exec playwright test`); CI integration is
   the intended end state but is out of scope for the initial implementation
 - Coverage starts against already-deployed pages (Map record page, Capability record
   page, permission set enforcement) and extends to LWC components as they land in

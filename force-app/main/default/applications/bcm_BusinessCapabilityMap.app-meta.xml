@@ -3,9 +3,27 @@
     <actionOverrides>
         <actionName>View</actionName>
         <comment>Action override created by Lightning App Builder during activation.</comment>
+        <content>bcm_Capability_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>bcm_Capability__c</pageOrSobjectType>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Flexipage</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <comment>Action override created by Lightning App Builder during activation.</comment>
         <content>bcm_MapRecordPage</content>
         <formFactor>Large</formFactor>
         <pageOrSobjectType>bcm_Map__c</pageOrSobjectType>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Flexipage</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <comment>Action override created by Lightning App Builder during activation.</comment>
+        <content>bcm_Tag_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>bcm_Tag__c</pageOrSobjectType>
         <skipRecordTypeSelect>false</skipRecordTypeSelect>
         <type>Flexipage</type>
     </actionOverrides>

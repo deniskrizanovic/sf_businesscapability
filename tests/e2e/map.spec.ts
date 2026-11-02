@@ -34,7 +34,10 @@ test.describe('Map CRUD — editor project', () => {
     test('editor deletes a Map record', async ({ page }) => {
         await createMap(page, `E2E Map Delete ${RUN_ID}`);
         await page.locator('.slds-page-header').getByRole('button', { name: 'Delete' }).click();
-        await page.getByRole('button', { name: 'Delete', exact: true }).click();
+        await page
+            .getByRole('dialog', { name: 'Delete Map' })
+            .getByRole('button', { name: 'Delete', exact: true })
+            .click();
         await page.waitForSelector('.slds-page-header', { state: 'visible' });
         await expect(
             page.getByRole('link', { name: `E2E Map Delete ${RUN_ID}` })

@@ -6,7 +6,7 @@
     "scripts": {
         "lint": "eslint **/lwc/**/*.js",
         "scan": "sf code-analyzer run -t force-app -s 2",
-        "test": "npm run test:unit",
+        "test": "pnpm test:unit",
         "test:e2e": "playwright test",
         "test:unit": "sfdx-lwc-jest",
         "test:unit:watch": "sfdx-lwc-jest --watch",
@@ -47,5 +47,6 @@
         "**/lwc/**": [
             "sfdx-lwc-jest -- --bail --findRelatedTests --passWithNoTests"
         ]
-    }
+    },
+    "packageManager": "pnpm@12.14.0"
 }

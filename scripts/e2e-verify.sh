@@ -33,7 +33,7 @@ hb() { echo "[$(date '+%H:%M:%S')] $*" | tee -a "$STATUS"; }
 run_phase() {
   local mode="$1" log="$2"
   hb "PHASE START mode=$mode -> $log"
-  SF_AUTH_MODE="$mode" npm run test:e2e >"$log" 2>&1 &
+  SF_AUTH_MODE="$mode" pnpm test:e2e >"$log" 2>&1 &
   local pid=$!
   local start elapsed
   start=$(date +%s)

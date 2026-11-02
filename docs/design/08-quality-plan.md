@@ -13,7 +13,7 @@ project. It covers four concerns:
 This is a single-developer project. There is no CI pipeline or peer review. All
 quality gates are enforced locally via pre-commit hooks and developer discipline.
 If the project becomes multi-developer, a CI pipeline should be added as the first
-step — running `npm run lint`, `npm run scan`, and `npm run test:unit` on every
+step — running `pnpm lint`, `pnpm scan`, and `pnpm test:unit` on every
 push to `main`.
 
 ---
@@ -116,10 +116,10 @@ and Flow analysis are disabled for this project.
 Running tools manually:
 
 ```bash
-npm run lint          # ESLint only
-npm run scan          # sf code-analyzer across all of force-app at severity ≥ 2
-npm run prettier      # auto-format everything
-npm run prettier:verify  # check formatting without writing
+pnpm lint          # ESLint only
+pnpm scan          # sf code-analyzer across all of force-app at severity ≥ 2
+pnpm prettier      # auto-format everything
+pnpm prettier:verify  # check formatting without writing
 ```
 
 ### What the tools do not catch
@@ -203,16 +203,21 @@ contexts. The usernames and passwords are stored in `.env` (gitignored);
 | `bcm-editor-test@...` | `bcm_Editor`   | Full access — creates, edits, deletes records  |
 | `bcm-viewer-test@...` | `bcm_Viewer`   | Read-only — verifies write controls are absent |
 
-Both users are assigned the `AutomatedTester - Minimum Access Clone` profile with
-`BypassMFAForUiLogins` and `SkipIdentityConfirmation` to allow headless login.
+Both users are assigned the `AutomatedTester - Minimum Access Clone` profile. The suite
+never fills the Salesforce login form — sessions are minted via an OAuth frontdoor
+exchange (see [09-e2e-test-architecture.md §3](09-e2e-test-architecture.md#3-authentication-selectable-strategy--oauth-frontdoor--storagestate)) —
+so the profile grants no MFA or identity-confirmation bypass.
 
 #### Test Users Profile
 
-Both users are assigned the `AutomatedTester - Minimum Access Clone` profile (committed to source at `force-app/main/default/profiles/AutomatedTester - Minimum Access Clone.profile-meta.xml`). This profile is a clone of Minimum Access — the lowest-privilege standard profile — with three deliberate additions:
+Both users are assigned the `AutomatedTester - Minimum Access Clone` profile (committed to source at `force-app/main/default/profiles/AutomatedTester - Minimum Access Clone.profile-meta.xml`). This profile is a clone of Minimum Access — the lowest-privilege standard profile — with two deliberate additions:
 
-- **`BypassMFAForUiLogins`** — prevents Salesforce from prompting for a second factor during username/password login. Without this, Playwright's login flow stalls at the MFA screen.
-- **`SkipIdentityConfirmation`** — suppresses the "Verify your identity" interstitial that Salesforce shows for logins from unfamiliar IP addresses. Without this, the test runner would be blocked on first login from any new CI machine or developer laptop.
+- **`LightningExperienceUser`** — lets the users open Lightning Experience at all. The Minimum Access baseline leaves it off, and without it every page shows "You can't access Lightning Experience".
 - **`ActivitiesAccess` and `ChatterInternalUser`** — standard permissions required for Lightning Experience to load correctly.
+
+The profile grants no MFA-bypass or identity-confirmation-skip permissions. Those were needed only by the retired username/password form login, and not every org offers the MFA-bypass permission — leaving them out keeps the profile deployable everywhere.
+
+The committed profile lists only this project's own `bcm_*` metadata (app, classes, fields, layout, tabs) plus license-level settings (user license and standard user permissions), so it deploys to any org that accepts the rest of `force-app`. In a new org, everything the file does not list starts from the `Salesforce` license defaults. When you retrieve or edit the profile, keep it that way: strip out any entries for objects, fields, record types, classes, apps, tabs, flows or pages that exist only in the org you retrieved from. One such entry is enough to make the deploy fail in every other org.
 
 All `bcm_` tabs (`bcm_Map__c`, `bcm_Capability__c`, `bcm_Tag__c`) are set to `Hidden` at the profile level. Tab visibility for these objects is granted exclusively via the `bcm_Editor` and `bcm_Viewer` permission sets. This is intentional: it means the Playwright tests for tab visibility are genuinely testing that the permission sets do their job, not that the profile grants access.
 
@@ -241,7 +246,7 @@ session to `tests/e2e/.auth/editor.json` and `tests/e2e/.auth/viewer.json`
 (gitignored). Subsequent test projects consume the saved session via `storageState`,
 avoiding repeated logins.
 
-Sessions are refreshed on every `npx playwright test` invocation and are not
+Sessions are refreshed on every `pnpm exec playwright test` invocation and are not
 persisted between runs.
 
 ---
@@ -402,8 +407,8 @@ Before marking any implementation step complete:
 - All traceability checks pass (Checks 1–5 in `/check-traceability`)
 - All Apex test methods pass with ≥ 90% coverage per class
 - All Playwright tests pass with zero failures
-- `npm run lint` passes with no errors
-- `npm run scan` passes with no severity ≥ 2 violations
+- `pnpm lint` passes with no errors
+- `pnpm scan` passes with no severity ≥ 2 violations
 
 **Then verify the remaining items manually:**
 
@@ -422,18 +427,18 @@ sf apex run test --test-level RunLocalTests --target-org <alias>
 sf apex run test --test-level RunLocalTests --target-org <alias> --code-coverage
 
 # E2E tests (requires .env configured with org URL and test user credentials)
-npx playwright test
-npx playwright test tests/e2e/map.spec.ts   # single spec
-npx playwright test --project=editor        # editor project only
-npx playwright show-report                  # open HTML report
+pnpm exec playwright test
+pnpm exec playwright test tests/e2e/map.spec.ts   # single spec
+pnpm exec playwright test --project=editor        # editor project only
+pnpm exec playwright show-report                  # open HTML report
 
 # LWC unit tests
-npm run test:unit
-npm run test:unit:coverage
+pnpm test:unit
+pnpm test:unit:coverage
 
 # Linting and scanning
-npm run lint
-npm run scan
+pnpm lint
+pnpm scan
 ```
 
 Prerequisites for E2E:
