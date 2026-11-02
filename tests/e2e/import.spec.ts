@@ -43,6 +43,9 @@ const SAMPLE_JSON = JSON.stringify({
 async function openImportPanel(page: Page) {
     await setupAutoDismiss(page);
     await gotoLightning(page, '/lightning/o/bcm_Map__c/list?filterName=All');
+    // A previous panel's Close click leaves the mouse over the list-view toolbar,
+    // and the "Filters" tooltip it raises intercepts the JSON Import click
+    await page.mouse.move(0, 0);
     await page.getByRole('button', { name: 'JSON Import', exact: true }).click();
     // Sandbox can take >20s to render the flow screen inside the iframe
     await flow(page).getByLabel('Paste JSON').waitFor({ state: 'visible', timeout: 40000 });
