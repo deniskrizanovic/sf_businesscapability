@@ -203,16 +203,21 @@ contexts. The usernames and passwords are stored in `.env` (gitignored);
 | `bcm-editor-test@...` | `bcm_Editor`   | Full access — creates, edits, deletes records  |
 | `bcm-viewer-test@...` | `bcm_Viewer`   | Read-only — verifies write controls are absent |
 
-Both users are assigned the `AutomatedTester - Minimum Access Clone` profile with
-`BypassMFAForUiLogins` and `SkipIdentityConfirmation` to allow headless login.
+Both users are assigned the `AutomatedTester - Minimum Access Clone` profile. The suite
+never fills the Salesforce login form — sessions are minted via an OAuth frontdoor
+exchange (see [09-e2e-test-architecture.md §3](09-e2e-test-architecture.md#3-authentication-selectable-strategy--oauth-frontdoor--storagestate)) —
+so the profile grants no MFA or identity-confirmation bypass.
 
 #### Test Users Profile
 
-Both users are assigned the `AutomatedTester - Minimum Access Clone` profile (committed to source at `force-app/main/default/profiles/AutomatedTester - Minimum Access Clone.profile-meta.xml`). This profile is a clone of Minimum Access — the lowest-privilege standard profile — with three deliberate additions:
+Both users are assigned the `AutomatedTester - Minimum Access Clone` profile (committed to source at `force-app/main/default/profiles/AutomatedTester - Minimum Access Clone.profile-meta.xml`). This profile is a clone of Minimum Access — the lowest-privilege standard profile — with two deliberate additions:
 
-- **`BypassMFAForUiLogins`** — prevents Salesforce from prompting for a second factor during username/password login. Without this, Playwright's login flow stalls at the MFA screen.
-- **`SkipIdentityConfirmation`** — suppresses the "Verify your identity" interstitial that Salesforce shows for logins from unfamiliar IP addresses. Without this, the test runner would be blocked on first login from any new CI machine or developer laptop.
+- **`LightningExperienceUser`** — lets the users open Lightning Experience at all. The Minimum Access baseline leaves it off, and without it every page shows "You can't access Lightning Experience".
 - **`ActivitiesAccess` and `ChatterInternalUser`** — standard permissions required for Lightning Experience to load correctly.
+
+The profile grants no MFA-bypass or identity-confirmation-skip permissions. Those were needed only by the retired username/password form login, and not every org offers the MFA-bypass permission — leaving them out keeps the profile deployable everywhere.
+
+The committed profile lists only this project's own `bcm_*` metadata (app, classes, fields, layout, tabs) plus license-level settings (user license and standard user permissions), so it deploys to any org that accepts the rest of `force-app`. In a new org, everything the file does not list starts from the `Salesforce` license defaults. When you retrieve or edit the profile, keep it that way: strip out any entries for objects, fields, record types, classes, apps, tabs, flows or pages that exist only in the org you retrieved from. One such entry is enough to make the deploy fail in every other org.
 
 All `bcm_` tabs (`bcm_Map__c`, `bcm_Capability__c`, `bcm_Tag__c`) are set to `Hidden` at the profile level. Tab visibility for these objects is granted exclusively via the `bcm_Editor` and `bcm_Viewer` permission sets. This is intentional: it means the Playwright tests for tab visibility are genuinely testing that the permission sets do their job, not that the profile grants access.
 
